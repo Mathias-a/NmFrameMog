@@ -1,2 +1,5 @@
 # Google App Engine generated folder
 appengine-generated/
+.venv/
+.mypy_cache/
+.ruff_cache/
