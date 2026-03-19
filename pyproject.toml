@@ -1,17 +1,26 @@
 [project]
-name = "nmframemog"
+name = "nmframemog-monorepo"
 version = "0.1.0"
+description = "Monorepo for object detection, AI accounting agent, and A* island."
 requires-python = ">=3.13"
 dependencies = []
 
 [dependency-groups]
 dev = [
     "basedmypy==2.10.0",
+    "pytest==8.4.2",
     "ruff==0.15.6",
 ]
 
 [tool.uv]
 package = false
+
+[tool.uv.workspace]
+members = [
+    "apps/object-detection",
+    "apps/ai-accounting-agent",
+    "apps/astar-island",
+]
 
 [tool.ruff]
 target-version = "py313"
@@ -22,4 +31,11 @@ select = ["B", "E", "F", "I", "UP"]
 [tool.mypy]
 python_version = "3.13"
 strict = true
-files = ["src"]
+files = ["apps"]
+explicit_package_bases = true
+mypy_path = [
+    "apps/object-detection/src",
+    "apps/ai-accounting-agent/src",
+    "apps/astar-island/src",
+]
+exclude = ["tests/"]
