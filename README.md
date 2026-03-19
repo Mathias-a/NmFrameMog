@@ -39,7 +39,7 @@ uv run mypy
 ## Run a specific app
 
 ```bash
-uv run -p apps/object-detection python -m object_detection.pipeline
-uv run -p apps/ai-accounting-agent python -m ai_accounting_agent.agent
-uv run -p apps/astar-island python -m astar_island.solver
+uv run --package object-detection python -m object_detection.pipeline
+uv run --package ai-accounting-agent python -m ai_accounting_agent.agent
+uv run --package astar-island python -m astar_island.solver
 ```
