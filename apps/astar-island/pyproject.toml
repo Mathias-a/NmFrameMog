@@ -3,7 +3,10 @@ name = "astar-island"
 version = "0.1.0"
 description = "A* island pathfinding task"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "httpx>=0.28.1",
+    "numpy>=2.4.3",
+]
 
 [build-system]
 requires = ["hatchling"]
