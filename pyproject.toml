@@ -20,6 +20,7 @@ members = [
     "apps/object-detection",
     "apps/ai-accounting-agent",
     "apps/astar-island",
+    "apps/gce-runner",
 ]
 
 [tool.ruff]
@@ -37,5 +38,6 @@ mypy_path = [
     "apps/object-detection/src",
     "apps/ai-accounting-agent/src",
     "apps/astar-island/src",
+    "apps/gce-runner/src",
 ]
 exclude = ["tests/"]
