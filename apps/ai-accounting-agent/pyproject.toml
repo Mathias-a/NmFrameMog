@@ -3,7 +3,10 @@ name = "ai-accounting-agent"
 version = "0.1.0"
 description = "AI accounting agent task"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "httpx>=0.28.1",
+    "pydantic>=2.12.5",
+]
 
 [build-system]
 requires = ["hatchling"]
