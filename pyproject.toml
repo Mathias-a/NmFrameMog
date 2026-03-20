@@ -3,7 +3,12 @@ name = "nmframemog-monorepo"
 version = "0.1.0"
 description = "Monorepo for object detection, AI accounting agent, and A* island."
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "fastapi>=0.115.12,<1.0.0",
+    "httpx>=0.28.1,<1.0.0",
+    "pillow>=11.2.1,<12.0.0",
+    "uvicorn>=0.35.0,<1.0.0",
+]
 
 [dependency-groups]
 dev = [
@@ -32,7 +37,7 @@ select = ["B", "E", "F", "I", "UP"]
 [tool.mypy]
 python_version = "3.13"
 strict = true
-files = ["apps"]
+files = ["src", "apps", "tests", "run.py"]
 explicit_package_bases = true
 mypy_path = [
     "apps/object-detection/src",
@@ -41,3 +46,20 @@ mypy_path = [
     "apps/gce-runner/src",
 ]
 exclude = ["tests/"]
+
+[tool.pyright]
+include = ["src", "tests", "run.py"]
+extraPaths = ["src"]
+pythonVersion = "3.13"
+venvPath = "."
+venv = ".venv"
+
+[tool.basedpyright]
+include = ["src", "tests", "run.py"]
+extraPaths = ["src"]
+pythonVersion = "3.13"
+venvPath = "."
+venv = ".venv"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
