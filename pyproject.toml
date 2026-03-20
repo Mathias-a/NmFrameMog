@@ -25,6 +25,7 @@ members = [
     "apps/object-detection",
     "apps/ai-accounting-agent",
     "apps/astar-island",
+    "apps/gce-runner",
 ]
 
 [tool.ruff]
