@@ -1,4 +1,12 @@
 from .baseline import build_baseline_tensor
+from .benchmark import (
+    BenchmarkConfig,
+    BenchmarkReport,
+    BenchmarkRunner,
+    ModelResult,
+    ModelSpec,
+    SeedResult,
+)
 from .contract import TERRAIN_CODE_TO_CLASS, TerrainClass
 from .debug_visualization import (
     DebugArtifacts,
@@ -13,6 +21,12 @@ from .validator import entropy_weighted_kl_score, validate_prediction_tensor
 
 __all__ = [
     "build_baseline_tensor",
+    "BenchmarkConfig",
+    "BenchmarkReport",
+    "BenchmarkRunner",
+    "ModelResult",
+    "ModelSpec",
+    "SeedResult",
     "TerrainClass",
     "TERRAIN_CODE_TO_CLASS",
     "DebugArtifacts",

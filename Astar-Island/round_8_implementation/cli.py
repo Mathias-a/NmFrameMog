@@ -3,8 +3,12 @@ from __future__ import annotations
 import argparse
 import importlib
 import json
+from collections.abc import Callable
 from pathlib import Path
+from typing import cast
 
+from .solver.baseline import build_baseline_tensor
+from .solver.benchmark import BenchmarkConfig, BenchmarkRunner, ModelSpec
 from .solver.cache import LocalCache
 from .solver.debug_visualization import load_trace_file, render_debug_bundle
 from .solver.emulator import AstarIslandEmulator
@@ -189,6 +193,58 @@ def main(argv: list[str] | None = None) -> int:
         help="Base random seed for stochastic /simulate responses.",
     )
 
+    benchmark_parser = subparsers.add_parser(
+        "benchmark",
+        help="Benchmark prediction models against local Monte Carlo ground truth.",
+    )
+    benchmark_parser.add_argument(
+        "--model",
+        dest="models",
+        action="append",
+        default=None,
+        help=(
+            "Model to benchmark as NAME=module.path:callable. "
+            "May be repeated for multiple models."
+        ),
+    )
+    benchmark_parser.add_argument(
+        "--no-baseline",
+        action="store_true",
+        help="Exclude the built-in baseline model from the benchmark.",
+    )
+    benchmark_parser.add_argument(
+        "--preset",
+        choices=("quick", "full"),
+        default=None,
+        help="Configuration preset: quick (16 rollouts) or full (256 rollouts).",
+    )
+    benchmark_parser.add_argument(
+        "--rollouts",
+        type=int,
+        default=None,
+        help="Override the Monte Carlo rollout count for ground truth generation.",
+    )
+    benchmark_parser.add_argument(
+        "--seed-index",
+        type=int,
+        default=None,
+        help="Limit benchmark to a single seed index.",
+    )
+    benchmark_parser.add_argument(
+        "--fixture",
+        dest="fixtures",
+        action="append",
+        type=Path,
+        default=None,
+        help="Round fixture JSON to load. Repeat to load multiple rounds.",
+    )
+    benchmark_parser.add_argument(
+        "--output",
+        type=Path,
+        default=None,
+        help="Write JSON report to this file path.",
+    )
+
     args = parser.parse_args(argv)
     command = _read_optional_str_arg(args, "command")
     if command == "solve-round":
@@ -208,6 +264,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if command == "serve-emulator":
         return _serve_emulator(args)
+    if command == "benchmark":
+        return _benchmark(args)
     raise AssertionError(f"Unsupported command: {command}")
 
 
@@ -333,6 +391,93 @@ def _serve_emulator(args: argparse.Namespace) -> int:
         host=_read_str_arg(args, "host"),
         port=_read_int_arg(args, "port"),
     )
+
+
+def _benchmark(args: argparse.Namespace) -> int:
+    fixture_paths = _read_path_list_arg(args, "fixtures")
+    runner = BenchmarkRunner.from_fixture_paths(fixture_paths)
+
+    models: list[ModelSpec] = []
+    no_baseline = _read_bool_arg(args, "no_baseline")
+    if not no_baseline:
+        models.append(ModelSpec(name="baseline", predict=build_baseline_tensor))
+
+    raw_model_args: list[str] | None = getattr(args, "models", None)
+    if isinstance(raw_model_args, list):
+        for model_arg in raw_model_args:
+            model_spec = _parse_model_arg(model_arg)
+            models.append(model_spec)
+
+    if not models:
+        print(
+            "No models to benchmark. "
+            "Add --model NAME=module:callable or remove --no-baseline."
+        )
+        return 1
+
+    preset = _read_optional_str_arg(args, "preset")
+    rollouts_override = _read_optional_int_arg(args, "rollouts")
+    seed_index = _read_optional_int_arg(args, "seed_index")
+
+    if preset == "quick":
+        config = BenchmarkConfig.quick()
+    elif preset == "full":
+        config = BenchmarkConfig.full()
+    else:
+        config = BenchmarkConfig()
+
+    if rollouts_override is not None:
+        config = BenchmarkConfig(
+            rollout_count=rollouts_override,
+            years=config.years,
+            base_seed=config.base_seed,
+            seed_indices=config.seed_indices,
+        )
+    if seed_index is not None:
+        config = BenchmarkConfig(
+            rollout_count=config.rollout_count,
+            years=config.years,
+            base_seed=config.base_seed,
+            seed_indices=(seed_index,),
+        )
+
+    print(
+        f"Benchmarking {len(models)} model(s) with {config.rollout_count} rollouts..."
+    )
+    report = runner.compare(models, config)
+    print()
+    print(report.format_table())
+
+    output_path = _read_optional_path_arg(args, "output")
+    if output_path is not None:
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(json.dumps(report.to_dict(), indent=2), encoding="utf-8")
+        print(f"\nJSON report written to {output_path}")
+
+    return 0
+
+
+def _parse_model_arg(model_arg: str) -> ModelSpec:
+    if "=" not in model_arg:
+        raise ValueError(
+            f"Invalid --model format: {model_arg!r}. Expected NAME=module.path:callable"
+        )
+    name, import_path = model_arg.split("=", 1)
+    if ":" not in import_path:
+        raise ValueError(
+            f"Invalid import path: {import_path!r}. Expected module.path:callable"
+        )
+    module_path, callable_name = import_path.rsplit(":", 1)
+    module = importlib.import_module(module_path)
+    predict_fn: object = getattr(module, callable_name)
+    if not callable(predict_fn):
+        raise ValueError(
+            f"Attribute {callable_name!r} in {module_path!r} is not callable."
+        )
+    predict_typed = cast(
+        Callable[[list[list[int]]], list[list[list[float]]]], predict_fn
+    )
+    return ModelSpec(name=name, predict=predict_typed)
 
 
 def _read_path_arg(args: argparse.Namespace, field_name: str) -> Path:
