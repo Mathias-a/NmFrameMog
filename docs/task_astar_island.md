@@ -1,5 +1,9 @@
 # Astar Island
 
+Implementation-oriented notes for this repository's Astar Island package.
+
+Reference competition docs: [docs/astar-island/](./astar-island/README.md)
+
 This package provides:
 
 - an authenticated async client for `/budget`, `/rounds`, `/simulate`, and `/submit`

@@ -1,5 +1,9 @@
 # Tripletex
 
+Implementation-oriented notes for this repository's Tripletex package.
+
+Reference competition docs: [docs/tripx/](./tripx/README.md)
+
 This package exposes a FastAPI service with the required delivery surface:
 
 ```bash

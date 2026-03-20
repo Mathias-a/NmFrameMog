@@ -1,5 +1,9 @@
 # NorgesGruppen Data
 
+Implementation-oriented notes for this repository's NorgesGruppen Data package.
+
+Reference competition docs: [docs/NG/](./NG/README.md)
+
 This package implements the required offline runner contract:
 
 ```bash
