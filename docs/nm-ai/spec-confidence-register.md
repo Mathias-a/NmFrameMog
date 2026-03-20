@@ -16,7 +16,7 @@ Confidence levels:
 | `game_state` and `game_over` message types exist | Validated | `challenge://game/endpoint`, `challenge://game/examples` excerpts | None |
 | Maximum game length is 300 rounds | Validated | `challenge://game/mechanics`, `challenge://game/endpoint` excerpts | None |
 | Difficulty levels vary grid size, bot count, aisles, item types, maps, and time limit | Inferred from excerpt | Heading/table shape exposed, not full table contents | Capture fuller table later |
-| Full scoring formula | Unknown | Only `Score Formula` / `Per game:` snippet retrieved | Re-query MCP or derive from live runs |
+| Full scoring formula | Validated | `challenge://game/scoring` full live resource now exposes `score = items_delivered × 1 + orders_completed × 5` plus leaderboard rules | None |
 | Game cooldown of 60 seconds | Validated | `challenge://game/examples` excerpt | Verify against platform behavior |
 
 ## NorgesGruppen Data
@@ -27,8 +27,8 @@ Confidence levels:
 | `run.py` must be at zip root | Validated | `challenge://norgesgruppen-data/submission` excerpt | None |
 | Scoring includes mAP@0.5 | Validated | `challenge://norgesgruppen-data/scoring` excerpt | None |
 | Final score combines detection and classification | Validated | `Hybrid Scoring` excerpt | None |
-| Sandbox environment has extra constraints | Inferred from excerpt | Section exposed but details truncated | Re-query once implementation reaches packaging stage |
-| Common errors table exists | Inferred from excerpt | Table headers only | Capture concrete rows later |
+| Sandbox environment has explicit CPU / memory / GPU / network / timeout constraints | Validated | `challenge://norgesgruppen-data/submission` full live resource | None |
+| Common errors table exists with concrete fixes | Validated | `challenge://norgesgruppen-data/examples` full live resource | None |
 
 ## Tripletex
 
@@ -38,8 +38,8 @@ Confidence levels:
 | Requests contain `tripletex_credentials.base_url` and `session_token` | Validated | `challenge://tripletex/endpoint` excerpt | None |
 | Auth uses username `0` and password=`session_token` | Validated | `challenge://tripletex/endpoint` excerpt | None |
 | Judge verifies resulting API state field-by-field | Validated | `challenge://tripletex/scoring` excerpt | None |
-| Rate limits exist | Inferred from excerpt | Section heading exposed, values truncated | Capture exact limits during sandbox work |
-| Common errors table exists | Inferred from excerpt | Table headers only | Capture concrete rows later |
+| Rate limits exist and are explicit (`10` concurrent, unlimited per day) | Validated | `challenge://tripletex/scoring` full live resource | None |
+| Common errors table exists with concrete causes and fixes | Validated | `challenge://tripletex/examples` full live resource | None |
 
 ## Astar Island
 
@@ -50,7 +50,7 @@ Confidence levels:
 | Zero probabilities can destroy score | Validated | `challenge://astar-island/quickstart`, `challenge://astar-island/scoring` excerpts | None |
 | Analysis endpoint returns prediction vs ground truth post-round | Validated | `challenge://astar-island/endpoint` excerpt | None |
 | World defaults to 40×40 and 8 terrain types map to 6 classes | Validated | `challenge://astar-island/mechanics` excerpt | None |
-| Full auth/setup details | Inferred from excerpt | Quickstart headings visible, details partial | Confirm with live API integration |
+| Full auth/setup details | Validated | `challenge://astar-island/quickstart` and `challenge://astar-island/endpoint` full live resources | None |
 
 ## Google Cloud guidance
 
