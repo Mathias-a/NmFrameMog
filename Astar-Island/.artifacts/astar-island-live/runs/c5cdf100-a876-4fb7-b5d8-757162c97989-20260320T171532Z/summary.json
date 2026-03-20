@@ -1,0 +1,852 @@
+{
+  "output_root": ".artifacts/astar-island-live",
+  "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+  "run_id": "c5cdf100-a876-4fb7-b5d8-757162c97989-20260320T171532Z",
+  "seed_results": [
+    {
+      "debug_output_dir": ".artifacts/astar-island-live/debug/c5cdf100-a876-4fb7-b5d8-757162c97989-20260320T171532Z/seed-00",
+      "observations_used": [
+        {
+          "source": "live",
+          "step": 0,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 7,
+            "y": 21
+          }
+        },
+        {
+          "source": "live",
+          "step": 2,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 21,
+            "y": 7
+          }
+        },
+        {
+          "source": "live",
+          "step": 4,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 14,
+            "y": 7
+          }
+        },
+        {
+          "source": "live",
+          "step": 11,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 14,
+            "y": 21
+          }
+        },
+        {
+          "source": "live",
+          "step": 14,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 14,
+            "y": 14
+          }
+        },
+        {
+          "source": "live",
+          "step": 15,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 7,
+            "y": 25
+          }
+        },
+        {
+          "source": "live",
+          "step": 20,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 7,
+            "y": 14
+          }
+        },
+        {
+          "source": "live",
+          "step": 32,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 14,
+            "y": 25
+          }
+        },
+        {
+          "source": "live",
+          "step": 35,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 7,
+            "y": 7
+          }
+        },
+        {
+          "source": "live",
+          "step": 42,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 21,
+            "y": 14
+          }
+        },
+        {
+          "source": "live",
+          "step": 44,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 21,
+            "y": 21
+          }
+        },
+        {
+          "source": "live",
+          "step": 45,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 21,
+            "y": 25
+          }
+        }
+      ],
+      "planned_viewports": [
+        {
+          "height": 15,
+          "width": 15,
+          "x": 7,
+          "y": 21
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 21,
+          "y": 7
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 14,
+          "y": 7
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 14,
+          "y": 21
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 14,
+          "y": 14
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 7,
+          "y": 25
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 7,
+          "y": 14
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 14,
+          "y": 25
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 7,
+          "y": 7
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 21,
+          "y": 14
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 21,
+          "y": 21
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 21,
+          "y": 25
+        }
+      ],
+      "prediction_path": ".artifacts/astar-island-live/predictions/c5cdf100-a876-4fb7-b5d8-757162c97989-20260320T171532Z/seed-00.json",
+      "seed_index": 0
+    },
+    {
+      "debug_output_dir": ".artifacts/astar-island-live/debug/c5cdf100-a876-4fb7-b5d8-757162c97989-20260320T171532Z/seed-01",
+      "observations_used": [
+        {
+          "source": "live",
+          "step": 13,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 21,
+            "y": 14
+          }
+        },
+        {
+          "source": "live",
+          "step": 21,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 21,
+            "y": 21
+          }
+        },
+        {
+          "source": "live",
+          "step": 29,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 7,
+            "y": 7
+          }
+        },
+        {
+          "source": "live",
+          "step": 36,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 14,
+            "y": 14
+          }
+        },
+        {
+          "source": "live",
+          "step": 38,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 7,
+            "y": 14
+          }
+        },
+        {
+          "source": "live",
+          "step": 40,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 25,
+            "y": 21
+          }
+        },
+        {
+          "source": "live",
+          "step": 41,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 7,
+            "y": 0
+          }
+        },
+        {
+          "source": "live",
+          "step": 47,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 21,
+            "y": 7
+          }
+        },
+        {
+          "source": "live",
+          "step": 49,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 14,
+            "y": 21
+          }
+        }
+      ],
+      "planned_viewports": [
+        {
+          "height": 15,
+          "width": 15,
+          "x": 21,
+          "y": 14
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 21,
+          "y": 21
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 7,
+          "y": 7
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 14,
+          "y": 14
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 7,
+          "y": 14
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 25,
+          "y": 21
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 7,
+          "y": 0
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 21,
+          "y": 7
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 14,
+          "y": 21
+        }
+      ],
+      "prediction_path": ".artifacts/astar-island-live/predictions/c5cdf100-a876-4fb7-b5d8-757162c97989-20260320T171532Z/seed-01.json",
+      "seed_index": 1
+    },
+    {
+      "debug_output_dir": ".artifacts/astar-island-live/debug/c5cdf100-a876-4fb7-b5d8-757162c97989-20260320T171532Z/seed-02",
+      "observations_used": [
+        {
+          "source": "live",
+          "step": 1,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 14,
+            "y": 21
+          }
+        },
+        {
+          "source": "live",
+          "step": 3,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 7,
+            "y": 21
+          }
+        },
+        {
+          "source": "live",
+          "step": 10,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 21,
+            "y": 21
+          }
+        },
+        {
+          "source": "live",
+          "step": 16,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 7,
+            "y": 14
+          }
+        },
+        {
+          "source": "live",
+          "step": 17,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 14,
+            "y": 14
+          }
+        },
+        {
+          "source": "live",
+          "step": 18,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 7,
+            "y": 7
+          }
+        },
+        {
+          "source": "live",
+          "step": 22,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 7,
+            "y": 25
+          }
+        },
+        {
+          "source": "live",
+          "step": 27,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 14,
+            "y": 7
+          }
+        },
+        {
+          "source": "live",
+          "step": 28,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 14,
+            "y": 25
+          }
+        },
+        {
+          "source": "live",
+          "step": 33,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 14,
+            "y": 0
+          }
+        },
+        {
+          "source": "live",
+          "step": 37,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 7,
+            "y": 0
+          }
+        },
+        {
+          "source": "live",
+          "step": 46,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 21,
+            "y": 14
+          }
+        }
+      ],
+      "planned_viewports": [
+        {
+          "height": 15,
+          "width": 15,
+          "x": 14,
+          "y": 21
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 7,
+          "y": 21
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 21,
+          "y": 21
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 7,
+          "y": 14
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 14,
+          "y": 14
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 7,
+          "y": 7
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 7,
+          "y": 25
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 14,
+          "y": 7
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 14,
+          "y": 25
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 14,
+          "y": 0
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 7,
+          "y": 0
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 21,
+          "y": 14
+        }
+      ],
+      "prediction_path": ".artifacts/astar-island-live/predictions/c5cdf100-a876-4fb7-b5d8-757162c97989-20260320T171532Z/seed-02.json",
+      "seed_index": 2
+    },
+    {
+      "debug_output_dir": ".artifacts/astar-island-live/debug/c5cdf100-a876-4fb7-b5d8-757162c97989-20260320T171532Z/seed-03",
+      "observations_used": [
+        {
+          "source": "live",
+          "step": 6,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 14,
+            "y": 14
+          }
+        },
+        {
+          "source": "live",
+          "step": 7,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 7,
+            "y": 21
+          }
+        },
+        {
+          "source": "live",
+          "step": 12,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 14,
+            "y": 21
+          }
+        },
+        {
+          "source": "live",
+          "step": 24,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 14,
+            "y": 7
+          }
+        },
+        {
+          "source": "live",
+          "step": 26,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 21,
+            "y": 14
+          }
+        },
+        {
+          "source": "live",
+          "step": 30,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 7,
+            "y": 14
+          }
+        },
+        {
+          "source": "live",
+          "step": 34,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 21,
+            "y": 7
+          }
+        }
+      ],
+      "planned_viewports": [
+        {
+          "height": 15,
+          "width": 15,
+          "x": 14,
+          "y": 14
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 7,
+          "y": 21
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 14,
+          "y": 21
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 14,
+          "y": 7
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 21,
+          "y": 14
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 7,
+          "y": 14
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 21,
+          "y": 7
+        }
+      ],
+      "prediction_path": ".artifacts/astar-island-live/predictions/c5cdf100-a876-4fb7-b5d8-757162c97989-20260320T171532Z/seed-03.json",
+      "seed_index": 3
+    },
+    {
+      "debug_output_dir": ".artifacts/astar-island-live/debug/c5cdf100-a876-4fb7-b5d8-757162c97989-20260320T171532Z/seed-04",
+      "observations_used": [
+        {
+          "source": "live",
+          "step": 5,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 21,
+            "y": 7
+          }
+        },
+        {
+          "source": "live",
+          "step": 8,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 7,
+            "y": 7
+          }
+        },
+        {
+          "source": "live",
+          "step": 9,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 14,
+            "y": 7
+          }
+        },
+        {
+          "source": "live",
+          "step": 19,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 14,
+            "y": 14
+          }
+        },
+        {
+          "source": "live",
+          "step": 23,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 21,
+            "y": 0
+          }
+        },
+        {
+          "source": "live",
+          "step": 25,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 7,
+            "y": 14
+          }
+        },
+        {
+          "source": "live",
+          "step": 31,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 0,
+            "y": 7
+          }
+        },
+        {
+          "source": "live",
+          "step": 39,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 25,
+            "y": 7
+          }
+        },
+        {
+          "source": "live",
+          "step": 43,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 21,
+            "y": 14
+          }
+        },
+        {
+          "source": "live",
+          "step": 48,
+          "viewport": {
+            "height": 15,
+            "width": 15,
+            "x": 0,
+            "y": 14
+          }
+        }
+      ],
+      "planned_viewports": [
+        {
+          "height": 15,
+          "width": 15,
+          "x": 21,
+          "y": 7
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 7,
+          "y": 7
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 14,
+          "y": 7
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 14,
+          "y": 14
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 21,
+          "y": 0
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 7,
+          "y": 14
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 0,
+          "y": 7
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 25,
+          "y": 7
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 21,
+          "y": 14
+        },
+        {
+          "height": 15,
+          "width": 15,
+          "x": 0,
+          "y": 14
+        }
+      ],
+      "prediction_path": ".artifacts/astar-island-live/predictions/c5cdf100-a876-4fb7-b5d8-757162c97989-20260320T171532Z/seed-04.json",
+      "seed_index": 4
+    }
+  ]
+}
