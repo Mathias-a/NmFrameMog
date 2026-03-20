@@ -7,6 +7,7 @@ from .debug_visualization import (
     load_trace_file,
     render_debug_bundle,
 )
+from .local_scoring import load_json_payload, score_prediction_locally
 from .pipeline import create_seed_states, parse_round_detail_payload, solve_round
 from .validator import entropy_weighted_kl_score, validate_prediction_tensor
 
@@ -19,6 +20,8 @@ __all__ = [
     "ViewportQuery",
     "load_trace_file",
     "render_debug_bundle",
+    "load_json_payload",
+    "score_prediction_locally",
     "create_seed_states",
     "parse_round_detail_payload",
     "solve_round",

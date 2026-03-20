@@ -1,17 +1,20 @@
 from __future__ import annotations
 
 import argparse
+import importlib
 import json
 from pathlib import Path
 
 from .solver.cache import LocalCache
 from .solver.debug_visualization import load_trace_file, render_debug_bundle
+from .solver.emulator import AstarIslandEmulator
 from .solver.pipeline import (
     build_live_client_from_environment,
     parse_round_detail_payload,
     round_detail_to_payload,
     solve_round,
 )
+from .solver.server import run_emulator_server
 from .solver.validator import validate_prediction_tensor
 
 
@@ -37,7 +40,10 @@ def main(argv: list[str] | None = None) -> int:
         "--cache-dir",
         type=Path,
         default=Path(".artifacts/astar-island"),
-        help="Root directory for cached inputs, predictions, debug artifacts, and run summaries.",
+        help=(
+            "Root directory for cached inputs, predictions, debug artifacts, "
+            "and run summaries."
+        ),
     )
     solve_parser.add_argument(
         "--base-url",
@@ -76,7 +82,10 @@ def main(argv: list[str] | None = None) -> int:
     solve_parser.add_argument(
         "--execute-live-queries",
         action="store_true",
-        help="Execute live viewport queries using the planned viewports and cache the responses.",
+        help=(
+            "Execute live viewport queries using the planned viewports and "
+            "cache the responses."
+        ),
     )
     solve_parser.add_argument(
         "--submit",
@@ -88,6 +97,34 @@ def main(argv: list[str] | None = None) -> int:
         "validate-prediction", help="Validate a saved prediction JSON file."
     )
     validate_parser.add_argument("prediction_file", type=Path)
+
+    score_parser = subparsers.add_parser(
+        "score-local",
+        help="Score a prediction locally against the fixture-backed proxy simulator.",
+    )
+    score_parser.add_argument("prediction_file", type=Path)
+    score_parser.add_argument("--round-id")
+    score_parser.add_argument("--seed-index", type=int)
+    score_parser.add_argument(
+        "--fixture",
+        dest="fixtures",
+        action="append",
+        type=Path,
+        default=None,
+        help="Round fixture JSON to load. Repeat to load multiple rounds.",
+    )
+    score_parser.add_argument(
+        "--random-seed",
+        type=int,
+        default=20260320,
+        help="Base random seed for local proxy scoring.",
+    )
+    score_parser.add_argument(
+        "--analysis-rollouts",
+        type=int,
+        default=128,
+        help="Monte Carlo rollout count used to build local ground truth.",
+    )
 
     analysis_parser = subparsers.add_parser(
         "fetch-analysis",
@@ -118,12 +155,48 @@ def main(argv: list[str] | None = None) -> int:
     debug_parser.add_argument("--input", type=Path, required=True)
     debug_parser.add_argument("--output-dir", type=Path, required=True)
 
+    serve_parser = subparsers.add_parser(
+        "serve-emulator",
+        help="Serve a local Astar Island emulator backed by cached round fixtures.",
+    )
+    serve_parser.add_argument(
+        "--host",
+        default="127.0.0.1",
+        help="Bind host for the local emulator HTTP server.",
+    )
+    serve_parser.add_argument(
+        "--port",
+        type=int,
+        default=8000,
+        help="Bind port for the local emulator HTTP server.",
+    )
+    serve_parser.add_argument(
+        "--fixture",
+        dest="fixtures",
+        action="append",
+        type=Path,
+        default=None,
+        help="Round fixture JSON to load. Repeat to load multiple rounds.",
+    )
+    serve_parser.add_argument(
+        "--active-round-id",
+        help="Round ID to expose as the in-memory active round.",
+    )
+    serve_parser.add_argument(
+        "--random-seed",
+        type=int,
+        default=20260320,
+        help="Base random seed for stochastic /simulate responses.",
+    )
+
     args = parser.parse_args(argv)
     command = _read_optional_str_arg(args, "command")
     if command == "solve-round":
         return _solve_round(args)
     if command == "validate-prediction":
         return _validate_prediction(_read_path_arg(args, "prediction_file"))
+    if command == "score-local":
+        return _score_local(args)
     if command == "fetch-analysis":
         return _fetch_analysis(args)
     if command == "render-debug":
@@ -133,6 +206,8 @@ def main(argv: list[str] | None = None) -> int:
         )
         print(artifacts.index_html)
         return 0
+    if command == "serve-emulator":
+        return _serve_emulator(args)
     raise AssertionError(f"Unsupported command: {command}")
 
 
@@ -158,7 +233,8 @@ def _solve_round(args: argparse.Namespace) -> int:
             )
         if client is None:
             raise ValueError(
-                f"Live round fetching requires the {token_env_var} environment variable."
+                "Live round fetching requires the "
+                f"{token_env_var} environment variable."
             )
         payload = client.get_round_detail(round_id)
 
@@ -202,6 +278,27 @@ def _validate_prediction(prediction_file: Path) -> int:
     return 0
 
 
+def _score_local(args: argparse.Namespace) -> int:
+    local_scoring = importlib.import_module(
+        "round_8_implementation.solver.local_scoring"
+    )
+    load_json_payload = local_scoring.load_json_payload
+    score_prediction_locally = local_scoring.score_prediction_locally
+
+    prediction_file = _read_path_arg(args, "prediction_file")
+    payload = load_json_payload(prediction_file)
+    analysis = score_prediction_locally(
+        prediction_payload=payload,
+        fixture_paths=_read_path_list_arg(args, "fixtures"),
+        round_id=_read_optional_str_arg(args, "round_id"),
+        seed_index=_read_optional_int_arg(args, "seed_index"),
+        random_seed=_read_int_arg(args, "random_seed"),
+        analysis_rollout_count=_read_int_arg(args, "analysis_rollouts"),
+    )
+    print(json.dumps(analysis, indent=2))
+    return 0
+
+
 def _fetch_analysis(args: argparse.Namespace) -> int:
     cache_dir = _read_path_arg(args, "cache_dir")
     token_env_var = _read_str_arg(args, "token_env_var")
@@ -225,6 +322,19 @@ def _fetch_analysis(args: argparse.Namespace) -> int:
     return 0
 
 
+def _serve_emulator(args: argparse.Namespace) -> int:
+    emulator = AstarIslandEmulator.from_fixture_paths(
+        _read_path_list_arg(args, "fixtures"),
+        active_round_id=_read_optional_str_arg(args, "active_round_id"),
+        random_seed=_read_int_arg(args, "random_seed"),
+    )
+    return run_emulator_server(
+        emulator=emulator,
+        host=_read_str_arg(args, "host"),
+        port=_read_int_arg(args, "port"),
+    )
+
+
 def _read_path_arg(args: argparse.Namespace, field_name: str) -> Path:
     value: object = getattr(args, field_name)
     if not isinstance(value, Path):
@@ -239,6 +349,20 @@ def _read_optional_path_arg(args: argparse.Namespace, field_name: str) -> Path |
     if not isinstance(value, Path):
         raise ValueError(f"Argument '{field_name}' must resolve to a path.")
     return value
+
+
+def _read_path_list_arg(args: argparse.Namespace, field_name: str) -> list[Path] | None:
+    value: object = getattr(args, field_name)
+    if value is None:
+        return None
+    if not isinstance(value, list):
+        raise ValueError(f"Argument '{field_name}' must resolve to a path list.")
+    paths: list[Path] = []
+    for item in value:
+        if not isinstance(item, Path):
+            raise ValueError(f"Argument '{field_name}' must contain only paths.")
+        paths.append(item)
+    return paths
 
 
 def _read_str_arg(args: argparse.Namespace, field_name: str) -> str:
@@ -261,6 +385,15 @@ def _read_int_arg(args: argparse.Namespace, field_name: str) -> int:
     value: object = getattr(args, field_name)
     if not isinstance(value, int):
         raise ValueError(f"Argument '{field_name}' must be an integer.")
+    return value
+
+
+def _read_optional_int_arg(args: argparse.Namespace, field_name: str) -> int | None:
+    value: object = getattr(args, field_name)
+    if value is None:
+        return None
+    if not isinstance(value, int):
+        raise ValueError(f"Argument '{field_name}' must be an integer when provided.")
     return value
 
 
