@@ -48,4 +48,9 @@ Common resource types:
 
 ## Export note
 
-The challenge pages in `challenges/` and `shared/` are excerpt-based snapshots from MCP search results, not perfect full-page mirrors.
+The live MCP currently exposes two different documentation surfaces:
+
+- The 19 challenge resources above are listed by `list_docs` / `resources/list` and are readable as full text through `resources/read`.
+- The 4 Google Cloud docs above are discoverable through `search_docs`, but they are not returned by `list_docs` / `resources/list` and currently fail under `resources/read`.
+
+The local files in `challenges/` summarize the readable challenge resources. The file in `shared/` summarizes the search-only Google Cloud pages from `search_docs`.

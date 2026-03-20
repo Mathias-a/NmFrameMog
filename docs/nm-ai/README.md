@@ -4,10 +4,13 @@ This directory stores a local snapshot of the documentation exposed through the 
 
 ## Provenance
 
-- **Catalog source:** `NM-AI-docs_list_docs`
-- **Content source:** `NM-AI-docs_search_docs`
+- **Catalog source:** live `list_docs` / `resources/list`
+- **Content source:** live `resources/read` for listed challenge docs, plus `search_docs` for search-only docs
 
-The MCP reliably exposes a catalog of challenge URIs. Its content retrieval works as excerpt search rather than full-page export, so the files below preserve all retrievable snippets gathered during this session and clearly label them as MCP excerpts.
+The live MCP currently has two content modes:
+
+- **Listed challenge resources** — 19 challenge URIs are returned by `list_docs` and `resources/list`, and they are readable as full text through `resources/read`.
+- **Search-only docs** — 4 Google Cloud pages are discoverable through `search_docs`, but they are not listed by `list_docs` / `resources/list` and currently fail under `resources/read`.
 
 ## Available challenge docs from the MCP catalog
 
@@ -44,7 +47,7 @@ The MCP reliably exposes a catalog of challenge URIs. Its content retrieval work
 
 ## Extra MCP docs discovered by search
 
-These were returned by the same docs server even though they were not listed in the initial catalog response:
+These are live docs returned by `search_docs` even though they are not listed in the main challenge catalog and are not currently readable via `resources/read`:
 
 - `challenge://google-cloud/overview`
 - `challenge://google-cloud/setup`
@@ -53,7 +56,7 @@ These were returned by the same docs server even though they were not listed in 
 
 ## Layout
 
-- `inventory.md` — full URI inventory and organization notes
+- `inventory.md` — full URI inventory and discovery-mode notes
 - `spec-confidence-register.md` — what is validated vs inferred vs still unknown
-- `challenges/` — excerpt-based challenge snapshots
-- `shared/` — cross-cutting platform and infrastructure guidance
+- `challenges/` — local challenge summaries aligned to the live readable docs
+- `shared/` — cross-cutting platform and infrastructure guidance, including search-only pages
