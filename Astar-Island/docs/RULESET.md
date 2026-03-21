@@ -33,7 +33,7 @@
 
 [UNKNOWN] Exact generation algorithm (spacing rules, fjord length distribution, mountain walk params, forest cluster sizes).
 
-> The map seed is visible to us. Initial grid is provided via API. We do NOT need to regenerate maps — we receive them.
+> The map seed is visible to us. Initial grid is provided via API. We do NOT need to regenerate maps — we receive them. But the implementation should make it highly possible to change the endpoint in order to use a generation alhorithm instead.
 
 ## 3. Simulation Lifecycle
 
@@ -44,8 +44,8 @@ Each year executes 5 phases in order: [CONFIRMED]
 ### Phase 1: Growth
 
 - Settlements produce food based on adjacent terrain [CONFIRMED]
-  - [INFERRED] Forest adjacency increases food production
-  - [UNKNOWN] Exact food formula (base + per-adjacent-forest? diminishing returns?)
+  - [CONFIRMED] Forest adjacency increases food production
+  - [UNKNOWN] Exact food formula (base + per-adjacent-forest? diminishing returns? Returns affected by nearby settlements?)
 - Population grows when food is sufficient [CONFIRMED]
   - [UNKNOWN] Growth rate formula, carrying capacity
 - Coastal settlements develop ports [CONFIRMED]
@@ -59,19 +59,19 @@ Each year executes 5 phases in order: [CONFIRMED]
 
 - Settlements raid each other [CONFIRMED]
 - Longships extend raiding range "significantly" [CONFIRMED]
-  - [UNKNOWN] Base raid range vs. longship-extended range
+  - [UNKNOWN] Base raid range vs. longship-extended range. The range being stable or dynamic accross rounds.
 - Low food settlements raid more aggressively [CONFIRMED]
   - [UNKNOWN] Desperation threshold, aggression scaling
 - Successful raids: loot resources, damage defender [CONFIRMED]
   - [UNKNOWN] Combat resolution formula (attack vs. defense)
   - [UNKNOWN] Loot calculation
 - Conquered settlements can change faction (owner_id) [CONFIRMED]
-  - [UNKNOWN] Allegiance change probability/conditions
+  - [UNKNOWN] Allegiance change probability/conditions/effect
 
 ### Phase 3: Trade
 
 - Ports within range trade if not at war [CONFIRMED]
-  - [UNKNOWN] Trade range, "at war" definition (same faction? recent raids?)
+  - [UNKNOWN] Trade range, "at war" definition (same faction? recent raids? Same range as war?)
 - Trade generates wealth and food for both parties [CONFIRMED]
   - [UNKNOWN] Trade value formula
 - Technology diffuses between trading partners [CONFIRMED]
@@ -80,7 +80,6 @@ Each year executes 5 phases in order: [CONFIRMED]
 ### Phase 4: Winter
 
 - Severity varies per year [CONFIRMED]
-  - [UNKNOWN] Severity distribution (uniform? trending? hidden parameter?)
 - All settlements lose food [CONFIRMED]
   - [UNKNOWN] Food loss formula (flat? proportional to severity?)
 - Settlements can collapse from: starvation, sustained raids, harsh winters [CONFIRMED]
@@ -130,8 +129,15 @@ Each settlement tracks: [CONFIRMED]
 - Trade range/value
 - Food production rates
 - Growth rates
+  - ruin to port
+  - Ruin to forest
+  - ruin to empty
+  - Ruin to reclaim
+  - etc.
 - Combat resolution weights
 - Forest reclamation speed
+- Population growth
+- Food growth rate
 
 ## 6. Stochasticity
 
