@@ -10,6 +10,7 @@ Default viewport size: 15x15.
 Shrink to 10x10 only when hotspot bbox is < 8x8.
 Shrink to 5x5 only for contradiction-resolution probes.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -58,10 +59,7 @@ def _clamp_viewport(
 
 def _find_settlement_positions(initial_state: InitialState) -> list[tuple[int, int, bool, bool]]:
     """Extract (x, y, has_port, alive) from initial state settlements."""
-    return [
-        (s.x, s.y, s.has_port, s.alive)
-        for s in initial_state.settlements
-    ]
+    return [(s.x, s.y, s.has_port, s.alive) for s in initial_state.settlements]
 
 
 def _find_coastal_cells(initial_state: InitialState) -> set[tuple[int, int]]:
@@ -100,8 +98,10 @@ def _find_forest_frontier(initial_state: InitialState) -> list[tuple[int, int]]:
                 if 0 <= ny < height and 0 <= nx < width:
                     ncode = grid[ny][nx]
                     if ncode in (
-                        TerrainCode.SETTLEMENT, TerrainCode.PORT,
-                        TerrainCode.PLAINS, TerrainCode.EMPTY,
+                        TerrainCode.SETTLEMENT,
+                        TerrainCode.PORT,
+                        TerrainCode.PLAINS,
+                        TerrainCode.EMPTY,
                     ):
                         frontier.append((x, y))
                         break
@@ -109,10 +109,18 @@ def _find_forest_frontier(initial_state: InitialState) -> list[tuple[int, int]]:
     return frontier
 
 
+def _select_viewport_size(bbox_w: int, bbox_h: int) -> int:
+    """Choose hotspot viewport size from the contributing feature bbox."""
+    if bbox_w < 8 and bbox_h < 8:
+        return 10
+    return MAX_VIEWPORT
+
+
 def generate_hotspots(
     initial_state: InitialState,
     map_height: int,
     map_width: int,
+    contradiction_probe: bool = False,
 ) -> list[ViewportCandidate]:
     """Generate mechanism-aware viewport candidates from one seed's initial state.
 
@@ -125,14 +133,22 @@ def generate_hotspots(
     # --- Coastal settlement clusters ---
     coastal_cells = _find_coastal_cells(initial_state)
     coastal_settlements = [
-        (x, y) for x, y, hp in alive_settlements
-        if (x, y) in coastal_cells or hp
+        (x, y) for x, y, hp in alive_settlements if (x, y) in coastal_cells or hp
     ]
     if coastal_settlements:
         # Cluster center of coastal settlements
         cx = sum(x for x, y in coastal_settlements) // len(coastal_settlements)
         cy = sum(y for x, y in coastal_settlements) // len(coastal_settlements)
-        x, y, w, h = _clamp_viewport(cx, cy, MAX_VIEWPORT, map_height, map_width)
+        min_x = min(x for x, y in coastal_settlements)
+        max_x = max(x for x, y in coastal_settlements)
+        min_y = min(y for x, y in coastal_settlements)
+        max_y = max(y for x, y in coastal_settlements)
+        size = (
+            MIN_VIEWPORT
+            if contradiction_probe
+            else _select_viewport_size(max_x - min_x, max_y - min_y)
+        )
+        x, y, w, h = _clamp_viewport(cx, cy, size, map_height, map_width)
         candidates.append(ViewportCandidate(x=x, y=y, w=w, h=h, category="coastal"))
 
     # --- Multi-settlement conflict corridors ---
@@ -146,10 +162,13 @@ def generate_hotspots(
                 if dist <= 10:
                     mx = (x1 + x2) // 2
                     my = (y1 + y2) // 2
-                    x, y, w, h = _clamp_viewport(mx, my, MAX_VIEWPORT, map_height, map_width)
-                    candidates.append(
-                        ViewportCandidate(x=x, y=y, w=w, h=h, category="corridor")
+                    size = (
+                        MIN_VIEWPORT
+                        if contradiction_probe
+                        else _select_viewport_size(abs(x2 - x1), abs(y2 - y1))
                     )
+                    x, y, w, h = _clamp_viewport(mx, my, size, map_height, map_width)
+                    candidates.append(ViewportCandidate(x=x, y=y, w=w, h=h, category="corridor"))
 
     # --- Forest-frontier growth zones ---
     frontier = _find_forest_frontier(initial_state)
@@ -157,7 +176,16 @@ def generate_hotspots(
         # Cluster center of frontier cells
         fx = sum(x for x, y in frontier) // len(frontier)
         fy = sum(y for x, y in frontier) // len(frontier)
-        x, y, w, h = _clamp_viewport(fx, fy, MAX_VIEWPORT, map_height, map_width)
+        min_x = min(x for x, y in frontier)
+        max_x = max(x for x, y in frontier)
+        min_y = min(y for x, y in frontier)
+        max_y = max(y for x, y in frontier)
+        size = (
+            MIN_VIEWPORT
+            if contradiction_probe
+            else _select_viewport_size(max_x - min_x, max_y - min_y)
+        )
+        x, y, w, h = _clamp_viewport(fx, fy, size, map_height, map_width)
         candidates.append(ViewportCandidate(x=x, y=y, w=w, h=h, category="frontier"))
 
     # --- Ruin/forest reclaim edges ---
@@ -173,7 +201,16 @@ def generate_hotspots(
     if ruin_positions:
         rx = sum(x for x, y in ruin_positions) // len(ruin_positions)
         ry = sum(y for x, y in ruin_positions) // len(ruin_positions)
-        x, y, w, h = _clamp_viewport(rx, ry, MAX_VIEWPORT, map_height, map_width)
+        min_x = min(x for x, y in ruin_positions)
+        max_x = max(x for x, y in ruin_positions)
+        min_y = min(y for x, y in ruin_positions)
+        max_y = max(y for x, y in ruin_positions)
+        size = (
+            MIN_VIEWPORT
+            if contradiction_probe
+            else _select_viewport_size(max_x - min_x, max_y - min_y)
+        )
+        x, y, w, h = _clamp_viewport(rx, ry, size, map_height, map_width)
         candidates.append(ViewportCandidate(x=x, y=y, w=w, h=h, category="reclaim"))
 
     # Deduplicate exact duplicates first
@@ -191,20 +228,23 @@ def generate_hotspots(
         step = max(MIN_VIEWPORT, min(MAX_VIEWPORT, map_width) // 2)
         for gy in range(0, map_height, step):
             for gx in range(0, map_width, step):
-                w = min(MAX_VIEWPORT, map_width - gx)
-                h = min(MAX_VIEWPORT, map_height - gy)
+                viewport_size = MIN_VIEWPORT if contradiction_probe else MAX_VIEWPORT
+                w = min(viewport_size, map_width - gx)
+                h = min(viewport_size, map_height - gy)
                 key = (gx, gy, w, h)
                 if w >= MIN_VIEWPORT and h >= MIN_VIEWPORT and key not in seen:
                     seen.add(key)
-                    candidates.append(
-                        ViewportCandidate(x=gx, y=gy, w=w, h=h, category="fallback")
-                    )
+                    candidates.append(ViewportCandidate(x=gx, y=gy, w=w, h=h, category="fallback"))
         # If still < 2, add a smaller centered viewport
         if len(candidates) < 2:
-            cw = min(MAX_VIEWPORT, map_width)
-            ch = min(MAX_VIEWPORT, map_height)
-            small_w = max(MIN_VIEWPORT, cw // 2)
-            small_h = max(MIN_VIEWPORT, ch // 2)
+            if contradiction_probe:
+                small_w = min(MIN_VIEWPORT, map_width)
+                small_h = min(MIN_VIEWPORT, map_height)
+            else:
+                cw = min(MAX_VIEWPORT, map_width)
+                ch = min(MAX_VIEWPORT, map_height)
+                small_w = max(MIN_VIEWPORT, cw // 2)
+                small_h = max(MIN_VIEWPORT, ch // 2)
             cx = (map_width - small_w) // 2
             cy = (map_height - small_h) // 2
             key = (cx, cy, small_w, small_h)

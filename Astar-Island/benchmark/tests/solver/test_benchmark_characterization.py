@@ -14,7 +14,11 @@ from astar_twin.contracts.types import (
 )
 from astar_twin.data.models import RoundFixture
 from astar_twin.scoring import safe_prediction
-from astar_twin.solver.baselines import fixed_coverage_baseline, uniform_baseline
+from astar_twin.solver.baselines import (
+    _generate_grid_viewports,
+    fixed_coverage_baseline,
+    uniform_baseline,
+)
 
 
 def test_benchmark_contract_constants() -> None:
@@ -41,7 +45,7 @@ def test_uniform_baseline_shape_and_normalization(fixture: RoundFixture) -> None
     assert np.all(tensor > 0)
 
 
-def test_fixed_coverage_baseline_valid_tensors(fixture: RoundFixture) -> None:
+def test_fixed_coverage_returns_correct_shapes(fixture: RoundFixture) -> None:
     tensors = fixed_coverage_baseline(
         fixture.initial_states, fixture.map_height, fixture.map_width, n_mc_runs=5, base_seed=42
     )
@@ -51,6 +55,25 @@ def test_fixed_coverage_baseline_valid_tensors(fixture: RoundFixture) -> None:
         sums = np.sum(tensor, axis=2)
         assert np.allclose(sums, 1.0, atol=1e-6)
         assert np.all(tensor > 0)
+
+
+def test_grid_viewports_count() -> None:
+    viewports = _generate_grid_viewports(40, 40, 10)
+    assert len(viewports) == 10
+
+
+def test_grid_viewports_within_bounds() -> None:
+    height = 40
+    width = 40
+    viewports = _generate_grid_viewports(height, width, 10)
+
+    for x, y, viewport_w, viewport_h in viewports:
+        assert x >= 0
+        assert y >= 0
+        assert viewport_w > 0
+        assert viewport_h > 0
+        assert x + viewport_w <= width
+        assert y + viewport_h <= height
 
 
 def test_uniform_baseline_all_seeds(fixture: RoundFixture) -> None:

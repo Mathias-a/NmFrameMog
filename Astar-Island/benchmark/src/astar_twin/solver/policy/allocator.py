@@ -235,28 +235,47 @@ def compute_posterior_disagreement(
     posterior: PosteriorState,
     initial_state: InitialState,
 ) -> float:
-    """Fraction of cells where top-2 particles disagree on argmax class.
+    """Fraction of viewport cells where top-2 particles disagree on argmax class.
 
-    Uses initial state terrain as a fast proxy (no simulation needed).
-    Returns a value in [0, 1].
+    Runs a lightweight inner MC (2 simulations per particle), aggregates each of the
+    top-2 particles into a terrain probability tensor, and compares the per-cell
+    argmax terrain class inside the candidate window. Returns a value in [0, 1].
     """
     if len(posterior.particles) < 2:
         return 0.0
 
-    # For a fast proxy, we measure disagreement as the weight difference
-    # between the top 2 particles. Higher weight concentration = less disagreement.
-    weights = np.array(posterior.normalized_weights())
-    sorted_weights = np.sort(weights)[::-1]
+    from astar_twin.engine import Simulator
+    from astar_twin.mc.aggregate import aggregate_runs
+    from astar_twin.mc.runner import MCRunner
 
-    if len(sorted_weights) < 2:
+    top_indices = posterior.top_k_indices(2)
+    if len(top_indices) < 2:
         return 0.0
 
-    # Disagreement proxy: 1 - dominance of top particle
-    # If top particle has 90% weight, disagreement = 0.1
-    # If top two are 50/50, disagreement ~ 0.5
-    top_mass = sorted_weights[0]
-    disagreement = 1.0 - top_mass
+    map_height = len(initial_state.grid)
+    map_width = len(initial_state.grid[0])
+    viewport_argmaxes: list[NDArray[np.int64]] = []
 
+    seed_offsets = [99000, 99100]
+    for idx, particle_idx in enumerate(top_indices):
+        base_seed = seed_offsets[idx]
+        particle = posterior.particles[particle_idx]
+        simulator = Simulator(params=particle.to_simulation_params())
+        runner = MCRunner(simulator)
+        runs = runner.run_batch(initial_state, n_runs=2, base_seed=base_seed)
+        tensor = aggregate_runs(runs, map_height, map_width)
+        window = tensor[
+            candidate.y : candidate.y + candidate.h,
+            candidate.x : candidate.x + candidate.w,
+        ]
+        viewport_argmaxes.append(np.argmax(window, axis=2))
+
+    argmax_1, argmax_2 = viewport_argmaxes
+    total_cells = int(argmax_1.size)
+    if total_cells == 0:
+        return 0.0
+
+    disagreement = np.sum(argmax_1 != argmax_2) / total_cells
     return float(np.clip(disagreement, 0.0, 1.0))
 
 
@@ -377,14 +396,12 @@ def check_argmax_disagreement(
 ) -> bool:
     """Check if top-2 particles disagree on argmax in >20% of cells.
 
-    This is a lightweight check that only looks at weight distribution.
-    True disagreement requires running inner MC for each particle,
-    but we use posterior weight spread as a proxy.
+    Uses the same lightweight cellwise top-2 argmax disagreement computation as
+    adaptive scoring.
     """
     if len(posterior.particles) < 2:
         return False
 
-    # Use disagreement proxy
     disagreement = compute_posterior_disagreement(candidate, posterior, initial_state)
     return disagreement > CONTRADICTION_CELL_THRESHOLD
 
@@ -394,13 +411,17 @@ def plan_reserve_queries(
     posterior: PosteriorState,
     initial_states: list[InitialState],
     seed_predictions: dict[int, NDArray[np.float64]] | None = None,
+    n_queries: int | None = None,
 ) -> list[tuple[int, ViewportCandidate]]:
     """Plan reserve query usage.
 
     If contradiction triggered: use as adaptive queries with high-overlap allowed.
     Otherwise: release as two final adaptive batches of 5.
     """
-    remaining = min(RESERVE_QUERIES, state.queries_remaining)
+    remaining = min(
+        n_queries if n_queries is not None else RESERVE_QUERIES,
+        state.queries_remaining,
+    )
     if remaining <= 0:
         return []
 

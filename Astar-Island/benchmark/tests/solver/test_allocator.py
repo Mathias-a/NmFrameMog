@@ -68,7 +68,7 @@ def _make_initial_state(width: int = 10, height: int = 10, n_settlements: int = 
             InitialSettlement(
                 x=3 + i,
                 y=2,
-                has_port=(i == 0),
+                has_port=False,
                 alive=True,
             )
         )
@@ -424,18 +424,18 @@ def test_record_query_increments_count():
 
 
 def test_posterior_disagreement_equal_weights():
-    """Equal-weight particles yield high disagreement proxy."""
+    """Equal-weight particles still produce a valid disagreement fraction."""
     state = _make_initial_state()
     posterior = create_posterior(n_particles=10, seed=42)
     candidate = ViewportCandidate(x=0, y=0, w=5, h=5, category="frontier")
 
     disagreement = compute_posterior_disagreement(candidate, posterior, state)
-    # 10 equal particles → top mass = 0.1, disagreement = 0.9
-    assert 0.85 <= disagreement <= 0.95
+    assert isinstance(disagreement, float)
+    assert 0.0 <= disagreement <= 1.0
 
 
 def test_posterior_disagreement_collapsed():
-    """Collapsed posterior yields low disagreement proxy."""
+    """Collapsed posterior yields low real disagreement."""
     state = _make_initial_state()
     posterior = create_posterior(n_particles=10, seed=42)
     posterior.particles[0].log_weight = 100.0
@@ -444,5 +444,26 @@ def test_posterior_disagreement_collapsed():
 
     candidate = ViewportCandidate(x=0, y=0, w=5, h=5, category="frontier")
     disagreement = compute_posterior_disagreement(candidate, posterior, state)
-    # Top particle has ~100% mass, disagreement ≈ 0
     assert disagreement < 0.05
+
+
+def test_disagreement_returns_valid_range():
+    """Real disagreement is always clipped into [0, 1]."""
+    state = _make_initial_state()
+    posterior = create_posterior(n_particles=4, seed=7)
+    candidate = ViewportCandidate(x=1, y=1, w=4, h=4, category="frontier")
+
+    disagreement = compute_posterior_disagreement(candidate, posterior, state)
+
+    assert 0.0 <= disagreement <= 1.0
+
+
+def test_disagreement_single_particle_zero():
+    """A single-particle posterior has no top-2 disagreement."""
+    state = _make_initial_state()
+    posterior = create_posterior(n_particles=1, seed=42)
+    candidate = ViewportCandidate(x=0, y=0, w=5, h=5, category="frontier")
+
+    disagreement = compute_posterior_disagreement(candidate, posterior, state)
+
+    assert disagreement == 0.0

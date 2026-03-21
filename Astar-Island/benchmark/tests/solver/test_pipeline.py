@@ -8,6 +8,7 @@ Covers:
   - Deterministic output from same seed
   - Graceful degradation under near-exhausted budget
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -20,6 +21,7 @@ from astar_twin.data.loaders import load_fixture
 from astar_twin.data.models import RoundFixture
 from astar_twin.solver.adapters.benchmark import BenchmarkAdapter
 from astar_twin.solver.pipeline import SolveResult, solve
+from astar_twin.solver.policy import allocator
 
 
 # ---- Fixtures ----
@@ -46,8 +48,12 @@ def adapter(fixture: RoundFixture) -> BenchmarkAdapter:
 def test_pipeline_returns_5_tensors(adapter: BenchmarkAdapter):
     """Pipeline returns one tensor per seed."""
     result = solve(
-        adapter, "test-round-001",
-        n_particles=8, n_inner_runs=2, sims_per_seed=4, base_seed=42,
+        adapter,
+        "test-round-001",
+        n_particles=8,
+        n_inner_runs=2,
+        sims_per_seed=4,
+        base_seed=42,
     )
     assert len(result.tensors) == 5
 
@@ -55,8 +61,12 @@ def test_pipeline_returns_5_tensors(adapter: BenchmarkAdapter):
 def test_pipeline_tensor_shapes(adapter: BenchmarkAdapter, fixture: RoundFixture):
     """All tensors have correct H×W×6 shape."""
     result = solve(
-        adapter, "test-round-001",
-        n_particles=8, n_inner_runs=2, sims_per_seed=4, base_seed=42,
+        adapter,
+        "test-round-001",
+        n_particles=8,
+        n_inner_runs=2,
+        sims_per_seed=4,
+        base_seed=42,
     )
     for t in result.tensors:
         assert t.shape == (fixture.map_height, fixture.map_width, NUM_CLASSES)
@@ -65,8 +75,12 @@ def test_pipeline_tensor_shapes(adapter: BenchmarkAdapter, fixture: RoundFixture
 def test_pipeline_tensors_are_valid(adapter: BenchmarkAdapter):
     """All tensors have positive probs that sum to ~1."""
     result = solve(
-        adapter, "test-round-001",
-        n_particles=8, n_inner_runs=2, sims_per_seed=4, base_seed=42,
+        adapter,
+        "test-round-001",
+        n_particles=8,
+        n_inner_runs=2,
+        sims_per_seed=4,
+        base_seed=42,
     )
     for t in result.tensors:
         assert np.all(t > 0), "No zeros allowed"
@@ -78,8 +92,12 @@ def test_pipeline_tensors_are_valid(adapter: BenchmarkAdapter):
 def test_pipeline_budget_not_exceeded(adapter: BenchmarkAdapter):
     """Pipeline uses at most 50 queries."""
     result = solve(
-        adapter, "test-round-001",
-        n_particles=8, n_inner_runs=2, sims_per_seed=4, base_seed=42,
+        adapter,
+        "test-round-001",
+        n_particles=8,
+        n_inner_runs=2,
+        sims_per_seed=4,
+        base_seed=42,
     )
     assert result.total_queries_used <= MAX_QUERIES
 
@@ -87,8 +105,12 @@ def test_pipeline_budget_not_exceeded(adapter: BenchmarkAdapter):
 def test_pipeline_transcript_consistent(adapter: BenchmarkAdapter):
     """Transcript length matches total queries used."""
     result = solve(
-        adapter, "test-round-001",
-        n_particles=8, n_inner_runs=2, sims_per_seed=4, base_seed=42,
+        adapter,
+        "test-round-001",
+        n_particles=8,
+        n_inner_runs=2,
+        sims_per_seed=4,
+        base_seed=42,
     )
     assert len(result.transcript) == result.total_queries_used
 
@@ -96,8 +118,12 @@ def test_pipeline_transcript_consistent(adapter: BenchmarkAdapter):
 def test_pipeline_transcript_phases(adapter: BenchmarkAdapter):
     """Transcript records phases in order: bootstrap, adaptive, reserve."""
     result = solve(
-        adapter, "test-round-001",
-        n_particles=8, n_inner_runs=2, sims_per_seed=4, base_seed=42,
+        adapter,
+        "test-round-001",
+        n_particles=8,
+        n_inner_runs=2,
+        sims_per_seed=4,
+        base_seed=42,
     )
     phases = [q.phase for q in result.transcript]
     # All bootstrap queries should come first
@@ -113,8 +139,12 @@ def test_pipeline_transcript_phases(adapter: BenchmarkAdapter):
 def test_pipeline_all_seeds_queried(adapter: BenchmarkAdapter):
     """All 5 seeds should receive at least 1 query."""
     result = solve(
-        adapter, "test-round-001",
-        n_particles=8, n_inner_runs=2, sims_per_seed=4, base_seed=42,
+        adapter,
+        "test-round-001",
+        n_particles=8,
+        n_inner_runs=2,
+        sims_per_seed=4,
+        base_seed=42,
     )
     queried_seeds = {q.seed_index for q in result.transcript}
     assert len(queried_seeds) == 5, f"Only queried seeds: {queried_seeds}"
@@ -123,23 +153,62 @@ def test_pipeline_all_seeds_queried(adapter: BenchmarkAdapter):
 def test_pipeline_ess_positive(adapter: BenchmarkAdapter):
     """Final ESS should be positive."""
     result = solve(
-        adapter, "test-round-001",
-        n_particles=8, n_inner_runs=2, sims_per_seed=4, base_seed=42,
+        adapter,
+        "test-round-001",
+        n_particles=8,
+        n_inner_runs=2,
+        sims_per_seed=4,
+        base_seed=42,
     )
     assert result.final_ess > 0
+
+
+def test_reserve_two_batches(adapter: BenchmarkAdapter, monkeypatch: pytest.MonkeyPatch):
+    """Reserve planning requests two 5-query batches on full budget."""
+    reserve_calls: list[int | None] = []
+    original = allocator.plan_reserve_queries
+
+    def tracking_plan_reserve_queries(*args, **kwargs):
+        reserve_calls.append(kwargs.get("n_queries"))
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(
+        "astar_twin.solver.pipeline.plan_reserve_queries",
+        tracking_plan_reserve_queries,
+    )
+
+    result = solve(
+        adapter,
+        "test-round-001",
+        n_particles=8,
+        n_inner_runs=2,
+        sims_per_seed=4,
+        base_seed=42,
+    )
+
+    assert result.total_queries_used <= MAX_QUERIES
+    assert reserve_calls == [5, allocator.RESERVE_QUERIES - 5]
 
 
 def test_pipeline_deterministic(fixture: RoundFixture):
     """Same inputs produce identical results."""
     adapter1 = BenchmarkAdapter(fixture, n_mc_runs=5, sim_seed_offset=0)
     r1 = solve(
-        adapter1, "test-round-001",
-        n_particles=8, n_inner_runs=2, sims_per_seed=4, base_seed=42,
+        adapter1,
+        "test-round-001",
+        n_particles=8,
+        n_inner_runs=2,
+        sims_per_seed=4,
+        base_seed=42,
     )
     adapter2 = BenchmarkAdapter(fixture, n_mc_runs=5, sim_seed_offset=0)
     r2 = solve(
-        adapter2, "test-round-001",
-        n_particles=8, n_inner_runs=2, sims_per_seed=4, base_seed=42,
+        adapter2,
+        "test-round-001",
+        n_particles=8,
+        n_inner_runs=2,
+        sims_per_seed=4,
+        base_seed=42,
     )
     for t1, t2 in zip(r1.tensors, r2.tensors):
         np.testing.assert_array_equal(t1, t2)
@@ -157,16 +226,24 @@ def test_pipeline_with_pre_exhausted_budget(fixture: RoundFixture):
     for i in range(45):
         try:
             adapter.simulate(
-                "test-round-001", 0,
-                viewport_x=0, viewport_y=0, viewport_w=5, viewport_h=5,
+                "test-round-001",
+                0,
+                viewport_x=0,
+                viewport_y=0,
+                viewport_w=5,
+                viewport_h=5,
             )
         except RuntimeError:
             break
 
     # Pipeline should still produce valid tensors with remaining budget
     result = solve(
-        adapter, "test-round-001",
-        n_particles=4, n_inner_runs=2, sims_per_seed=4, base_seed=42,
+        adapter,
+        "test-round-001",
+        n_particles=4,
+        n_inner_runs=2,
+        sims_per_seed=4,
+        base_seed=42,
     )
     # Should have tensors even with limited queries
     assert len(result.tensors) == 5

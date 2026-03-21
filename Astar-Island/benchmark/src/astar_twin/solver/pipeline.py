@@ -33,6 +33,7 @@ from astar_twin.solver.policy.allocator import (
     ADAPTIVE_BATCHES,
     ADAPTIVE_BATCH_SIZE,
     AllocationState,
+    RESERVE_QUERIES,
     check_contradiction_triggers,
     initialize_allocation,
     plan_bootstrap_queries,
@@ -277,19 +278,23 @@ def solve(
         )
         seed_predictions = {i: tensor for i, tensor in enumerate(batch_tensors)}
 
-    # 6. Reserve phase
     transition_phase(alloc)
     contradiction = check_contradiction_triggers(alloc, posterior)
 
-    if alloc.queries_remaining > 0:
-        reserve_plan = plan_reserve_queries(
+    reserve_remaining = min(RESERVE_QUERIES, alloc.queries_remaining)
+    if reserve_remaining > 0:
+        batch_1_size = min(5, reserve_remaining)
+        batch_2_size = reserve_remaining - batch_1_size
+
+        reserve_batch_1 = plan_reserve_queries(
             alloc,
             posterior,
             initial_states[:n_seeds],
             seed_predictions=seed_predictions,
+            n_queries=batch_1_size,
         )
 
-        for seed_idx, vp in reserve_plan:
+        for seed_idx, vp in reserve_batch_1:
             if alloc.queries_remaining <= 0:
                 break
             try:
@@ -326,6 +331,60 @@ def solve(
                 )
             )
             query_counter += 1
+
+        posterior = resample_if_needed(
+            posterior,
+            ess_threshold=6.0,
+            seed=base_seed + 6000,
+        )
+        posterior = temper_if_collapsed(posterior)
+
+        if batch_2_size > 0:
+            reserve_batch_2 = plan_reserve_queries(
+                alloc,
+                posterior,
+                initial_states[:n_seeds],
+                seed_predictions=seed_predictions,
+                n_queries=batch_2_size,
+            )
+
+            for seed_idx, vp in reserve_batch_2:
+                if alloc.queries_remaining <= 0:
+                    break
+                try:
+                    response = _issue_query(
+                        adapter,
+                        round_id,
+                        seed_idx,
+                        vp.x,
+                        vp.y,
+                        vp.w,
+                        vp.h,
+                    )
+                except RuntimeError:
+                    break
+
+                posterior = update_posterior(
+                    posterior,
+                    response,
+                    initial_states[seed_idx],
+                    n_inner_runs=n_inner_runs,
+                    base_seed=base_seed + query_counter * 100,
+                )
+                record_query(alloc, seed_idx, vp, "reserve")
+                transcript.append(
+                    QueryRecord(
+                        seed_index=seed_idx,
+                        viewport_x=vp.x,
+                        viewport_y=vp.y,
+                        viewport_w=vp.w,
+                        viewport_h=vp.h,
+                        phase="reserve",
+                        utility_score=vp.score,
+                        ess_after=posterior.ess,
+                    )
+                )
+                query_counter += 1
 
     transition_phase(alloc)
 

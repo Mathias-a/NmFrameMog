@@ -1,4 +1,5 @@
 """Tests for solver adapter contracts and pipeline boundary."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -122,6 +123,9 @@ def test_solver_does_not_import_benchmark_stores() -> None:
     # Temporarily block store imports
     blocked = "astar_twin.api.store"
     original = sys.modules.get(blocked)
+    saved_mods = {
+        name: module for name, module in sys.modules.items() if name.startswith("astar_twin.solver")
+    }
     sys.modules[blocked] = None  # type: ignore[assignment]
     try:
         # Force reimport of solver modules
@@ -131,6 +135,17 @@ def test_solver_does_not_import_benchmark_stores() -> None:
         importlib.import_module("astar_twin.solver.interfaces")
         importlib.import_module("astar_twin.solver.pipeline")
     finally:
+        for mod_name in list(sys.modules):
+            if mod_name.startswith("astar_twin.solver"):
+                del sys.modules[mod_name]
+        sys.modules.update(saved_mods)
+        for mod_name, module in saved_mods.items():
+            parent_name, _, attr_name = mod_name.rpartition(".")
+            if not parent_name:
+                continue
+            parent = sys.modules.get(parent_name)
+            if parent is not None:
+                setattr(parent, attr_name, module)
         if original is not None:
             sys.modules[blocked] = original
         elif blocked in sys.modules:

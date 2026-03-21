@@ -1,4 +1,5 @@
 """Tests for hotspot generation and observation features."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -21,21 +22,28 @@ from astar_twin.solver.observe.features import ObservationFeatures, extract_feat
 from astar_twin.solver.policy.hotspots import ViewportCandidate, generate_hotspots
 
 
+def _make_initial_state(
+    *,
+    settlements: list[InitialSettlement],
+    width: int = 20,
+    height: int = 20,
+    fill: TerrainCode = TerrainCode.PLAINS,
+) -> InitialState:
+    grid = [[fill] * width for _ in range(height)]
+    return InitialState(grid=grid, settlements=settlements)
+
+
 def test_hotspots_from_fixture_seed(fixture: RoundFixture) -> None:
     """Every fixture seed should yield at least two bootstrap candidates."""
     for initial_state in fixture.initial_states:
-        candidates = generate_hotspots(
-            initial_state, fixture.map_height, fixture.map_width
-        )
+        candidates = generate_hotspots(initial_state, fixture.map_height, fixture.map_width)
         assert len(candidates) >= 2, "Each seed must produce at least 2 candidates"
 
 
 def test_all_candidates_respect_viewport_bounds(fixture: RoundFixture) -> None:
     """All generated candidates must have valid viewport dimensions."""
     for initial_state in fixture.initial_states:
-        candidates = generate_hotspots(
-            initial_state, fixture.map_height, fixture.map_width
-        )
+        candidates = generate_hotspots(initial_state, fixture.map_height, fixture.map_width)
         for c in candidates:
             assert MIN_VIEWPORT <= c.w <= MAX_VIEWPORT, f"Width {c.w} out of bounds"
             assert MIN_VIEWPORT <= c.h <= MAX_VIEWPORT, f"Height {c.h} out of bounds"
@@ -48,9 +56,7 @@ def test_all_candidates_respect_viewport_bounds(fixture: RoundFixture) -> None:
 def test_hotspot_categories_present(fixture: RoundFixture) -> None:
     """Expected hotspot categories should appear when map features exist."""
     initial_state = fixture.initial_states[0]
-    candidates = generate_hotspots(
-        initial_state, fixture.map_height, fixture.map_width
-    )
+    candidates = generate_hotspots(initial_state, fixture.map_height, fixture.map_width)
     categories = {c.category for c in candidates}
     # At minimum, some categories should be present
     assert len(categories) >= 1
@@ -80,18 +86,77 @@ def test_overlap_fraction() -> None:
     assert abs(c1.overlap_fraction(c3) - 1.0) < 1e-6  # identical
 
 
+def test_tight_bbox_10x10() -> None:
+    initial_state = _make_initial_state(
+        settlements=[
+            InitialSettlement(x=4, y=4, has_port=False, alive=True),
+            InitialSettlement(x=7, y=4, has_port=False, alive=True),
+        ]
+    )
+
+    candidates = generate_hotspots(initial_state, 20, 20)
+
+    corridor = next(c for c in candidates if c.category == "corridor")
+    assert corridor.w == 10
+    assert corridor.h == 10
+
+
+def test_wide_bbox_15x15() -> None:
+    initial_state = _make_initial_state(
+        settlements=[
+            InitialSettlement(x=3, y=4, has_port=True, alive=True),
+            InitialSettlement(x=15, y=4, has_port=True, alive=True),
+            InitialSettlement(x=4, y=15, has_port=True, alive=True),
+        ]
+    )
+
+    candidates = generate_hotspots(initial_state, 20, 20)
+
+    coastal = next(c for c in candidates if c.category == "coastal")
+    assert coastal.w == 15
+    assert coastal.h == 15
+
+
+def test_contradiction_probe_5x5() -> None:
+    initial_state = _make_initial_state(
+        settlements=[
+            InitialSettlement(x=4, y=4, has_port=True, alive=True),
+            InitialSettlement(x=7, y=4, has_port=False, alive=True),
+        ]
+    )
+
+    candidates = generate_hotspots(initial_state, 20, 20, contradiction_probe=True)
+
+    assert candidates
+    assert all(c.w == MIN_VIEWPORT and c.h == MIN_VIEWPORT for c in candidates)
+
+
 def test_extract_features_with_settlements() -> None:
     """Feature extraction should capture settlement stats."""
     response = SimulateResponse(
         grid=[[0, 0], [0, 0]],
         settlements=[
             SimSettlement(
-                x=0, y=0, population=2.0, food=1.5, wealth=0.5,
-                defense=0.3, has_port=True, alive=True, owner_id=0,
+                x=0,
+                y=0,
+                population=2.0,
+                food=1.5,
+                wealth=0.5,
+                defense=0.3,
+                has_port=True,
+                alive=True,
+                owner_id=0,
             ),
             SimSettlement(
-                x=1, y=1, population=3.0, food=2.0, wealth=0.8,
-                defense=0.6, has_port=False, alive=True, owner_id=1,
+                x=1,
+                y=1,
+                population=3.0,
+                food=2.0,
+                wealth=0.8,
+                defense=0.6,
+                has_port=False,
+                alive=True,
+                owner_id=1,
             ),
         ],
         viewport=ViewportBounds(x=0, y=0, w=2, h=2),
