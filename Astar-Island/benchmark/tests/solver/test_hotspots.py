@@ -14,11 +14,10 @@ from astar_twin.contracts.api_models import (
 from astar_twin.contracts.types import (
     MAX_VIEWPORT,
     MIN_VIEWPORT,
-    NUM_CLASSES,
     TerrainCode,
 )
 from astar_twin.data.models import RoundFixture
-from astar_twin.solver.observe.features import ObservationFeatures, extract_features
+from astar_twin.solver.observe.features import extract_features
 from astar_twin.solver.policy.hotspots import ViewportCandidate, generate_hotspots
 
 

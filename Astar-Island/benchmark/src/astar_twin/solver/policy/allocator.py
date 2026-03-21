@@ -38,7 +38,6 @@ from astar_twin.contracts.types import MAX_QUERIES, MAX_SEEDS, NUM_CLASSES
 from astar_twin.solver.inference.posterior import PosteriorState
 from astar_twin.solver.policy.hotspots import ViewportCandidate, generate_hotspots
 
-
 # Budget constants
 BOOTSTRAP_QUERIES = 10
 ADAPTIVE_QUERIES = 30

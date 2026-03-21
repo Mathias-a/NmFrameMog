@@ -11,24 +11,18 @@ Covers:
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
-from astar_twin.contracts.api_models import InitialState, InitialSettlement
-from astar_twin.solver.inference.particles import initialize_particles
-from astar_twin.solver.inference.posterior import PosteriorState, create_posterior
+from astar_twin.contracts.api_models import InitialSettlement, InitialState
+from astar_twin.solver.inference.posterior import create_posterior
 from astar_twin.solver.policy.allocator import (
     ADAPTIVE_BATCH_SIZE,
     ADAPTIVE_QUERIES,
     BOOTSTRAP_PER_SEED,
     BOOTSTRAP_QUERIES,
-    MAX_OVERLAP_FRACTION,
     MAX_QUERIES,
-    MIN_QUERIES_PER_SEED,
     RESERVE_QUERIES,
     AllocationState,
-    QueryRecord,
     ViewportCandidate,
-    check_argmax_disagreement,
     check_contradiction_triggers,
     compute_entropy_map,
     compute_posterior_disagreement,
@@ -40,8 +34,6 @@ from astar_twin.solver.policy.allocator import (
     select_adaptive_batch,
     transition_phase,
 )
-from astar_twin.solver.policy.hotspots import generate_hotspots
-
 
 # ---- Fixtures ----
 

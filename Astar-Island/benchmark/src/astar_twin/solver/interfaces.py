@@ -3,20 +3,20 @@
 The solver core depends ONLY on these protocols, never on benchmark stores,
 FastAPI internals, or fixture data directly.
 """
+
 from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
 
+import numpy as np
+from numpy.typing import NDArray
+
 from astar_twin.contracts.api_models import (
     AnalysisResponse,
-    InitialState,
     RoundDetail,
     SimulateResponse,
     SubmitResponse,
 )
-
-import numpy as np
-from numpy.typing import NDArray
 
 
 @runtime_checkable

@@ -6,6 +6,7 @@ Produces summary features used by the likelihood model:
   - port count
   - mean and variance of settlement population, food, wealth, defense
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

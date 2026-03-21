@@ -21,7 +21,6 @@ from numpy.typing import NDArray
 
 from astar_twin.contracts.types import MAX_QUERIES, MAX_SEEDS
 from astar_twin.solver.inference.posterior import (
-    PosteriorState,
     create_posterior,
     prune_and_resample_bootstrap,
     resample_if_needed,
@@ -30,9 +29,8 @@ from astar_twin.solver.inference.posterior import (
 )
 from astar_twin.solver.interfaces import SolverAdapter
 from astar_twin.solver.policy.allocator import (
-    ADAPTIVE_BATCHES,
     ADAPTIVE_BATCH_SIZE,
-    AllocationState,
+    ADAPTIVE_BATCHES,
     RESERVE_QUERIES,
     check_contradiction_triggers,
     initialize_allocation,

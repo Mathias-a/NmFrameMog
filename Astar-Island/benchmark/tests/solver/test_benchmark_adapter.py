@@ -1,4 +1,5 @@
 """Tests for the benchmark adapter — ensures solver never sees hidden params."""
+
 from __future__ import annotations
 
 import numpy as np

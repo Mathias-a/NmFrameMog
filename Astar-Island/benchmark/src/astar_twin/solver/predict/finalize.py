@@ -4,6 +4,7 @@ Every prediction path MUST call finalize_tensor before returning.
 This centralizes shape checks, finite-value checks, normalization,
 static terrain overrides, and safe_prediction flooring.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -74,9 +75,7 @@ def finalize_tensor(
     # Shape check
     expected_shape = (height, width, NUM_CLASSES)
     if tensor.shape != expected_shape:
-        raise TensorValidationError(
-            f"Expected shape {expected_shape}, got {tensor.shape}"
-        )
+        raise TensorValidationError(f"Expected shape {expected_shape}, got {tensor.shape}")
 
     # Finite check
     if not np.all(np.isfinite(tensor)):

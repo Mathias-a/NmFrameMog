@@ -7,17 +7,17 @@ For each observed viewport, computes particle likelihood using inner MC:
   - Compute grid log-likelihood and settlement-stat log-likelihood
   - Total = 0.75 * loglik_grid + 0.25 * loglik_stats
 """
+
 from __future__ import annotations
 
 import numpy as np
 from numpy.typing import NDArray
 
-from astar_twin.contracts.api_models import SimulateResponse
+from astar_twin.contracts.api_models import InitialState, SimulateResponse
 from astar_twin.contracts.types import NUM_CLASSES, TERRAIN_TO_CLASS
 from astar_twin.engine import Simulator
 from astar_twin.solver.inference.particles import Particle
 from astar_twin.solver.observe.features import ObservationFeatures, extract_features
-from astar_twin.contracts.api_models import InitialState
 
 
 def _simulate_viewport_classes(
@@ -77,21 +77,32 @@ def _simulate_settlement_stats(
 
         settlements_in_vp = []
         for s in state.settlements:
-            if (viewport_x <= s.x < viewport_x + viewport_w
-                    and viewport_y <= s.y < viewport_y + viewport_h):
-                settlements_in_vp.append(SimSettlement(
-                    x=s.x, y=s.y,
-                    population=s.population, food=s.food,
-                    wealth=s.wealth, defense=s.defense,
-                    has_port=s.has_port, alive=s.alive,
-                    owner_id=s.owner_id,
-                ))
+            if (
+                viewport_x <= s.x < viewport_x + viewport_w
+                and viewport_y <= s.y < viewport_y + viewport_h
+            ):
+                settlements_in_vp.append(
+                    SimSettlement(
+                        x=s.x,
+                        y=s.y,
+                        population=s.population,
+                        food=s.food,
+                        wealth=s.wealth,
+                        defense=s.defense,
+                        has_port=s.has_port,
+                        alive=s.alive,
+                        owner_id=s.owner_id,
+                    )
+                )
 
         mock_resp = SimulateResponse(
             grid=vp.to_list(),
             settlements=settlements_in_vp,
             viewport=ViewportBounds(x=viewport_x, y=viewport_y, w=viewport_w, h=viewport_h),
-            width=40, height=40, queries_used=0, queries_max=50,
+            width=40,
+            height=40,
+            queries_used=0,
+            queries_max=50,
         )
         features_list.append(extract_features(mock_resp))
 
@@ -138,7 +149,7 @@ def compute_stats_loglik(
 
         # Gaussian log-likelihood
         diff = obs_val - sim_mean
-        loglik -= 0.5 * (diff ** 2) / sim_var
+        loglik -= 0.5 * (diff**2) / sim_var
 
     # Also penalize alive count difference
     obs_alive = observed_features.alive_count
@@ -172,17 +183,27 @@ def compute_particle_loglik(
 
     # Inner MC for grid probabilities
     predicted_probs = _simulate_viewport_classes(
-        particle, initial_state,
-        vp.x, vp.y, vp.w, vp.h,
-        n_inner_runs, base_seed,
+        particle,
+        initial_state,
+        vp.x,
+        vp.y,
+        vp.w,
+        vp.h,
+        n_inner_runs,
+        base_seed,
     )
     grid_ll = compute_grid_loglik(observed_response, predicted_probs)
 
     # Inner MC for settlement stats
     sim_features = _simulate_settlement_stats(
-        particle, initial_state,
-        vp.x, vp.y, vp.w, vp.h,
-        n_inner_runs, base_seed,
+        particle,
+        initial_state,
+        vp.x,
+        vp.y,
+        vp.w,
+        vp.h,
+        n_inner_runs,
+        base_seed,
     )
     obs_features = extract_features(observed_response)
     stats_ll = compute_stats_loglik(obs_features, sim_features)

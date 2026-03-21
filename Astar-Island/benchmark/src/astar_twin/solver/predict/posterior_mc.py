@@ -11,20 +11,17 @@ Uses top-K particles weighted by posterior to generate full-map predictions:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
 
 from astar_twin.contracts.api_models import InitialState
-from astar_twin.contracts.types import NUM_CLASSES, TERRAIN_TO_CLASS
+from astar_twin.contracts.types import NUM_CLASSES
 from astar_twin.engine import Simulator
 from astar_twin.mc.aggregate import aggregate_runs
 from astar_twin.mc.runner import MCRunner
-from astar_twin.solver.inference.particles import Particle
 from astar_twin.solver.inference.posterior import PosteriorState
 from astar_twin.solver.predict.finalize import finalize_tensor
-
 
 # Defaults
 DEFAULT_TOP_K = 6

@@ -6,19 +6,14 @@ Covers:
   - Calibration disagreements are computed per seed
   - Result is JSON-serializable
 """
+
 from __future__ import annotations
 
 from pathlib import Path
 
-import numpy as np
-import pytest
-
 from astar_twin.solver.eval.run_replay_validation import (
-    ReplayResult,
-    VariantResult,
     run_replay_validation,
 )
-
 
 FIXTURE_PATH = (
     Path(__file__).parent.parent.parent / "data" / "rounds" / "test-round-001" / "round_detail.json"

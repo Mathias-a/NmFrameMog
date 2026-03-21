@@ -7,20 +7,20 @@ Runs the solver multiple times against the local twin and records:
   - hedge activation count
   - baseline comparisons
 """
+
 from __future__ import annotations
 
 import json
 import sys
 import time
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
 from numpy.typing import NDArray
 
-from astar_twin.contracts.api_models import InitialState as _ISType
-from astar_twin.contracts.types import NUM_CLASSES
 from astar_twin.data.loaders import load_fixture
+from astar_twin.data.models import RoundFixture
 from astar_twin.scoring import compute_score, safe_prediction
 from astar_twin.solver.adapters.benchmark import BenchmarkAdapter
 from astar_twin.solver.baselines import (
@@ -101,14 +101,23 @@ class SuiteResult:
         return d
 
 
-def _resilient_run_batch(
-    simulator: "Simulator",
-    initial_state: "InitialState",
+def resilient_run_batch(
+    simulator: object,
+    initial_state: object,
     n_runs: int,
     base_seed: int,
 ) -> list:
-    """Run MC batch, skipping individual runs that hit simulator NaN bugs."""
+    """Run MC batch, skipping individual runs that hit simulator NaN bugs.
+
+    This helper is shared by run_benchmark_suite and run_replay_validation.
+    """
     from astar_twin.state.round_state import RoundState
+    from astar_twin.engine import Simulator
+    from astar_twin.contracts.api_models import InitialState
+
+    assert isinstance(simulator, Simulator)
+    assert isinstance(initial_state, InitialState)
+
     runs: list[RoundState] = []
     for i in range(n_runs):
         try:
@@ -124,6 +133,41 @@ def _resilient_run_batch(
     return runs
 
 
+def load_or_compute_ground_truths(
+    fixture: RoundFixture,
+    n_mc_runs: int,
+    base_seed: int,
+) -> list[NDArray[np.float64]]:
+    """Load pre-computed ground truths from fixture or compute them on demand.
+
+    If ``fixture.ground_truths`` is already populated (i.e. was pre-computed
+    and persisted in the round_detail.json), the cached tensors are returned
+    directly without running any simulations.  This keeps benchmark runs fast
+    and reproducible.
+
+    Otherwise, ground truths are derived by running ``n_mc_runs`` resilient
+    Monte Carlo simulations per seed using the fixture's simulation_params.
+    """
+    if fixture.ground_truths is not None:
+        return [np.array(gt, dtype=np.float64) for gt in fixture.ground_truths]
+
+    from astar_twin.engine import Simulator
+    from astar_twin.mc import aggregate_runs
+
+    simulator = Simulator(fixture.simulation_params)
+    ground_truths: list[NDArray[np.float64]] = []
+    for seed_idx, initial_state in enumerate(fixture.initial_states):
+        runs = resilient_run_batch(
+            simulator,
+            initial_state,
+            n_runs=n_mc_runs,
+            base_seed=base_seed + seed_idx * n_mc_runs,
+        )
+        gt = safe_prediction(aggregate_runs(runs, fixture.map_height, fixture.map_width))
+        ground_truths.append(gt)
+    return ground_truths
+
+
 def run_suite(
     fixture_path: Path,
     repeats: int = 10,
@@ -131,6 +175,8 @@ def run_suite(
     n_inner_runs: int = 6,
     sims_per_seed: int = 64,
     fc_mc_runs: int = 200,
+    gt_mc_runs: int = 200,
+    gt_base_seed: int = 0,
 ) -> SuiteResult:
     """Run the full benchmark suite.
 
@@ -141,6 +187,9 @@ def run_suite(
         n_inner_runs: Inner MC runs per likelihood.
         sims_per_seed: Final prediction MC runs.
         fc_mc_runs: MC runs for fixed_coverage baseline.
+        gt_mc_runs: MC runs for ground truth (only used when fixture has no
+            cached ground_truths).
+        gt_base_seed: Base seed for ground truth derivation.
 
     Returns:
         SuiteResult with all metrics.
@@ -152,18 +201,8 @@ def run_suite(
     initial_states = fixture.initial_states
     n_seeds = len(initial_states)
 
-    # Compute ground truths using high-quality MC
-    from astar_twin.engine import Simulator
-    from astar_twin.mc import MCRunner, aggregate_runs
-    from astar_twin.params import SimulationParams
-
-    gt_sim = Simulator(fixture.simulation_params)
-    gt_runner = MCRunner(gt_sim)
-    ground_truths: list[NDArray[np.float64]] = []
-    for seed_idx, ist in enumerate(initial_states):
-        runs = _resilient_run_batch(gt_sim, ist, n_runs=200, base_seed=seed_idx * 1000)
-        gt = safe_prediction(aggregate_runs(runs, height, width))
-        ground_truths.append(gt)
+    # Ground truth: use cached tensors when available, otherwise compute.
+    ground_truths = load_or_compute_ground_truths(fixture, gt_mc_runs, gt_base_seed)
 
     # Compute baselines
     uniform = uniform_baseline(height, width)
@@ -173,9 +212,7 @@ def run_suite(
     fc_tensors = fixed_coverage_baseline(
         initial_states, height, width, n_mc_runs=fc_mc_runs, base_seed=42
     )
-    fc_per_seed = [
-        float(compute_score(gt, t)) for gt, t in zip(ground_truths, fc_tensors)
-    ]
+    fc_per_seed = [float(compute_score(gt, t)) for gt, t in zip(ground_truths, fc_tensors)]
     fc_mean = float(np.mean(fc_per_seed))
 
     # Run solver N times
@@ -188,7 +225,8 @@ def run_suite(
         adapter = BenchmarkAdapter(fixture, n_mc_runs=5, sim_seed_offset=run_idx * 100)
         t_run_start = time.monotonic()
         result = solve(
-            adapter, fixture.id,
+            adapter,
+            fixture.id,
             n_particles=n_particles,
             n_inner_runs=n_inner_runs,
             sims_per_seed=sims_per_seed,
@@ -196,20 +234,22 @@ def run_suite(
         )
         runtime = time.monotonic() - t_run_start
 
-        # Score against ground truth
+        # Score against ground truth — never use adapter.get_analysis() here
+        # to keep solver blind to its own scoring during the run.
         per_seed_scores = [
-            float(compute_score(gt, t))
-            for gt, t in zip(ground_truths, result.tensors)
+            float(compute_score(gt, t)) for gt, t in zip(ground_truths, result.tensors)
         ]
         mean_score = float(np.mean(per_seed_scores))
 
-        candidate_runs.append(RunResult(
-            run_index=run_idx,
-            per_seed_scores=per_seed_scores,
-            mean_score=mean_score,
-            runtime_seconds=runtime,
-            total_queries=result.total_queries_used,
-        ))
+        candidate_runs.append(
+            RunResult(
+                run_index=run_idx,
+                per_seed_scores=per_seed_scores,
+                mean_score=mean_score,
+                runtime_seconds=runtime,
+                total_queries=result.total_queries_used,
+            )
+        )
         all_scores.append(mean_score)
         for s_idx in range(n_seeds):
             per_seed_accum[s_idx].append(per_seed_scores[s_idx])
@@ -227,13 +267,8 @@ def run_suite(
     for run_idx, run_tensors in enumerate(all_tensors):
         if should_hedge(candidate_runs[run_idx].mean_score, fc_mean):
             hedge_activations += 1
-            hedged = apply_hedge(
-                run_tensors, fc_tensors, initial_states, height, width
-            )
-            hedged_per_seed = [
-                float(compute_score(gt, t))
-                for gt, t in zip(ground_truths, hedged)
-            ]
+            hedged = apply_hedge(run_tensors, fc_tensors, initial_states, height, width)
+            hedged_per_seed = [float(compute_score(gt, t)) for gt, t in zip(ground_truths, hedged)]
             hedged_scores.append(float(np.mean(hedged_per_seed)))
 
     hedged_mean = float(np.mean(hedged_scores)) if hedged_scores else None
@@ -269,6 +304,12 @@ def main() -> None:
     parser.add_argument("--particles", type=int, default=24)
     parser.add_argument("--inner-runs", type=int, default=6)
     parser.add_argument("--sims-per-seed", type=int, default=64)
+    parser.add_argument(
+        "--gt-mc-runs",
+        type=int,
+        default=200,
+        help="MC runs for ground truth when not cached in fixture (default 200).",
+    )
     args = parser.parse_args()
 
     fixture_path = Path(f"data/rounds/{args.round_id}/round_detail.json")
@@ -282,6 +323,7 @@ def main() -> None:
         n_particles=args.particles,
         n_inner_runs=args.inner_runs,
         sims_per_seed=args.sims_per_seed,
+        gt_mc_runs=args.gt_mc_runs,
     )
 
     output_path = Path(args.output)

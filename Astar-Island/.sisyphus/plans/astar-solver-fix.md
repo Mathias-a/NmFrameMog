@@ -124,7 +124,7 @@ Make all 4 verification agents (F1-F4) approve on re-run.
 
 ## TODOs
 
-- [ ] 1. Fix `safe_prediction` to guarantee min ≥ 0.01 after renormalization
+- [x] 1. Fix `safe_prediction` to guarantee min ≥ 0.01 after renormalization
 
   **What to do**:
   In `benchmark/src/astar_twin/scoring/safe_prediction.py`, replace the single floor+renormalize pass with an iterative approach:
@@ -183,7 +183,7 @@ Make all 4 verification agents (F1-F4) approve on re-run.
 
 ---
 
-- [ ] 2. Add empty-particle and zero-`top_k` guards in `predict_seed()`
+- [x] 2. Add empty-particle and zero-`top_k` guards in `predict_seed()`
 
   **What to do**:
   In `benchmark/src/astar_twin/solver/predict/posterior_mc.py`, add guard at the top of `predict_seed()` (after line 133):
@@ -260,7 +260,7 @@ Make all 4 verification agents (F1-F4) approve on re-run.
 
 ---
 
-- [ ] 3. Fix KL scoring to eliminate runtime warnings
+- [x] 3. Fix KL scoring to eliminate runtime warnings
 
   **What to do**:
   In `benchmark/src/astar_twin/scoring/kl.py`, the current implementation already uses `np.where` guards (lines 10-17), but runtime warnings still occur. Replace with explicit `np.clip` approach:
@@ -329,7 +329,7 @@ Make all 4 verification agents (F1-F4) approve on re-run.
 
 ---
 
-- [ ] 4. Make `current_prediction` live in pipeline adaptive phase
+- [x] 4. Make `current_prediction` live in pipeline adaptive phase
 
   **What to do**:
   In `benchmark/src/astar_twin/solver/pipeline.py`, update the adaptive phase to maintain a per-seed prediction dict and generate predictions after bootstrap and after each adaptive batch.
@@ -424,7 +424,7 @@ Make all 4 verification agents (F1-F4) approve on re-run.
 
 ---
 
-- [ ] 5. Implement 15→10→5 viewport sizing rules in hotspots
+- [x] 5. Implement 15→10→5 viewport sizing rules in hotspots
 
   **What to do**:
   In `benchmark/src/astar_twin/solver/policy/hotspots.py`, the current implementation uses `MAX_VIEWPORT` (15) for all candidates. Modify `generate_hotspots()` to compute a bounding box of the feature points for each hotspot category, then apply sizing rules:
@@ -498,7 +498,7 @@ Make all 4 verification agents (F1-F4) approve on re-run.
 
 ---
 
-- [ ] 6. Implement true cellwise top-2 argmax disagreement
+- [x] 6. Implement true cellwise top-2 argmax disagreement
 
   **What to do**:
   In `benchmark/src/astar_twin/solver/policy/allocator.py`, replace `compute_posterior_disagreement()` (lines 234-261) with true cellwise disagreement using lightweight inner MC.
@@ -601,7 +601,7 @@ Make all 4 verification agents (F1-F4) approve on re-run.
 
 ---
 
-- [ ] 7. Implement two-batch reserve release
+- [x] 7. Implement two-batch reserve release
 
   **What to do**:
   In `benchmark/src/astar_twin/solver/policy/allocator.py`, modify `plan_reserve_queries()` (lines 387-413) to release reserve in two batches of 5 (or 5+remainder if total reserve ≠ 10).
@@ -680,7 +680,7 @@ Make all 4 verification agents (F1-F4) approve on re-run.
 
 ---
 
-- [ ] 8. Convert fixed_coverage_baseline to 50-query viewport sweep
+- [x] 8. Convert fixed_coverage_baseline to 50-query viewport sweep
 
   **What to do**:
   In `benchmark/src/astar_twin/solver/baselines.py`, modify `fixed_coverage_baseline()` (lines 23-42) to simulate the planned 50-query sweep strategy instead of full-map MC with default params.
@@ -800,7 +800,7 @@ Make all 4 verification agents (F1-F4) approve on re-run.
 
 ---
 
-- [ ] 9. Add `dump_prediction_stats` CLI + library function
+- [x] 9. Add `dump_prediction_stats` CLI + library function
 
   **What to do**:
   Create `benchmark/src/astar_twin/solver/eval/dump_prediction_stats.py`:
@@ -938,7 +938,7 @@ Make all 4 verification agents (F1-F4) approve on re-run.
 
 ---
 
-- [ ] 10. Run ruff auto-fix on all solver + test files
+- [x] 10. Run ruff auto-fix on all solver + test files
 
   **What to do**:
   Run the following commands in sequence:

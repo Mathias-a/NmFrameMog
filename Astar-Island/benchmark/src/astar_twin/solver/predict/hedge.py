@@ -6,6 +6,7 @@ fixed_coverage baseline, or when calibration disagreement is high.
 Hedge formula: q_final = 0.85 * q_particle + 0.15 * q_fixed_coverage
 Applied per-cell then passed through the finalizer.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -51,9 +52,7 @@ def should_hedge(
 
     # Gate 2: calibration disagreement
     if per_seed_disagreements is not None:
-        high_disagreement = sum(
-            1 for d in per_seed_disagreements if d > CALIBRATION_THRESHOLD
-        )
+        high_disagreement = sum(1 for d in per_seed_disagreements if d > CALIBRATION_THRESHOLD)
         if high_disagreement >= MIN_DISAGREEMENT_SEEDS:
             return True
 

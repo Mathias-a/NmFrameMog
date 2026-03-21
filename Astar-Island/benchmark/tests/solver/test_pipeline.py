@@ -20,9 +20,8 @@ from astar_twin.contracts.types import MAX_QUERIES, NUM_CLASSES
 from astar_twin.data.loaders import load_fixture
 from astar_twin.data.models import RoundFixture
 from astar_twin.solver.adapters.benchmark import BenchmarkAdapter
-from astar_twin.solver.pipeline import SolveResult, solve
+from astar_twin.solver.pipeline import solve
 from astar_twin.solver.policy import allocator
-
 
 # ---- Fixtures ----
 

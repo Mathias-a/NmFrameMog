@@ -6,28 +6,23 @@ Covers:
   - Hedge gate logic: activates only when conditions met
   - Hedge blend produces valid tensors
 """
+
 from __future__ import annotations
 
 from pathlib import Path
 
 import numpy as np
-import pytest
 
 from astar_twin.contracts.types import NUM_CLASSES
 from astar_twin.data.loaders import load_fixture
-from astar_twin.scoring import compute_score, safe_prediction
-from astar_twin.solver.baselines import fixed_coverage_baseline, uniform_baseline
+from astar_twin.scoring import safe_prediction
+from astar_twin.solver.eval.run_benchmark_suite import run_suite
 from astar_twin.solver.predict.hedge import (
-    CALIBRATION_THRESHOLD,
     COVERAGE_WEIGHT,
-    MIN_DISAGREEMENT_SEEDS,
     PARTICLE_WEIGHT,
-    SCORE_MARGIN,
     apply_hedge,
     should_hedge,
 )
-from astar_twin.solver.eval.run_benchmark_suite import RunResult, SuiteResult, run_suite
-
 
 FIXTURE_PATH = (
     Path(__file__).parent.parent.parent / "data" / "rounds" / "test-round-001" / "round_detail.json"
@@ -39,36 +34,48 @@ FIXTURE_PATH = (
 
 def test_hedge_not_activated_when_candidate_dominates():
     """Hedge stays off when candidate clearly beats fixed_coverage."""
-    assert should_hedge(
-        candidate_mean_score=80.0,
-        fixed_coverage_mean_score=50.0,
-    ) is False
+    assert (
+        should_hedge(
+            candidate_mean_score=80.0,
+            fixed_coverage_mean_score=50.0,
+        )
+        is False
+    )
 
 
 def test_hedge_activated_on_score_margin():
     """Hedge activates when candidate is within SCORE_MARGIN of fixed_coverage."""
-    assert should_hedge(
-        candidate_mean_score=52.0,
-        fixed_coverage_mean_score=50.0,
-    ) is True
+    assert (
+        should_hedge(
+            candidate_mean_score=52.0,
+            fixed_coverage_mean_score=50.0,
+        )
+        is True
+    )
 
 
 def test_hedge_activated_on_calibration_disagreement():
     """Hedge activates when >=2 seeds have high disagreement."""
-    assert should_hedge(
-        candidate_mean_score=80.0,
-        fixed_coverage_mean_score=50.0,
-        per_seed_disagreements=[0.05, 0.20, 0.25, 0.01, 0.01],
-    ) is True
+    assert (
+        should_hedge(
+            candidate_mean_score=80.0,
+            fixed_coverage_mean_score=50.0,
+            per_seed_disagreements=[0.05, 0.20, 0.25, 0.01, 0.01],
+        )
+        is True
+    )
 
 
 def test_hedge_not_activated_with_low_disagreement():
     """Hedge stays off with only 1 seed above threshold."""
-    assert should_hedge(
-        candidate_mean_score=80.0,
-        fixed_coverage_mean_score=50.0,
-        per_seed_disagreements=[0.20, 0.05, 0.05, 0.05, 0.05],
-    ) is False
+    assert (
+        should_hedge(
+            candidate_mean_score=80.0,
+            fixed_coverage_mean_score=50.0,
+            per_seed_disagreements=[0.20, 0.05, 0.05, 0.05, 0.05],
+        )
+        is False
+    )
 
 
 # ---- Hedge blend tests ----
@@ -91,8 +98,11 @@ def test_hedge_blend_valid_tensors():
     ]
 
     hedged = apply_hedge(
-        particle_tensors, coverage_tensors,
-        fixture.initial_states, height, width,
+        particle_tensors,
+        coverage_tensors,
+        fixture.initial_states,
+        height,
+        width,
     )
     assert len(hedged) == 5
     for t in hedged:

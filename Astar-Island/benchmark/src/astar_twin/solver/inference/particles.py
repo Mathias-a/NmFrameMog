@@ -3,9 +3,10 @@
 A particle is a subset of SimulationParams (17 inferred fields) plus a log-weight.
 All other params are frozen at SimulationParams() defaults.
 """
+
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
@@ -17,7 +18,6 @@ from astar_twin.params.simulation_params import (
     SimulationParams,
     UpdateOrderMode,
 )
-
 
 # The 17-parameter subset inferred in v1
 INFERRED_PARAMS: list[str] = [
@@ -148,15 +148,11 @@ def initialize_particles(
             elif name == "expansion_radius":
                 # Integer param — perturb around default
                 lo, hi, default = _CONTINUOUS_RANGES[name]
-                params[name] = int(np.clip(
-                    rng.normal(default, 1.0), lo, hi
-                ))
+                params[name] = int(np.clip(rng.normal(default, 1.0), lo, hi))
             elif name == "trade_range":
                 # Integer param
                 lo, hi, default = _CONTINUOUS_RANGES[name]
-                params[name] = int(np.clip(
-                    rng.normal(default, 2.0), lo, hi
-                ))
+                params[name] = int(np.clip(rng.normal(default, 2.0), lo, hi))
             else:
                 params[name] = _sample_continuous_param(name, rng)
         particles.append(Particle(params=params, log_weight=0.0))

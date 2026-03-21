@@ -3,12 +3,12 @@
 Validates that the SolverAdapter protocol is sufficient for prod usage,
 and that any implementation must provide exactly the required methods.
 """
+
 from __future__ import annotations
 
-from typing import Protocol, runtime_checkable
+from typing import Protocol
 
 import numpy as np
-import pytest
 from numpy.typing import NDArray
 
 from astar_twin.contracts.api_models import (
@@ -18,7 +18,6 @@ from astar_twin.contracts.api_models import (
     SubmitResponse,
 )
 from astar_twin.solver.interfaces import SolverAdapter
-
 
 # ---- Contract completeness ----
 
@@ -45,14 +44,20 @@ class CompliantStub:
         raise NotImplementedError
 
     def simulate(
-        self, round_id: str, seed_index: int,
-        viewport_x: int, viewport_y: int,
-        viewport_w: int, viewport_h: int,
+        self,
+        round_id: str,
+        seed_index: int,
+        viewport_x: int,
+        viewport_y: int,
+        viewport_w: int,
+        viewport_h: int,
     ) -> SimulateResponse:
         raise NotImplementedError
 
     def submit(
-        self, round_id: str, seed_index: int,
+        self,
+        round_id: str,
+        seed_index: int,
         prediction: NDArray[np.float64],
     ) -> SubmitResponse:
         raise NotImplementedError
@@ -81,7 +86,9 @@ class MissingSimulate:
         raise NotImplementedError
 
     def submit(
-        self, round_id: str, seed_index: int,
+        self,
+        round_id: str,
+        seed_index: int,
         prediction: NDArray[np.float64],
     ) -> SubmitResponse:
         raise NotImplementedError
@@ -106,9 +113,13 @@ class MissingSubmit:
         raise NotImplementedError
 
     def simulate(
-        self, round_id: str, seed_index: int,
-        viewport_x: int, viewport_y: int,
-        viewport_w: int, viewport_h: int,
+        self,
+        round_id: str,
+        seed_index: int,
+        viewport_x: int,
+        viewport_y: int,
+        viewport_w: int,
+        viewport_h: int,
     ) -> SimulateResponse:
         raise NotImplementedError
 
@@ -132,14 +143,20 @@ class MissingGetBudget:
         raise NotImplementedError
 
     def simulate(
-        self, round_id: str, seed_index: int,
-        viewport_x: int, viewport_y: int,
-        viewport_w: int, viewport_h: int,
+        self,
+        round_id: str,
+        seed_index: int,
+        viewport_x: int,
+        viewport_y: int,
+        viewport_w: int,
+        viewport_h: int,
     ) -> SimulateResponse:
         raise NotImplementedError
 
     def submit(
-        self, round_id: str, seed_index: int,
+        self,
+        round_id: str,
+        seed_index: int,
         prediction: NDArray[np.float64],
     ) -> SubmitResponse:
         raise NotImplementedError
@@ -162,8 +179,10 @@ def test_prod_adapter_only_needs_five_methods():
     # The solver imports no benchmark-specific code;
     # switching to prod only needs a new SolverAdapter implementation.
     import inspect
+
     members = [
-        name for name, _ in inspect.getmembers(SolverAdapter, predicate=inspect.isfunction)
+        name
+        for name, _ in inspect.getmembers(SolverAdapter, predicate=inspect.isfunction)
         if not name.startswith("_")
     ]
     assert set(members) == {"get_round_detail", "simulate", "submit", "get_analysis", "get_budget"}

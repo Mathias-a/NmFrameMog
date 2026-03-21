@@ -1,11 +1,11 @@
 """Tests for particle schema, priors, and parameter subset."""
+
 from __future__ import annotations
 
 from astar_twin.params.simulation_params import SimulationParams
 from astar_twin.solver.inference.particles import (
     INFERRED_PARAMS,
     Particle,
-    _CONTINUOUS_RANGES,
     initialize_particles,
     validate_particle,
 )

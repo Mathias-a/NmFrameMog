@@ -1,4 +1,5 @@
 """Tests for tensor finalization and safety enforcement."""
+
 from __future__ import annotations
 
 import numpy as np

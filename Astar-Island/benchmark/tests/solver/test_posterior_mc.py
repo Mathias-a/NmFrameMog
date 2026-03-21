@@ -20,15 +20,11 @@ from astar_twin.data.loaders import load_fixture
 from astar_twin.solver.baselines import uniform_baseline
 from astar_twin.solver.inference.posterior import PosteriorState, create_posterior
 from astar_twin.solver.predict.posterior_mc import (
-    DEFAULT_SIMS_PER_SEED,
-    DEFAULT_TOP_K,
     FALLBACK_SIMS_PER_SEED,
-    MIN_RUNS_PER_PARTICLE,
     allocate_runs_to_particles,
     predict_all_seeds,
     predict_seed,
 )
-
 
 # ---- Fixtures ----
 

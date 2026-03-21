@@ -6,12 +6,10 @@ import numpy as np
 
 from astar_twin.contracts.api_models import (
     InitialState,
-    SimSettlement,
     SimulateResponse,
     ViewportBounds,
 )
 from astar_twin.contracts.types import TerrainCode
-from astar_twin.solver.inference.particles import initialize_particles
 from astar_twin.solver.inference.posterior import (
     PosteriorState,
     create_posterior,

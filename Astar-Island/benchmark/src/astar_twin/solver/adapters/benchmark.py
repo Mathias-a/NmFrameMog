@@ -4,6 +4,7 @@ This adapter internally uses benchmark fixtures and simulator components but
 NEVER exposes simulation_params to the solver. The solver sees only the
 public contract objects (RoundDetail, SimulateResponse, etc.).
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -11,19 +12,17 @@ from numpy.typing import NDArray
 
 from astar_twin.contracts.api_models import (
     AnalysisResponse,
-    InitialState,
     RoundDetail,
     SimSettlement,
     SimulateResponse,
     SubmitResponse,
     ViewportBounds,
 )
-from astar_twin.contracts.types import MAX_QUERIES, TERRAIN_TO_CLASS, NUM_CLASSES
+from astar_twin.contracts.types import MAX_QUERIES
 from astar_twin.data.models import RoundFixture
 from astar_twin.engine import Simulator
 from astar_twin.mc import MCRunner, aggregate_runs
 from astar_twin.scoring import compute_score, safe_prediction
-from astar_twin.state.settlement import Settlement
 
 
 class BenchmarkAdapter:
@@ -50,9 +49,7 @@ class BenchmarkAdapter:
         # Pre-compute ground truths if not provided
         self._ground_truths: list[NDArray[np.float64]] | None = None
         if fixture.ground_truths is not None:
-            self._ground_truths = [
-                np.array(gt, dtype=np.float64) for gt in fixture.ground_truths
-            ]
+            self._ground_truths = [np.array(gt, dtype=np.float64) for gt in fixture.ground_truths]
 
     def get_round_detail(self, round_id: str) -> RoundDetail:
         return RoundDetail(
@@ -94,25 +91,32 @@ class BenchmarkAdapter:
         # Extract settlements visible in viewport
         settlements: list[SimSettlement] = []
         for s in final_state.settlements:
-            if (viewport_x <= s.x < viewport_x + viewport_w
-                    and viewport_y <= s.y < viewport_y + viewport_h):
-                settlements.append(SimSettlement(
-                    x=s.x,
-                    y=s.y,
-                    population=s.population,
-                    food=s.food,
-                    wealth=s.wealth,
-                    defense=s.defense,
-                    has_port=s.has_port,
-                    alive=s.alive,
-                    owner_id=s.owner_id,
-                ))
+            if (
+                viewport_x <= s.x < viewport_x + viewport_w
+                and viewport_y <= s.y < viewport_y + viewport_h
+            ):
+                settlements.append(
+                    SimSettlement(
+                        x=s.x,
+                        y=s.y,
+                        population=s.population,
+                        food=s.food,
+                        wealth=s.wealth,
+                        defense=s.defense,
+                        has_port=s.has_port,
+                        alive=s.alive,
+                        owner_id=s.owner_id,
+                    )
+                )
 
         return SimulateResponse(
             grid=grid_list,
             settlements=settlements,
             viewport=ViewportBounds(
-                x=viewport_x, y=viewport_y, w=viewport_w, h=viewport_h,
+                x=viewport_x,
+                y=viewport_y,
+                w=viewport_w,
+                h=viewport_h,
             ),
             width=self._fixture.map_width,
             height=self._fixture.map_height,
@@ -137,9 +141,7 @@ class BenchmarkAdapter:
         if self._ground_truths is None:
             # Generate ground truth via MC if not pre-computed
             initial_state = self._fixture.initial_states[seed_index]
-            runs = self._mc_runner.run_batch(
-                initial_state, n_runs=200, base_seed=seed_index * 1000
-            )
+            runs = self._mc_runner.run_batch(initial_state, n_runs=200, base_seed=seed_index * 1000)
             gt = safe_prediction(
                 aggregate_runs(runs, self._fixture.map_height, self._fixture.map_width)
             )

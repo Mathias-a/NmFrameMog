@@ -12,7 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 import numpy as np
-from numpy.random import Generator, default_rng
+from numpy.random import default_rng
 
 from astar_twin.contracts.api_models import InitialState, SimulateResponse
 from astar_twin.solver.inference.likelihood import compute_particle_loglik

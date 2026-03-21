@@ -8,22 +8,22 @@ Evaluates the final solver against:
 
 Selects the winner as the highest-mean configuration.
 """
+
 from __future__ import annotations
 
 import json
 import sys
-import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
 from numpy.typing import NDArray
 
-from astar_twin.contracts.types import NUM_CLASSES
 from astar_twin.data.loaders import load_fixture
-from astar_twin.scoring import compute_score, safe_prediction
+from astar_twin.scoring import compute_score
 from astar_twin.solver.adapters.benchmark import BenchmarkAdapter
 from astar_twin.solver.baselines import fixed_coverage_baseline, uniform_baseline
+from astar_twin.solver.eval.run_benchmark_suite import load_or_compute_ground_truths
 from astar_twin.solver.pipeline import solve
 from astar_twin.solver.predict.hedge import apply_hedge, should_hedge
 
@@ -66,29 +66,14 @@ class ReplayResult:
         }
 
 
-def _resilient_run_batch(simulator, initial_state, n_runs: int, base_seed: int):
-    """Run MC batch, skipping runs that hit simulator NaN bugs."""
-    from astar_twin.state.round_state import RoundState
-
-    runs: list[RoundState] = []
-    for i in range(n_runs):
-        try:
-            state = simulator.run(initial_state=initial_state, sim_seed=base_seed + i)
-            runs.append(state)
-        except (ValueError, FloatingPointError):
-            pass
-    if not runs:
-        state = simulator.run(initial_state=initial_state, sim_seed=base_seed + 99999)
-        runs.append(state)
-    return runs
-
-
 def run_replay_validation(
     fixture_path: Path,
     n_particles: int = 24,
     n_inner_runs: int = 6,
     sims_per_seed: int = 64,
     fc_mc_runs: int = 200,
+    gt_mc_runs: int = 200,
+    gt_base_seed: int = 0,
 ) -> ReplayResult:
     """Run replay validation comparing all variants.
 
@@ -98,6 +83,9 @@ def run_replay_validation(
         n_inner_runs: Inner MC runs.
         sims_per_seed: Final prediction MC runs.
         fc_mc_runs: MC runs for fixed_coverage baseline.
+        gt_mc_runs: MC runs for ground truth (only used when fixture has no
+            cached ground_truths).
+        gt_base_seed: Base seed for ground truth derivation.
 
     Returns:
         ReplayResult with all variant scores and selected winner.
@@ -108,57 +96,59 @@ def run_replay_validation(
     initial_states = fixture.initial_states
     n_seeds = len(initial_states)
 
-    # Compute ground truths
-    from astar_twin.engine import Simulator
-    from astar_twin.mc import aggregate_runs
-
-    gt_sim = Simulator(fixture.simulation_params)
-    ground_truths: list[NDArray[np.float64]] = []
-    for seed_idx, ist in enumerate(initial_states):
-        runs = _resilient_run_batch(gt_sim, ist, n_runs=200, base_seed=seed_idx * 1000)
-        gt = safe_prediction(aggregate_runs(runs, height, width))
-        ground_truths.append(gt)
+    # Ground truth: prefer cached tensors, otherwise compute.
+    ground_truths = load_or_compute_ground_truths(fixture, gt_mc_runs, gt_base_seed)
 
     variants: list[VariantResult] = []
 
     # Variant 1: Uniform baseline
     uniform = uniform_baseline(height, width)
     uniform_scores = [float(compute_score(gt, uniform)) for gt in ground_truths]
-    variants.append(VariantResult(
-        name="uniform", per_seed_scores=uniform_scores,
-        mean_score=float(np.mean(uniform_scores)),
-    ))
+    variants.append(
+        VariantResult(
+            name="uniform",
+            per_seed_scores=uniform_scores,
+            mean_score=float(np.mean(uniform_scores)),
+        )
+    )
 
     # Variant 2: Fixed-coverage baseline
     fc_tensors = fixed_coverage_baseline(
-        initial_states, height, width, n_mc_runs=fc_mc_runs, base_seed=42,
+        initial_states,
+        height,
+        width,
+        n_mc_runs=fc_mc_runs,
+        base_seed=42,
     )
-    fc_scores = [
-        float(compute_score(gt, t)) for gt, t in zip(ground_truths, fc_tensors)
-    ]
-    variants.append(VariantResult(
-        name="fixed_coverage", per_seed_scores=fc_scores,
-        mean_score=float(np.mean(fc_scores)),
-    ))
+    fc_scores = [float(compute_score(gt, t)) for gt, t in zip(ground_truths, fc_tensors)]
+    variants.append(
+        VariantResult(
+            name="fixed_coverage",
+            per_seed_scores=fc_scores,
+            mean_score=float(np.mean(fc_scores)),
+        )
+    )
     fc_mean = float(np.mean(fc_scores))
 
     # Variant 3: Particle solver (no hedge)
     adapter = BenchmarkAdapter(fixture, n_mc_runs=5, sim_seed_offset=0)
     result = solve(
-        adapter, fixture.id,
+        adapter,
+        fixture.id,
         n_particles=n_particles,
         n_inner_runs=n_inner_runs,
         sims_per_seed=sims_per_seed,
         base_seed=42,
     )
-    particle_scores = [
-        float(compute_score(gt, t)) for gt, t in zip(ground_truths, result.tensors)
-    ]
+    particle_scores = [float(compute_score(gt, t)) for gt, t in zip(ground_truths, result.tensors)]
     particle_mean = float(np.mean(particle_scores))
-    variants.append(VariantResult(
-        name="particle_no_hedge", per_seed_scores=particle_scores,
-        mean_score=particle_mean,
-    ))
+    variants.append(
+        VariantResult(
+            name="particle_no_hedge",
+            per_seed_scores=particle_scores,
+            mean_score=particle_mean,
+        )
+    )
 
     # Compute calibration disagreements per seed
     calibration_disagreements: list[float] = []
@@ -169,19 +159,26 @@ def run_replay_validation(
 
     # Variant 4: Particle solver with hedge (if gate triggers)
     hedge_activated = should_hedge(
-        particle_mean, fc_mean, calibration_disagreements,
+        particle_mean,
+        fc_mean,
+        calibration_disagreements,
     )
     if hedge_activated:
         hedged = apply_hedge(
-            result.tensors, fc_tensors, initial_states, height, width,
+            result.tensors,
+            fc_tensors,
+            initial_states,
+            height,
+            width,
         )
-        hedged_scores = [
-            float(compute_score(gt, t)) for gt, t in zip(ground_truths, hedged)
-        ]
-        variants.append(VariantResult(
-            name="particle_hedged", per_seed_scores=hedged_scores,
-            mean_score=float(np.mean(hedged_scores)),
-        ))
+        hedged_scores = [float(compute_score(gt, t)) for gt, t in zip(ground_truths, hedged)]
+        variants.append(
+            VariantResult(
+                name="particle_hedged",
+                per_seed_scores=hedged_scores,
+                mean_score=float(np.mean(hedged_scores)),
+            )
+        )
 
     # Select winner
     winner = max(variants, key=lambda v: v.mean_score)
