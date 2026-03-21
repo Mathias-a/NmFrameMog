@@ -6,7 +6,7 @@ from astar_twin.engine import Simulator
 
 
 def test_ocean_cells_never_change(fixture: RoundFixture) -> None:
-    simulator = Simulator()
+    simulator = Simulator(params=fixture.simulation_params)
     initial_state = fixture.initial_states[0]
     initial_grid = initial_state.grid
 
@@ -19,7 +19,7 @@ def test_ocean_cells_never_change(fixture: RoundFixture) -> None:
 
 
 def test_mountain_cells_never_change(fixture: RoundFixture) -> None:
-    simulator = Simulator()
+    simulator = Simulator(params=fixture.simulation_params)
     initial_state = fixture.initial_states[0]
     initial_grid = initial_state.grid
 

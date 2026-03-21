@@ -7,7 +7,7 @@ from astar_twin.mc import MCRunner
 
 
 def test_all_ports_are_coastal_in_mc_runs(fixture: RoundFixture) -> None:
-    runner = MCRunner(Simulator())
+    runner = MCRunner(Simulator(params=fixture.simulation_params))
     runs = runner.run_batch(fixture.initial_states[0], n_runs=10)
     for run in runs:
         for y in range(run.grid.height):

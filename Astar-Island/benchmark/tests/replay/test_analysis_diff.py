@@ -10,6 +10,17 @@ from astar_twin.scoring import safe_prediction
 
 
 def test_analysis_returns_score_between_zero_and_hundred(fixture: RoundFixture) -> None:
+    fixture = fixture.model_copy(
+        update={
+            "ground_truths": [
+                [
+                    [[1.0 / 6.0] * 6 for _ in range(fixture.map_width)]
+                    for _ in range(fixture.map_height)
+                ]
+                for _ in range(fixture.seeds_count)
+            ]
+        }
+    )
     round_store = RoundStore()
     round_store.add(fixture)
     submission_store = SubmissionStore()

@@ -3,6 +3,7 @@ from __future__ import annotations
 from pydantic import BaseModel, ConfigDict
 
 from astar_twin.contracts.api_models import InitialState
+from astar_twin.params import SimulationParams
 
 
 class RoundFixture(BaseModel):
@@ -16,5 +17,6 @@ class RoundFixture(BaseModel):
     seeds_count: int
     initial_states: list[InitialState]
     ground_truths: list[list[list[list[float]]]] | None = None
+    simulation_params: SimulationParams = SimulationParams()
     event_date: str = ""
     round_weight: float = 1.0

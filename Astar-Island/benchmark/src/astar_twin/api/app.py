@@ -28,8 +28,8 @@ def create_app(
     app.state.round_store = round_store or RoundStore()
     app.state.submission_store = submission_store or SubmissionStore()
     app.state.budget_store = budget_store or BudgetStore()
-    app.state.simulator = simulator or Simulator()
-    app.state.mc_runner = mc_runner or MCRunner(app.state.simulator)
+    app.state.simulator = simulator
+    app.state.mc_runner = mc_runner
     app.state.n_mc_runs = n_mc_runs
 
     if data_dir is not None:

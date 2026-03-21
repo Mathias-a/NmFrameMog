@@ -49,7 +49,7 @@ def test_phase_order_and_year_count(monkeypatch: MonkeyPatch, fixture: RoundFixt
     monkeypatch.setattr("astar_twin.engine.simulator.apply_winter", winter)
     monkeypatch.setattr("astar_twin.engine.simulator.apply_environment", environment)
 
-    Simulator().run(fixture.initial_states[0], sim_seed=0)
+    Simulator(params=fixture.simulation_params).run(fixture.initial_states[0], sim_seed=0)
 
     assert len(calls) == 50 * 5
     for year in range(50):

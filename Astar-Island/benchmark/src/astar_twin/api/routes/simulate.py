@@ -13,7 +13,7 @@ from astar_twin.contracts.api_models import (
     SimulateResponse,
     ViewportBounds,
 )
-from astar_twin.contracts.types import MAX_QUERIES
+from astar_twin.contracts.types import MAX_QUERIES, TerrainCode
 from astar_twin.engine import Simulator
 
 router = APIRouter()
@@ -28,13 +28,16 @@ def get_budget_store(request: Request) -> BudgetStore:
     return request.app.state.budget_store
 
 
-def get_simulator(request: Request) -> Simulator:
-    return request.app.state.simulator
+def get_app_simulator(request: Request) -> Simulator | None:
+    simulator = getattr(request.app.state, "simulator", None)
+    if isinstance(simulator, Simulator):
+        return simulator
+    return None
 
 
 RoundStoreDep = Annotated[RoundStore, Depends(get_round_store)]
 BudgetStoreDep = Annotated[BudgetStore, Depends(get_budget_store)]
-SimulatorDep = Annotated[Simulator, Depends(get_simulator)]
+AppSimulatorDep = Annotated[Simulator | None, Depends(get_app_simulator)]
 
 
 @router.post("/astar-island/simulate", response_model=SimulateResponse)
@@ -42,7 +45,7 @@ def simulate(
     body: SimulateRequest,
     round_store: RoundStoreDep,
     budget_store: BudgetStoreDep,
-    simulator: SimulatorDep,
+    app_simulator: AppSimulatorDep,
 ) -> SimulateResponse:
     fixture = round_store.get(body.round_id)
     if fixture is None:
@@ -56,7 +59,11 @@ def simulate(
 
     initial_state = fixture.initial_states[body.seed_index]
     sim_seed = int(_SIM_SEED_RNG.integers(0, 2**32, endpoint=False))
-    final_state = simulator.run(initial_state=initial_state, sim_seed=sim_seed)
+    simulator = app_simulator or Simulator(params=fixture.simulation_params)
+    final_state = simulator.run(
+        initial_state=initial_state,
+        sim_seed=sim_seed,
+    )
 
     x0 = max(0, body.viewport_x)
     y0 = max(0, body.viewport_y)
@@ -81,7 +88,11 @@ def simulate(
             owner_id=settlement.owner_id,
         )
         for settlement in final_state.settlements
-        if x0 <= settlement.x < x1 and y0 <= settlement.y < y1
+        if x0 <= settlement.x < x1
+        and y0 <= settlement.y < y1
+        and (
+            settlement.alive or final_state.grid.get(settlement.y, settlement.x) == TerrainCode.RUIN
+        )
     ]
 
     budget_store.increment(fixture.id)
