@@ -195,8 +195,8 @@ def prepare_workspace(
         write_text(one_class_label_path, "\n".join(one_class_lines) + ("\n" if one_class_lines else ""))
         write_text(multi_class_label_path, "\n".join(multi_class_lines) + ("\n" if multi_class_lines else ""))
 
-        one_class_path_str = str(one_class_image_link.resolve())
-        multi_class_path_str = str(multi_class_image_link.resolve())
+        one_class_path_str = str(one_class_image_link)
+        multi_class_path_str = str(multi_class_image_link)
         for fold in range(num_folds):
             if fold == fold_index:
                 one_class_val_lists[fold].append(one_class_path_str)
