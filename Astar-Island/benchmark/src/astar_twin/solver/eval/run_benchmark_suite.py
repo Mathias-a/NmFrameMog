@@ -20,7 +20,8 @@ import numpy as np
 from numpy.typing import NDArray
 
 from astar_twin.data.loaders import load_fixture
-from astar_twin.data.models import RoundFixture
+from astar_twin.data.models import ParamsSource, RoundFixture
+from astar_twin.params import sample_default_prior_params
 from astar_twin.scoring import compute_score, safe_prediction
 from astar_twin.solver.adapters.benchmark import BenchmarkAdapter
 from astar_twin.solver.baselines import (
@@ -111,9 +112,9 @@ def resilient_run_batch(
 
     This helper is shared by run_benchmark_suite and run_replay_validation.
     """
-    from astar_twin.state.round_state import RoundState
-    from astar_twin.engine import Simulator
     from astar_twin.contracts.api_models import InitialState
+    from astar_twin.engine import Simulator
+    from astar_twin.state.round_state import RoundState
 
     assert isinstance(simulator, Simulator)
     assert isinstance(initial_state, InitialState)
@@ -137,6 +138,7 @@ def load_or_compute_ground_truths(
     fixture: RoundFixture,
     n_mc_runs: int,
     base_seed: int,
+    prior_spread: float = 1.0,
 ) -> list[NDArray[np.float64]]:
     """Load pre-computed ground truths from fixture or compute them on demand.
 
@@ -154,7 +156,15 @@ def load_or_compute_ground_truths(
     from astar_twin.engine import Simulator
     from astar_twin.mc import aggregate_runs
 
-    simulator = Simulator(fixture.simulation_params)
+    simulation_params = fixture.simulation_params
+    if fixture.params_source == ParamsSource.DEFAULT_PRIOR:
+        simulation_params = sample_default_prior_params(
+            seed=base_seed,
+            defaults=fixture.simulation_params,
+            spread=prior_spread,
+        )
+
+    simulator = Simulator(simulation_params)
     ground_truths: list[NDArray[np.float64]] = []
     for seed_idx, initial_state in enumerate(fixture.initial_states):
         runs = resilient_run_batch(
@@ -177,6 +187,7 @@ def run_suite(
     fc_mc_runs: int = 200,
     gt_mc_runs: int = 200,
     gt_base_seed: int = 0,
+    gt_prior_spread: float = 1.0,
 ) -> SuiteResult:
     """Run the full benchmark suite.
 
@@ -190,6 +201,9 @@ def run_suite(
         gt_mc_runs: MC runs for ground truth (only used when fixture has no
             cached ground_truths).
         gt_base_seed: Base seed for ground truth derivation.
+        gt_prior_spread: Spread for DEFAULT_PRIOR sampling when deriving
+            uncached ground truths. Ignored when cached ground truths already
+            exist.
 
     Returns:
         SuiteResult with all metrics.
@@ -202,7 +216,12 @@ def run_suite(
     n_seeds = len(initial_states)
 
     # Ground truth: use cached tensors when available, otherwise compute.
-    ground_truths = load_or_compute_ground_truths(fixture, gt_mc_runs, gt_base_seed)
+    ground_truths = load_or_compute_ground_truths(
+        fixture,
+        gt_mc_runs,
+        gt_base_seed,
+        prior_spread=gt_prior_spread,
+    )
 
     # Compute baselines
     uniform = uniform_baseline(height, width)
@@ -212,7 +231,9 @@ def run_suite(
     fc_tensors = fixed_coverage_baseline(
         initial_states, height, width, n_mc_runs=fc_mc_runs, base_seed=42
     )
-    fc_per_seed = [float(compute_score(gt, t)) for gt, t in zip(ground_truths, fc_tensors)]
+    fc_per_seed = [
+        float(compute_score(gt, t)) for gt, t in zip(ground_truths, fc_tensors, strict=True)
+    ]
     fc_mean = float(np.mean(fc_per_seed))
 
     # Run solver N times
@@ -237,7 +258,7 @@ def run_suite(
         # Score against ground truth — never use adapter.get_analysis() here
         # to keep solver blind to its own scoring during the run.
         per_seed_scores = [
-            float(compute_score(gt, t)) for gt, t in zip(ground_truths, result.tensors)
+            float(compute_score(gt, t)) for gt, t in zip(ground_truths, result.tensors, strict=True)
         ]
         mean_score = float(np.mean(per_seed_scores))
 
@@ -268,7 +289,9 @@ def run_suite(
         if should_hedge(candidate_runs[run_idx].mean_score, fc_mean):
             hedge_activations += 1
             hedged = apply_hedge(run_tensors, fc_tensors, initial_states, height, width)
-            hedged_per_seed = [float(compute_score(gt, t)) for gt, t in zip(ground_truths, hedged)]
+            hedged_per_seed = [
+                float(compute_score(gt, t)) for gt, t in zip(ground_truths, hedged, strict=True)
+            ]
             hedged_scores.append(float(np.mean(hedged_per_seed)))
 
     hedged_mean = float(np.mean(hedged_scores)) if hedged_scores else None
@@ -294,7 +317,10 @@ def run_suite(
 
 
 def main() -> None:
-    """CLI entry point for running the benchmark suite."""
+    """CLI entry point for running the benchmark suite.
+
+    ``--gt-prior-spread`` only affects fixtures without cached ground truths.
+    """
     import argparse
 
     parser = argparse.ArgumentParser(description="Run benchmark suite")
@@ -310,6 +336,14 @@ def main() -> None:
         default=200,
         help="MC runs for ground truth when not cached in fixture (default 200).",
     )
+    parser.add_argument(
+        "--gt-prior-spread",
+        type=float,
+        default=1.0,
+        help=(
+            "Spread for DEFAULT_PRIOR sampling when deriving uncached ground truths (default 1.0)."
+        ),
+    )
     args = parser.parse_args()
 
     fixture_path = Path(f"data/rounds/{args.round_id}/round_detail.json")
@@ -324,6 +358,7 @@ def main() -> None:
         n_inner_runs=args.inner_runs,
         sims_per_seed=args.sims_per_seed,
         gt_mc_runs=args.gt_mc_runs,
+        gt_prior_spread=args.gt_prior_spread,
     )
 
     output_path = Path(args.output)

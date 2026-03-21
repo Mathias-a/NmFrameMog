@@ -15,8 +15,10 @@ import numpy as np
 
 from astar_twin.contracts.types import NUM_CLASSES
 from astar_twin.data.loaders import load_fixture
+from astar_twin.data.models import ParamsSource
+from astar_twin.params import SimulationParams
 from astar_twin.scoring import safe_prediction
-from astar_twin.solver.eval.run_benchmark_suite import run_suite
+from astar_twin.solver.eval.run_benchmark_suite import load_or_compute_ground_truths, run_suite
 from astar_twin.solver.predict.hedge import (
     COVERAGE_WEIGHT,
     PARTICLE_WEIGHT,
@@ -32,7 +34,7 @@ FIXTURE_PATH = (
 # ---- Hedge gating tests ----
 
 
-def test_hedge_not_activated_when_candidate_dominates():
+def test_hedge_not_activated_when_candidate_dominates() -> None:
     """Hedge stays off when candidate clearly beats fixed_coverage."""
     assert (
         should_hedge(
@@ -43,7 +45,7 @@ def test_hedge_not_activated_when_candidate_dominates():
     )
 
 
-def test_hedge_activated_on_score_margin():
+def test_hedge_activated_on_score_margin() -> None:
     """Hedge activates when candidate is within SCORE_MARGIN of fixed_coverage."""
     assert (
         should_hedge(
@@ -54,7 +56,7 @@ def test_hedge_activated_on_score_margin():
     )
 
 
-def test_hedge_activated_on_calibration_disagreement():
+def test_hedge_activated_on_calibration_disagreement() -> None:
     """Hedge activates when >=2 seeds have high disagreement."""
     assert (
         should_hedge(
@@ -66,7 +68,7 @@ def test_hedge_activated_on_calibration_disagreement():
     )
 
 
-def test_hedge_not_activated_with_low_disagreement():
+def test_hedge_not_activated_with_low_disagreement() -> None:
     """Hedge stays off with only 1 seed above threshold."""
     assert (
         should_hedge(
@@ -81,7 +83,7 @@ def test_hedge_not_activated_with_low_disagreement():
 # ---- Hedge blend tests ----
 
 
-def test_hedge_blend_valid_tensors():
+def test_hedge_blend_valid_tensors() -> None:
     """Hedge blend produces valid normalized tensors."""
     fixture = load_fixture(FIXTURE_PATH)
     height = fixture.map_height
@@ -112,7 +114,7 @@ def test_hedge_blend_valid_tensors():
         np.testing.assert_allclose(sums, 1.0, atol=0.02)
 
 
-def test_hedge_blend_weights():
+def test_hedge_blend_weights() -> None:
     """Hedge blend uses correct 0.85/0.15 weights."""
     assert abs(PARTICLE_WEIGHT - 0.85) < 1e-10
     assert abs(COVERAGE_WEIGHT - 0.15) < 1e-10
@@ -122,7 +124,7 @@ def test_hedge_blend_weights():
 # ---- Suite tests (reduced params for speed) ----
 
 
-def test_suite_runs_and_returns_valid_result():
+def test_suite_runs_and_returns_valid_result() -> None:
     """Suite produces valid SuiteResult with scores."""
     result = run_suite(
         FIXTURE_PATH,
@@ -142,7 +144,7 @@ def test_suite_runs_and_returns_valid_result():
     assert len(result.fixed_coverage_per_seed) == 5
 
 
-def test_suite_candidate_beats_uniform():
+def test_suite_candidate_beats_uniform() -> None:
     """Candidate solver should beat uniform baseline."""
     result = run_suite(
         FIXTURE_PATH,
@@ -159,7 +161,7 @@ def test_suite_candidate_beats_uniform():
     )
 
 
-def test_suite_serialization():
+def test_suite_serialization() -> None:
     """Suite result can be serialized to JSON-compatible dict."""
     result = run_suite(
         FIXTURE_PATH,
@@ -175,3 +177,46 @@ def test_suite_serialization():
     assert "hedge" in d
     assert d["repeats"] == 1
     assert len(d["runs"]) == 1
+
+
+def test_load_or_compute_ground_truths_respects_prior_spread_for_default_prior() -> None:
+    fixture = load_fixture(FIXTURE_PATH)
+
+    gt_zero = load_or_compute_ground_truths(fixture, n_mc_runs=5, base_seed=22, prior_spread=0.0)
+    gt_wide = load_or_compute_ground_truths(fixture, n_mc_runs=5, base_seed=22, prior_spread=1.0)
+
+    assert len(gt_zero) == len(gt_wide) == fixture.seeds_count
+    assert any(not np.array_equal(a, b) for a, b in zip(gt_zero, gt_wide, strict=False))
+
+
+def test_load_or_compute_ground_truths_ignores_prior_spread_when_cached() -> None:
+    fixture = load_fixture(FIXTURE_PATH)
+    height = fixture.map_height
+    width = fixture.map_width
+    gt = safe_prediction(np.full((height, width, 6), 1.0 / 6.0, dtype=np.float64)).tolist()
+    cached_fixture = fixture.model_copy(
+        update={"ground_truths": [gt for _ in range(fixture.seeds_count)]}
+    )
+
+    gt_zero = load_or_compute_ground_truths(
+        cached_fixture, n_mc_runs=5, base_seed=22, prior_spread=0.0
+    )
+    gt_wide = load_or_compute_ground_truths(
+        cached_fixture, n_mc_runs=5, base_seed=22, prior_spread=1.0
+    )
+
+    assert all(np.array_equal(a, b) for a, b in zip(gt_zero, gt_wide, strict=False))
+
+
+def test_load_or_compute_ground_truths_ignores_prior_spread_for_calibrated_fixture() -> None:
+    fixture = load_fixture(FIXTURE_PATH).model_copy(
+        update={
+            "params_source": ParamsSource.BENCHMARK_TRUTH,
+            "simulation_params": SimulationParams(init_population_mean=2.0, trade_range=12),
+        }
+    )
+
+    gt_zero = load_or_compute_ground_truths(fixture, n_mc_runs=5, base_seed=22, prior_spread=0.0)
+    gt_wide = load_or_compute_ground_truths(fixture, n_mc_runs=5, base_seed=22, prior_spread=1.0)
+
+    assert all(np.array_equal(a, b) for a, b in zip(gt_zero, gt_wide, strict=False))

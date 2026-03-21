@@ -44,14 +44,16 @@ class BenchmarkAdapter:
         if require_calibrated_params and fixture.params_source == ParamsSource.DEFAULT_PRIOR:
             raise ValueError(
                 f"BenchmarkAdapter: fixture '{fixture.id}' has params_source=DEFAULT_PRIOR. "
-                "The simulator will run with hardcoded defaults, not real server-side params. "
+                "The simulator will run with benchmark prior parameters, "
+                "not real server-side params. "
                 "Pass require_calibrated_params=False to suppress this error, or use a fixture "
                 "with params_source=INFERRED or BENCHMARK_TRUTH."
             )
         if fixture.params_source == ParamsSource.DEFAULT_PRIOR:
             warnings.warn(
                 f"BenchmarkAdapter: fixture '{fixture.id}' has params_source=DEFAULT_PRIOR. "
-                "Simulator results reflect default prior parameters, not real competition values. "
+                "Simulator results reflect benchmark prior parameters, "
+                "not real competition values. "
                 "Use this adapter for ground-truth generation only, not calibration.",
                 stacklevel=2,
             )

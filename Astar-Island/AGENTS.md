@@ -109,6 +109,14 @@ cd Astar-Island/benchmark
 uv run python scripts/fetch_real_rounds.py
 ```
 
+Use `--prior-spread <float>` when local fallback ground truths must be derived
+from `DEFAULT_PRIOR` parameters and you want a narrower or wider hyperparameter
+range than the default `1.0` spread.
+
+If you regenerate local ground truths or benchmark uncached fixtures, keep the
+same prior-spread setting across fixture prep and on-demand benchmark
+evaluation so scores stay comparable.
+
 ### Adding a new strategy
 1. Create `benchmark/src/astar_twin/strategies/<your_strategy>/strategy.py`
 2. Implement the `Strategy` protocol: `name` property + `predict(initial_state, budget, base_seed) -> NDArray[float64]`

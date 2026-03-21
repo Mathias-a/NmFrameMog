@@ -20,7 +20,7 @@ FIXTURE_PATH = (
 )
 
 
-def test_replay_produces_at_least_3_variants():
+def test_replay_produces_at_least_3_variants() -> None:
     """Replay validation produces uniform, fixed_coverage, and particle_no_hedge."""
     result = run_replay_validation(
         FIXTURE_PATH,
@@ -36,7 +36,7 @@ def test_replay_produces_at_least_3_variants():
     assert len(result.variants) >= 3
 
 
-def test_replay_winner_is_highest_mean():
+def test_replay_winner_is_highest_mean() -> None:
     """Winner should be the variant with highest mean score."""
     result = run_replay_validation(
         FIXTURE_PATH,
@@ -50,7 +50,7 @@ def test_replay_winner_is_highest_mean():
     assert abs(result.winner_mean - best.mean_score) < 1e-6
 
 
-def test_replay_calibration_disagreements():
+def test_replay_calibration_disagreements() -> None:
     """Calibration disagreements are computed for 5 seeds."""
     result = run_replay_validation(
         FIXTURE_PATH,
@@ -63,7 +63,7 @@ def test_replay_calibration_disagreements():
     assert all(d >= 0.0 for d in result.calibration_disagreements)
 
 
-def test_replay_serialization():
+def test_replay_serialization() -> None:
     """Result serializes to JSON-compatible dict."""
     result = run_replay_validation(
         FIXTURE_PATH,
@@ -80,7 +80,7 @@ def test_replay_serialization():
     assert d["winner"]["name"] == result.winner_name
 
 
-def test_replay_per_seed_scores_present():
+def test_replay_per_seed_scores_present() -> None:
     """Each variant has per_seed_scores for all 5 seeds."""
     result = run_replay_validation(
         FIXTURE_PATH,

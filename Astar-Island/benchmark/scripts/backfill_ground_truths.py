@@ -10,11 +10,15 @@ Usage (from the benchmark/ directory)::
 
     uv run python scripts/backfill_ground_truths.py
     uv run python scripts/backfill_ground_truths.py --n-runs 500 --force
+    uv run python scripts/backfill_ground_truths.py --n-runs 500 --prior-spread 0.5 --force
 
 The script writes each fixture back to its original ``round_detail.json`` file
 via ``write_fixture()`` so that ``run_benchmark_suite`` and
 ``run_multi_fixture_suite`` will pick up the cached tensors automatically on
 subsequent runs.
+
+Use ``--prior-spread`` to tune the ``DEFAULT_PRIOR`` hyperparameter sampling
+spread used to derive cached ground truths. The default is ``1.0``.
 """
 
 from __future__ import annotations
@@ -69,6 +73,12 @@ def main() -> None:
         help=f"Base random seed for MC runs (default: {DEFAULT_BASE_SEED}).",
     )
     parser.add_argument(
+        "--prior-spread",
+        type=float,
+        default=1.0,
+        help="Spread for DEFAULT_PRIOR hyperparameter sampling (default: 1.0).",
+    )
+    parser.add_argument(
         "--force",
         action="store_true",
         help="Recompute even if ground_truths are already present in the fixture.",
@@ -121,7 +131,8 @@ def main() -> None:
 
         if fixture.simulation_params is None:
             print(
-                f"    WARNING: fixture has no simulation_params — cannot compute ground truths. Skipping."
+                "    WARNING: fixture has no simulation_params — cannot "
+                "compute ground truths. Skipping."
             )
             skipped += 1
             continue
@@ -130,6 +141,7 @@ def main() -> None:
             fixture,
             n_runs=args.n_runs,
             base_seed=args.base_seed,
+            prior_spread=args.prior_spread,
         )
         write_fixture(updated_fixture, fixture_path)
         print(f"    Written to {fixture_path}")

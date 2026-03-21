@@ -1,15 +1,16 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 import numpy as np
 import pytest
 
+from astar_twin.contracts.api_models import InitialState
 from astar_twin.data.loaders import load_fixture
-from astar_twin.data.models import RoundFixture
+from astar_twin.data.models import ParamsSource, RoundFixture
 from astar_twin.harness.budget import Budget
 from astar_twin.harness.runner import BenchmarkRunner
+from astar_twin.params import SimulationParams
 from astar_twin.scoring import safe_prediction
 from astar_twin.strategies.uniform.strategy import UniformStrategy
 
@@ -131,6 +132,44 @@ class TestBenchmarkRunnerDerivedGroundTruths:
             assert len(gt[0]) == fixture.map_width
             assert len(gt[0][0]) == 6
 
+    def test_same_seed_reuses_same_prior_sample(self) -> None:
+        fixture = load_fixture(FIXTURE_PATH)
+        runner_a = BenchmarkRunner(fixture=fixture, base_seed=22, n_mc_runs=5)
+        runner_b = BenchmarkRunner(fixture=fixture, base_seed=22, n_mc_runs=5)
+
+        assert runner_a._get_ground_truths() == runner_b._get_ground_truths()
+
+    def test_benchmark_truth_fixture_uses_explicit_params(self) -> None:
+        fixture = load_fixture(FIXTURE_PATH).model_copy(
+            update={
+                "params_source": ParamsSource.BENCHMARK_TRUTH,
+                "simulation_params": SimulationParams(init_population_mean=2.0, trade_range=12),
+            }
+        )
+        runner_a = BenchmarkRunner(fixture=fixture, base_seed=22, n_mc_runs=5)
+        runner_b = BenchmarkRunner(fixture=fixture, base_seed=23, n_mc_runs=5)
+
+        assert runner_a._get_ground_truths() != runner_b._get_ground_truths()
+
+    def test_prior_spread_zero_is_deterministic(self) -> None:
+        fixture = load_fixture(FIXTURE_PATH)
+        runner_a = BenchmarkRunner(fixture=fixture, base_seed=22, n_mc_runs=5, prior_spread=0.0)
+        runner_b = BenchmarkRunner(fixture=fixture, base_seed=22, n_mc_runs=5, prior_spread=0.0)
+
+        assert runner_a._get_ground_truths() == runner_b._get_ground_truths()
+
+    def test_existing_ground_truths_ignore_prior_spread(
+        self, fixture_with_ground_truths: RoundFixture
+    ) -> None:
+        runner_a = BenchmarkRunner(
+            fixture=fixture_with_ground_truths, base_seed=22, prior_spread=0.0
+        )
+        runner_b = BenchmarkRunner(
+            fixture=fixture_with_ground_truths, base_seed=22, prior_spread=1.0
+        )
+
+        assert runner_a._get_ground_truths() == runner_b._get_ground_truths()
+
 
 class TestBenchmarkRunnerSharedBudget:
     """The runner must pass a single shared Budget instance across all seeds for
@@ -149,7 +188,7 @@ class TestBenchmarkRunnerSharedBudget:
 
             def predict(
                 self,
-                initial_state: Any,
+                initial_state: InitialState,
                 budget: Budget,
                 base_seed: int,
             ) -> np.ndarray:
@@ -187,7 +226,7 @@ class TestBenchmarkRunnerSharedBudget:
 
                 def predict(
                     self,
-                    initial_state: Any,
+                    initial_state: InitialState,
                     budget: Budget,
                     base_seed: int,
                 ) -> np.ndarray:

@@ -17,7 +17,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
-from numpy.typing import NDArray
 
 from astar_twin.data.loaders import load_fixture
 from astar_twin.scoring import compute_score
@@ -74,6 +73,7 @@ def run_replay_validation(
     fc_mc_runs: int = 200,
     gt_mc_runs: int = 200,
     gt_base_seed: int = 0,
+    gt_prior_spread: float = 1.0,
 ) -> ReplayResult:
     """Run replay validation comparing all variants.
 
@@ -86,6 +86,9 @@ def run_replay_validation(
         gt_mc_runs: MC runs for ground truth (only used when fixture has no
             cached ground_truths).
         gt_base_seed: Base seed for ground truth derivation.
+        gt_prior_spread: Spread for DEFAULT_PRIOR sampling when deriving
+            uncached ground truths. Ignored when cached ground truths already
+            exist.
 
     Returns:
         ReplayResult with all variant scores and selected winner.
@@ -97,7 +100,12 @@ def run_replay_validation(
     n_seeds = len(initial_states)
 
     # Ground truth: prefer cached tensors, otherwise compute.
-    ground_truths = load_or_compute_ground_truths(fixture, gt_mc_runs, gt_base_seed)
+    ground_truths = load_or_compute_ground_truths(
+        fixture,
+        gt_mc_runs,
+        gt_base_seed,
+        prior_spread=gt_prior_spread,
+    )
 
     variants: list[VariantResult] = []
 
@@ -120,7 +128,9 @@ def run_replay_validation(
         n_mc_runs=fc_mc_runs,
         base_seed=42,
     )
-    fc_scores = [float(compute_score(gt, t)) for gt, t in zip(ground_truths, fc_tensors)]
+    fc_scores = [
+        float(compute_score(gt, t)) for gt, t in zip(ground_truths, fc_tensors, strict=True)
+    ]
     variants.append(
         VariantResult(
             name="fixed_coverage",
@@ -140,7 +150,9 @@ def run_replay_validation(
         sims_per_seed=sims_per_seed,
         base_seed=42,
     )
-    particle_scores = [float(compute_score(gt, t)) for gt, t in zip(ground_truths, result.tensors)]
+    particle_scores = [
+        float(compute_score(gt, t)) for gt, t in zip(ground_truths, result.tensors, strict=True)
+    ]
     particle_mean = float(np.mean(particle_scores))
     variants.append(
         VariantResult(
@@ -171,7 +183,9 @@ def run_replay_validation(
             height,
             width,
         )
-        hedged_scores = [float(compute_score(gt, t)) for gt, t in zip(ground_truths, hedged)]
+        hedged_scores = [
+            float(compute_score(gt, t)) for gt, t in zip(ground_truths, hedged, strict=True)
+        ]
         variants.append(
             VariantResult(
                 name="particle_hedged",
@@ -193,7 +207,10 @@ def run_replay_validation(
 
 
 def main() -> None:
-    """CLI entry point for replay validation."""
+    """CLI entry point for replay validation.
+
+    ``--gt-prior-spread`` only affects fixtures without cached ground truths.
+    """
     import argparse
 
     parser = argparse.ArgumentParser(description="Run replay validation")
@@ -202,6 +219,14 @@ def main() -> None:
     parser.add_argument("--particles", type=int, default=24)
     parser.add_argument("--inner-runs", type=int, default=6)
     parser.add_argument("--sims-per-seed", type=int, default=64)
+    parser.add_argument(
+        "--gt-prior-spread",
+        type=float,
+        default=1.0,
+        help=(
+            "Spread for DEFAULT_PRIOR sampling when deriving uncached ground truths (default 1.0)."
+        ),
+    )
     args = parser.parse_args()
 
     fixture_path = Path(f"data/rounds/{args.round_id}/round_detail.json")
@@ -214,6 +239,7 @@ def main() -> None:
         n_particles=args.particles,
         n_inner_runs=args.inner_runs,
         sims_per_seed=args.sims_per_seed,
+        gt_prior_spread=args.gt_prior_spread,
     )
 
     output_path = Path(args.output)

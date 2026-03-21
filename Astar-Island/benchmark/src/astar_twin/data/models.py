@@ -17,8 +17,9 @@ class ParamsSource(StrEnum):
                          are known).
       inferred         — params were estimated by the particle-filter inference
                          pipeline from real API observations.
-      default_prior    — params are the SimulationParams() defaults; the real
-                         server values are unknown.  Fixture is suitable for
+      default_prior    — params come from the benchmark prior rooted in
+                         SimulationParams() defaults. The real server values are
+                         unknown. Fixture is suitable for synthetic
                          ground-truth generation but NOT for calibration.
     """
 

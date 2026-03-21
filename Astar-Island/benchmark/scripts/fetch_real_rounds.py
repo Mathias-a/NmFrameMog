@@ -4,6 +4,7 @@ them as RoundFixture JSON files under benchmark/data/rounds/{round_id}/.
 
 Usage (from the benchmark/ directory):
     uv run python scripts/fetch_real_rounds.py
+    uv run python scripts/fetch_real_rounds.py --prior-spread 0.5
 
 Environment:
     ACCESS_TOKEN or .env file at repo root (worktree-2/.env) with:
@@ -15,10 +16,15 @@ The script will:
   3. For each seed: try GET /astar-island/analysis/{id}/{seed} for ground truths.
   4. Fall back to compute_and_attach_ground_truths if analysis is unavailable.
   5. Write fixture via write_fixture() to data/rounds/{round_id}/round_detail.json.
+
+Use ``--prior-spread`` to control ``DEFAULT_PRIOR`` hyperparameter sampling for
+local fallback ground-truth generation when API analysis is unavailable. The
+default is ``1.0``.
 """
 
 from __future__ import annotations
 
+import argparse
 import os
 import sys
 from pathlib import Path
@@ -139,6 +145,7 @@ def _fetch_and_save_round(
     client: httpx.Client,
     summary: RoundSummary,
     token: str,
+    prior_spread: float,
 ) -> Path:
     """Fetch one round, build a RoundFixture, save it, return the path."""
     print(f"  Fetching detail for round {summary.round_number} ({summary.id}) …")
@@ -215,6 +222,7 @@ def _fetch_and_save_round(
             fixture,
             n_runs=GROUND_TRUTH_N_RUNS,
             base_seed=GROUND_TRUTH_BASE_SEED,
+            prior_spread=prior_spread,
         )
         print("  Local ground truths computed ✓")
 
@@ -230,6 +238,20 @@ def _fetch_and_save_round(
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Fetch completed real rounds into benchmark fixtures"
+    )
+    parser.add_argument(
+        "--prior-spread",
+        type=float,
+        default=1.0,
+        help=(
+            "Spread for DEFAULT_PRIOR hyperparameter sampling during local "
+            "fallback ground-truth generation (default: 1.0)."
+        ),
+    )
+    args = parser.parse_args()
+
     token = _load_token()
     print(f"Token loaded (first 20 chars): {token[:20]}…\n")
 
@@ -249,7 +271,7 @@ def main() -> None:
         for summary in sorted(target_rounds, key=lambda r: r.round_number):
             print(f"Round {summary.round_number} — {summary.status} — {summary.event_date}")
             try:
-                path = _fetch_and_save_round(client, summary, token)
+                path = _fetch_and_save_round(client, summary, token, args.prior_spread)
                 saved_paths.append(path)
             except Exception as exc:
                 print(f"  [ERROR] {exc}")
@@ -260,7 +282,7 @@ def main() -> None:
         most_recent_id = sorted(target_rounds, key=lambda r: r.round_number)[-1].id
         print(f"Done. {len(saved_paths)} fixture(s) saved.")
         print(f"Most recent real round ID: {most_recent_id}")
-        print(f"\nUpdate AGENTS.md benchmark example to use:")
+        print("\nUpdate AGENTS.md benchmark example to use:")
         print(f"    load_fixture(Path('data/rounds/{most_recent_id}'))")
     else:
         print("No fixtures saved.")
