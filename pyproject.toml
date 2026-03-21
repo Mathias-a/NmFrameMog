@@ -16,6 +16,17 @@ dev = [
     "pytest==8.4.2",
     "ruff==0.15.6",
 ]
+ng-train = [
+    "matplotlib>=3.8,<4.0",
+    "numpy>=1.26,<2.0",
+    "pillow>=11.2.1,<12.0.0",
+    "pyyaml>=6.0,<7.0",
+    "scikit-learn>=1.4,<2.0",
+    "timm==0.9.12",
+    "torch==2.6.0",
+    "torchvision==0.21.0",
+    "ultralytics==8.1.0",
+]
 
 [tool.uv]
 package = false
