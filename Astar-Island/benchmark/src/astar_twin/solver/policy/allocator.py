@@ -25,6 +25,7 @@ Contradiction triggers:
   - ESS < 6
   - Any seed has < 8 total queries after adaptive phase
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -132,14 +133,14 @@ def plan_bootstrap_queries(
 
         # Query A: prefer coastal, then corridor, then anything
         query_a = _pick_by_category_priority(
-            candidates, ["coastal", "corridor", "frontier", "reclaim", "fallback"],
-            exclude=[]
+            candidates, ["coastal", "corridor", "frontier", "reclaim", "fallback"], exclude=[]
         )
         # Query B: prefer frontier/corridor, then anything not already chosen
         exclude_b = [query_a] if query_a else []
         query_b = _pick_by_category_priority(
-            candidates, ["frontier", "corridor", "reclaim", "fallback", "coastal"],
-            exclude=exclude_b
+            candidates,
+            ["frontier", "corridor", "reclaim", "fallback", "coastal"],
+            exclude=exclude_b,
         )
 
         if query_a:
@@ -215,9 +216,7 @@ def score_candidate(
             entropy_score = float(np.sum(window_entropy)) / max(max_entropy, 1e-6)
 
     # --- Posterior disagreement ---
-    disagreement = compute_posterior_disagreement(
-        candidate, posterior, initial_state
-    )
+    disagreement = compute_posterior_disagreement(candidate, posterior, initial_state)
 
     # --- Expected stat gain (proxy) ---
     stat_gain = _estimate_stat_gain(candidate, initial_state)
@@ -274,8 +273,10 @@ def _estimate_stat_gain(
     for s in initial_state.settlements:
         if s.alive:
             total_settlements += 1
-            if (candidate.x <= s.x < candidate.x + candidate.w
-                    and candidate.y <= s.y < candidate.y + candidate.h):
+            if (
+                candidate.x <= s.x < candidate.x + candidate.w
+                and candidate.y <= s.y < candidate.y + candidate.h
+            ):
                 alive_in_window += 1
 
     if total_settlements == 0:
@@ -302,7 +303,7 @@ def select_adaptive_batch(
     state: AllocationState,
     posterior: PosteriorState,
     initial_states: list[InitialState],
-    current_prediction: NDArray[np.float64] | None = None,
+    seed_predictions: dict[int, NDArray[np.float64]] | None = None,
     batch_size: int = ADAPTIVE_BATCH_SIZE,
 ) -> list[tuple[int, ViewportCandidate]]:
     """Select the next batch of adaptive queries across all seeds.
@@ -314,11 +315,6 @@ def select_adaptive_batch(
 
     actual_batch = min(batch_size, state.queries_remaining)
 
-    # Compute entropy map if prediction available
-    entropy_map: NDArray[np.float64] | None = None
-    if current_prediction is not None:
-        entropy_map = compute_entropy_map(current_prediction)
-
     # Score all candidates across all seeds
     scored: list[tuple[float, int, ViewportCandidate]] = []
 
@@ -327,11 +323,20 @@ def select_adaptive_batch(
             continue
         initial_state = initial_states[seed_idx]
         queried_vps = [q.viewport for q in state.queries_for_seed(seed_idx)]
+        entropy_map: NDArray[np.float64] | None = None
+        if seed_predictions is not None:
+            prediction = seed_predictions.get(seed_idx)
+            if prediction is not None:
+                entropy_map = compute_entropy_map(prediction)
 
         for candidate in candidates:
             s = score_candidate(
-                candidate, seed_idx, posterior, initial_state,
-                queried_vps, entropy_map,
+                candidate,
+                seed_idx,
+                posterior,
+                initial_state,
+                queried_vps,
+                entropy_map,
             )
             if s >= 0:  # not rejected
                 scored.append((s, seed_idx, candidate))
@@ -388,7 +393,7 @@ def plan_reserve_queries(
     state: AllocationState,
     posterior: PosteriorState,
     initial_states: list[InitialState],
-    current_prediction: NDArray[np.float64] | None = None,
+    seed_predictions: dict[int, NDArray[np.float64]] | None = None,
 ) -> list[tuple[int, ViewportCandidate]]:
     """Plan reserve query usage.
 
@@ -404,12 +409,12 @@ def plan_reserve_queries(
     if contradiction:
         # Allow high-overlap queries for contradiction resolution
         return _select_contradiction_queries(
-            state, posterior, initial_states, current_prediction, remaining
+            state, posterior, initial_states, seed_predictions, remaining
         )
     else:
         # Release as normal adaptive batches
         return select_adaptive_batch(
-            state, posterior, initial_states, current_prediction, batch_size=remaining
+            state, posterior, initial_states, seed_predictions, batch_size=remaining
         )
 
 
@@ -417,14 +422,10 @@ def _select_contradiction_queries(
     state: AllocationState,
     posterior: PosteriorState,
     initial_states: list[InitialState],
-    current_prediction: NDArray[np.float64] | None,
+    seed_predictions: dict[int, NDArray[np.float64]] | None,
     n_queries: int,
 ) -> list[tuple[int, ViewportCandidate]]:
     """Select queries for contradiction resolution with relaxed overlap rules."""
-    entropy_map: NDArray[np.float64] | None = None
-    if current_prediction is not None:
-        entropy_map = compute_entropy_map(current_prediction)
-
     scored: list[tuple[float, int, ViewportCandidate]] = []
 
     for seed_idx, candidates in state.seed_candidates.items():
@@ -432,11 +433,20 @@ def _select_contradiction_queries(
             continue
         initial_state = initial_states[seed_idx]
         queried_vps = [q.viewport for q in state.queries_for_seed(seed_idx)]
+        entropy_map: NDArray[np.float64] | None = None
+        if seed_predictions is not None:
+            prediction = seed_predictions.get(seed_idx)
+            if prediction is not None:
+                entropy_map = compute_entropy_map(prediction)
 
         for candidate in candidates:
             s = score_candidate(
-                candidate, seed_idx, posterior, initial_state,
-                queried_vps, entropy_map,
+                candidate,
+                seed_idx,
+                posterior,
+                initial_state,
+                queried_vps,
+                entropy_map,
                 allow_high_overlap=True,  # relaxed for contradiction
             )
             if s >= 0:
@@ -467,9 +477,13 @@ def record_query(
     """Record a query that has been executed."""
     if phase is None:
         phase = state.phase
-    state.queries.append(QueryRecord(
-        seed_index=seed_index, viewport=viewport, phase=phase,
-    ))
+    state.queries.append(
+        QueryRecord(
+            seed_index=seed_index,
+            viewport=viewport,
+            phase=phase,
+        )
+    )
     return state
 
 

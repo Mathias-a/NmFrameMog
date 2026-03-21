@@ -7,6 +7,7 @@ Covers:
   - Runtime fallback triggers correctly
   - Deterministic output from same base_seed
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -16,7 +17,8 @@ import pytest
 
 from astar_twin.contracts.types import NUM_CLASSES
 from astar_twin.data.loaders import load_fixture
-from astar_twin.solver.inference.posterior import create_posterior
+from astar_twin.solver.baselines import uniform_baseline
+from astar_twin.solver.inference.posterior import PosteriorState, create_posterior
 from astar_twin.solver.predict.posterior_mc import (
     DEFAULT_SIMS_PER_SEED,
     DEFAULT_TOP_K,
@@ -33,7 +35,13 @@ from astar_twin.solver.predict.posterior_mc import (
 
 @pytest.fixture
 def fixture():
-    return load_fixture(Path(__file__).parent.parent.parent / "data" / "rounds" / "test-round-001" / "round_detail.json")
+    return load_fixture(
+        Path(__file__).parent.parent.parent
+        / "data"
+        / "rounds"
+        / "test-round-001"
+        / "round_detail.json"
+    )
 
 
 @pytest.fixture
@@ -108,9 +116,14 @@ def test_predict_seed_shape(posterior, initial_states, map_dims):
     """Prediction tensor has correct H×W×6 shape."""
     height, width = map_dims
     tensor, metrics = predict_seed(
-        posterior, initial_states[0], seed_index=0,
-        map_height=height, map_width=width,
-        top_k=3, sims_per_seed=6, base_seed=0,
+        posterior,
+        initial_states[0],
+        seed_index=0,
+        map_height=height,
+        map_width=width,
+        top_k=3,
+        sims_per_seed=6,
+        base_seed=0,
     )
     assert tensor.shape == (height, width, NUM_CLASSES)
 
@@ -119,9 +132,14 @@ def test_predict_seed_normalized(posterior, initial_states, map_dims):
     """Prediction tensor sums to ~1 per cell."""
     height, width = map_dims
     tensor, _ = predict_seed(
-        posterior, initial_states[0], seed_index=0,
-        map_height=height, map_width=width,
-        top_k=3, sims_per_seed=6, base_seed=0,
+        posterior,
+        initial_states[0],
+        seed_index=0,
+        map_height=height,
+        map_width=width,
+        top_k=3,
+        sims_per_seed=6,
+        base_seed=0,
     )
     sums = np.sum(tensor, axis=2)
     np.testing.assert_allclose(sums, 1.0, atol=0.02)
@@ -131,9 +149,14 @@ def test_predict_seed_no_zeros(posterior, initial_states, map_dims):
     """No exact zeros in prediction (safe_prediction applied)."""
     height, width = map_dims
     tensor, _ = predict_seed(
-        posterior, initial_states[0], seed_index=0,
-        map_height=height, map_width=width,
-        top_k=3, sims_per_seed=6, base_seed=0,
+        posterior,
+        initial_states[0],
+        seed_index=0,
+        map_height=height,
+        map_width=width,
+        top_k=3,
+        sims_per_seed=6,
+        base_seed=0,
     )
     assert np.all(tensor > 0)
 
@@ -142,9 +165,14 @@ def test_predict_seed_metrics(posterior, initial_states, map_dims):
     """Metrics are populated correctly."""
     height, width = map_dims
     _, metrics = predict_seed(
-        posterior, initial_states[0], seed_index=0,
-        map_height=height, map_width=width,
-        top_k=3, sims_per_seed=6, base_seed=0,
+        posterior,
+        initial_states[0],
+        seed_index=0,
+        map_height=height,
+        map_width=width,
+        top_k=3,
+        sims_per_seed=6,
+        base_seed=0,
     )
     assert metrics.seed_index == 0
     assert metrics.n_particles_used == 3
@@ -157,16 +185,75 @@ def test_predict_seed_deterministic(posterior, initial_states, map_dims):
     """Same inputs produce identical output."""
     height, width = map_dims
     t1, _ = predict_seed(
-        posterior, initial_states[0], seed_index=0,
-        map_height=height, map_width=width,
-        top_k=3, sims_per_seed=6, base_seed=42,
+        posterior,
+        initial_states[0],
+        seed_index=0,
+        map_height=height,
+        map_width=width,
+        top_k=3,
+        sims_per_seed=6,
+        base_seed=42,
     )
     t2, _ = predict_seed(
-        posterior, initial_states[0], seed_index=0,
-        map_height=height, map_width=width,
-        top_k=3, sims_per_seed=6, base_seed=42,
+        posterior,
+        initial_states[0],
+        seed_index=0,
+        map_height=height,
+        map_width=width,
+        top_k=3,
+        sims_per_seed=6,
+        base_seed=42,
     )
     np.testing.assert_array_equal(t1, t2)
+
+
+def test_predict_seed_empty_posterior_returns_uniform(initial_states, map_dims):
+    """Empty posterior falls back to uniform baseline."""
+    height, width = map_dims
+    posterior = PosteriorState(particles=[])
+
+    tensor, metrics = predict_seed(
+        posterior,
+        initial_states[0],
+        seed_index=0,
+        map_height=height,
+        map_width=width,
+        top_k=3,
+        sims_per_seed=6,
+        base_seed=0,
+    )
+
+    expected = uniform_baseline(height, width)
+    assert tensor.shape == (height, width, NUM_CLASSES)
+    np.testing.assert_allclose(tensor, expected)
+    assert metrics.seed_index == 0
+    assert metrics.n_particles_used == 0
+    assert metrics.total_sims == 0
+    assert metrics.fallback_used is True
+    assert metrics.runs_per_particle == []
+
+
+def test_predict_seed_top_k_zero_returns_uniform(posterior, initial_states, map_dims):
+    """top_k=0 falls back to uniform baseline."""
+    height, width = map_dims
+
+    tensor, metrics = predict_seed(
+        posterior,
+        initial_states[0],
+        seed_index=0,
+        map_height=height,
+        map_width=width,
+        top_k=0,
+        sims_per_seed=6,
+        base_seed=0,
+    )
+
+    expected = uniform_baseline(height, width)
+    np.testing.assert_allclose(tensor, expected)
+    assert metrics.n_particles_used == 0
+    assert metrics.total_sims == 0
+    assert metrics.fallback_used is True
+    assert metrics.runs_per_particle == []
 
 
 # ---- All seeds prediction ----
@@ -176,9 +263,13 @@ def test_predict_all_seeds_count(posterior, initial_states, map_dims):
     """Produces one tensor per seed."""
     height, width = map_dims
     tensors, metrics = predict_all_seeds(
-        posterior, initial_states,
-        map_height=height, map_width=width,
-        top_k=3, sims_per_seed=6, base_seed=0,
+        posterior,
+        initial_states,
+        map_height=height,
+        map_width=width,
+        top_k=3,
+        sims_per_seed=6,
+        base_seed=0,
     )
     assert len(tensors) == len(initial_states)
     assert len(metrics) == len(initial_states)
@@ -188,9 +279,13 @@ def test_predict_all_seeds_shapes(posterior, initial_states, map_dims):
     """All tensors have correct shape."""
     height, width = map_dims
     tensors, _ = predict_all_seeds(
-        posterior, initial_states,
-        map_height=height, map_width=width,
-        top_k=3, sims_per_seed=6, base_seed=0,
+        posterior,
+        initial_states,
+        map_height=height,
+        map_width=width,
+        top_k=3,
+        sims_per_seed=6,
+        base_seed=0,
     )
     for t in tensors:
         assert t.shape == (height, width, NUM_CLASSES)
@@ -206,10 +301,14 @@ def test_runtime_fallback_triggers(posterior, initial_states, map_dims):
     """High runtime fraction triggers fallback to fewer sims."""
     height, width = map_dims
     _, metrics = predict_all_seeds(
-        posterior, initial_states,
-        map_height=height, map_width=width,
-        top_k=3, sims_per_seed=64,
-        base_seed=0, runtime_fraction=0.85,
+        posterior,
+        initial_states,
+        map_height=height,
+        map_width=width,
+        top_k=3,
+        sims_per_seed=64,
+        base_seed=0,
+        runtime_fraction=0.85,
     )
     for m in metrics:
         assert m.fallback_used is True
@@ -220,10 +319,14 @@ def test_runtime_no_fallback(posterior, initial_states, map_dims):
     """Low runtime fraction uses full sim count."""
     height, width = map_dims
     _, metrics = predict_all_seeds(
-        posterior, initial_states,
-        map_height=height, map_width=width,
-        top_k=3, sims_per_seed=12,
-        base_seed=0, runtime_fraction=0.5,
+        posterior,
+        initial_states,
+        map_height=height,
+        map_width=width,
+        top_k=3,
+        sims_per_seed=12,
+        base_seed=0,
+        runtime_fraction=0.5,
     )
     for m in metrics:
         assert m.fallback_used is False

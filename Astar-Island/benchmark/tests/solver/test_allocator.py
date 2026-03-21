@@ -7,6 +7,7 @@ Covers:
   - Reserve phase: contradiction triggers, release logic
   - Phase transitions
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -45,9 +46,7 @@ from astar_twin.solver.policy.hotspots import generate_hotspots
 # ---- Fixtures ----
 
 
-def _make_initial_state(
-    width: int = 10, height: int = 10, n_settlements: int = 3
-) -> InitialState:
+def _make_initial_state(width: int = 10, height: int = 10, n_settlements: int = 3) -> InitialState:
     """Create a minimal initial state for testing."""
     from astar_twin.contracts.types import TerrainCode
 
@@ -65,9 +64,14 @@ def _make_initial_state(
 
     settlements: list[InitialSettlement] = []
     for i in range(n_settlements):
-        settlements.append(InitialSettlement(
-            x=3 + i, y=2, has_port=(i == 0), alive=True,
-        ))
+        settlements.append(
+            InitialSettlement(
+                x=3 + i,
+                y=2,
+                has_port=(i == 0),
+                alive=True,
+            )
+        )
 
     return InitialState(grid=grid, settlements=settlements)
 
@@ -153,7 +157,11 @@ def test_score_candidate_respects_overlap_rejection():
     candidate = ViewportCandidate(x=0, y=0, w=10, h=10, category="frontier")
 
     score = score_candidate(
-        candidate, 0, posterior, state, [queried],
+        candidate,
+        0,
+        posterior,
+        state,
+        [queried],
     )
     assert score == -1.0
 
@@ -167,7 +175,11 @@ def test_score_candidate_allows_high_overlap_when_flagged():
     candidate = ViewportCandidate(x=0, y=0, w=10, h=10, category="frontier")
 
     score = score_candidate(
-        candidate, 0, posterior, state, [queried],
+        candidate,
+        0,
+        posterior,
+        state,
+        [queried],
         allow_high_overlap=True,
     )
     assert score != -1.0  # Scored normally despite overlap
@@ -183,14 +195,22 @@ def test_score_candidate_with_entropy_map():
     candidate = ViewportCandidate(x=0, y=0, w=5, h=5, category="frontier")
 
     score_with_entropy = score_candidate(
-        candidate, 0, posterior, state, [],
+        candidate,
+        0,
+        posterior,
+        state,
+        [],
         entropy_map=entropy_map,
     )
 
     # Low-entropy map
     entropy_map_low = np.zeros((10, 10), dtype=np.float64)
     score_without_entropy = score_candidate(
-        candidate, 0, posterior, state, [],
+        candidate,
+        0,
+        posterior,
+        state,
+        [],
         entropy_map=entropy_map_low,
     )
 
@@ -235,6 +255,27 @@ def test_select_adaptive_batch_respects_budget():
 
     batch = select_adaptive_batch(alloc, posterior, states, batch_size=5)
     assert len(batch) <= 2  # Only 2 queries remaining
+
+
+def test_select_adaptive_batch_accepts_per_seed_predictions():
+    """Adaptive selection accepts per-seed prediction tensors."""
+    states = _make_5_initial_states()
+    alloc = initialize_allocation(states, map_height=10, map_width=10)
+    posterior = create_posterior(n_particles=4, seed=42)
+    seed_predictions = {
+        seed_idx: np.ones((10, 10, 6), dtype=np.float64) / 6.0 for seed_idx in range(5)
+    }
+
+    batch = select_adaptive_batch(
+        alloc,
+        posterior,
+        states,
+        seed_predictions=seed_predictions,
+        batch_size=ADAPTIVE_BATCH_SIZE,
+    )
+
+    assert len(batch) <= ADAPTIVE_BATCH_SIZE
+    assert all(seed_idx in seed_predictions for seed_idx, _ in batch)
 
 
 # ---- Phase transitions ----
@@ -344,6 +385,25 @@ def test_reserve_queries_with_contradiction():
     reserve = plan_reserve_queries(alloc, posterior, states)
     assert len(reserve) <= RESERVE_QUERIES
     assert len(reserve) > 0  # Should produce queries
+
+
+def test_reserve_queries_accepts_per_seed_predictions():
+    """Reserve planning accepts per-seed prediction tensors."""
+    states = _make_5_initial_states()
+    alloc = initialize_allocation(states, map_height=10, map_width=10)
+    posterior = create_posterior(n_particles=8, seed=42)
+    seed_predictions = {
+        seed_idx: np.ones((10, 10, 6), dtype=np.float64) / 6.0 for seed_idx in range(5)
+    }
+
+    reserve = plan_reserve_queries(
+        alloc,
+        posterior,
+        states,
+        seed_predictions=seed_predictions,
+    )
+
+    assert len(reserve) <= RESERVE_QUERIES
 
 
 # ---- Record + query tracking ----

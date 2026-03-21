@@ -7,6 +7,7 @@ Uses top-K particles weighted by posterior to generate full-map predictions:
   4. Combine tensors by normalized posterior weight.
   5. Finalize through the shared tensor finalizer.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -131,6 +132,19 @@ def predict_seed(
     """
     # Select top-K particles
     k = min(top_k, len(posterior.particles))
+    if k == 0:
+        from astar_twin.solver.baselines import uniform_baseline
+
+        uniform = uniform_baseline(map_height, map_width)
+        metrics = PredictionMetrics(
+            seed_index=seed_index,
+            n_particles_used=0,
+            total_sims=0,
+            fallback_used=True,
+            runs_per_particle=[],
+        )
+        return uniform, metrics
+
     top_indices = posterior.top_k_indices(k)
     top_particles = [posterior.particles[i] for i in top_indices]
 
@@ -150,9 +164,7 @@ def predict_seed(
     # Run MC for each particle
     combined = np.zeros((map_height, map_width, NUM_CLASSES), dtype=np.float64)
 
-    for i, (particle, n_runs, weight) in enumerate(
-        zip(top_particles, run_alloc, selected_weights)
-    ):
+    for i, (particle, n_runs, weight) in enumerate(zip(top_particles, run_alloc, selected_weights)):
         sim_params = particle.to_simulation_params()
         simulator = Simulator(params=sim_params)
         runner = MCRunner(simulator)
@@ -216,8 +228,11 @@ def predict_all_seeds(
     for seed_idx, initial_state in enumerate(initial_states):
         seed_offset = base_seed + seed_idx * 10000
         tensor, metrics = predict_seed(
-            posterior, initial_state, seed_idx,
-            map_height, map_width,
+            posterior,
+            initial_state,
+            seed_idx,
+            map_height,
+            map_width,
             top_k=top_k,
             sims_per_seed=effective_sims,
             base_seed=seed_offset,

@@ -1,4 +1,5 @@
 """Tests for posterior updates, resampling, and tempering."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -31,7 +32,10 @@ def _make_observation() -> SimulateResponse:
         grid=[[TerrainCode.PLAINS] * 5 for _ in range(5)],
         settlements=[],
         viewport=ViewportBounds(x=0, y=0, w=5, h=5),
-        width=10, height=10, queries_used=1, queries_max=50,
+        width=10,
+        height=10,
+        queries_used=1,
+        queries_max=50,
     )
 
 
@@ -40,6 +44,15 @@ def test_create_posterior_has_24_particles() -> None:
     assert len(state.particles) == 24
     assert state.n_updates == 0
     assert state.phase == "bootstrap"
+
+
+def test_empty_posterior_state_properties() -> None:
+    state = PosteriorState(particles=[])
+
+    assert state.ess == 0.0
+    assert state.top_particle_mass == 0.0
+    assert state.normalized_weights() == []
+    assert state.top_k_indices(3) == []
 
 
 def test_update_changes_weights() -> None:
@@ -147,7 +160,10 @@ def test_posterior_ranking_changes_with_evidence() -> None:
         grid=[[TerrainCode.PLAINS] * 5 for _ in range(5)],
         settlements=[],
         viewport=ViewportBounds(x=0, y=0, w=5, h=5),
-        width=10, height=10, queries_used=1, queries_max=50,
+        width=10,
+        height=10,
+        queries_used=1,
+        queries_max=50,
     )
 
     # Observation 2: mixed terrain
@@ -155,7 +171,10 @@ def test_posterior_ranking_changes_with_evidence() -> None:
         grid=[[TerrainCode.FOREST] * 5 for _ in range(5)],
         settlements=[],
         viewport=ViewportBounds(x=0, y=0, w=5, h=5),
-        width=10, height=10, queries_used=1, queries_max=50,
+        width=10,
+        height=10,
+        queries_used=1,
+        queries_max=50,
     )
 
     state1 = create_posterior(n_particles=6, seed=42)

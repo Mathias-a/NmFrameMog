@@ -6,6 +6,7 @@ Maintains a particle set with:
   - Post-bootstrap pruning (top 8 → resample to 12)
   - Tempering when top-particle mass > 0.85
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -30,15 +31,21 @@ class PosteriorState:
     @property
     def ess(self) -> float:
         """Effective sample size."""
+        if not self.particles:
+            return 0.0
+
         log_weights = np.array([p.log_weight for p in self.particles])
         max_w = np.max(log_weights)
         weights = np.exp(log_weights - max_w)
         weights /= np.sum(weights)
-        return float(1.0 / np.sum(weights ** 2))
+        return float(1.0 / np.sum(weights**2))
 
     @property
     def top_particle_mass(self) -> float:
         """Normalized weight of the highest-weight particle."""
+        if not self.particles:
+            return 0.0
+
         log_weights = np.array([p.log_weight for p in self.particles])
         max_w = np.max(log_weights)
         weights = np.exp(log_weights - max_w)
@@ -47,6 +54,9 @@ class PosteriorState:
 
     def normalized_weights(self) -> list[float]:
         """Return normalized weights for all particles."""
+        if not self.particles:
+            return []
+
         log_weights = np.array([p.log_weight for p in self.particles])
         max_w = np.max(log_weights)
         weights = np.exp(log_weights - max_w)
@@ -55,6 +65,9 @@ class PosteriorState:
 
     def top_k_indices(self, k: int) -> list[int]:
         """Return indices of top-k particles by weight."""
+        if not self.particles:
+            return []
+
         log_weights = [p.log_weight for p in self.particles]
         sorted_idx = sorted(range(len(log_weights)), key=lambda i: log_weights[i], reverse=True)
         return sorted_idx[:k]
@@ -76,8 +89,11 @@ def update_posterior(
     """Update particle weights given a new observation."""
     for particle in state.particles:
         ll = compute_particle_loglik(
-            particle, observed_response, initial_state,
-            n_inner_runs=n_inner_runs, base_seed=base_seed,
+            particle,
+            observed_response,
+            initial_state,
+            n_inner_runs=n_inner_runs,
+            base_seed=base_seed,
         )
         particle.log_weight += ll
 
@@ -120,10 +136,12 @@ def prune_and_resample_bootstrap(
             idx += 1
         # Clone the selected particle with reset weight
         source = top_particles[idx]
-        new_particles.append(Particle(
-            params=dict(source.params),
-            log_weight=0.0,
-        ))
+        new_particles.append(
+            Particle(
+                params=dict(source.params),
+                log_weight=0.0,
+            )
+        )
 
     state.particles = new_particles
     state.phase = "adaptive"
@@ -154,10 +172,12 @@ def resample_if_needed(
         while idx < len(cumsum) - 1 and cumsum[idx] < threshold:
             idx += 1
         source = state.particles[idx]
-        new_particles.append(Particle(
-            params=dict(source.params),
-            log_weight=0.0,
-        ))
+        new_particles.append(
+            Particle(
+                params=dict(source.params),
+                log_weight=0.0,
+            )
+        )
 
     state.particles = new_particles
     return state

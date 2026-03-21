@@ -10,6 +10,7 @@ This module is the single entrypoint that orchestrates:
   6. generate final tensors
   7. return metrics + transcripts
 """
+
 from __future__ import annotations
 
 import time
@@ -83,8 +84,12 @@ def _issue_query(
 ):
     """Issue a single simulate query through the adapter."""
     return adapter.simulate(
-        round_id, seed_index,
-        viewport_x, viewport_y, viewport_w, viewport_h,
+        round_id,
+        seed_index,
+        viewport_x,
+        viewport_y,
+        viewport_w,
+        viewport_h,
     )
 
 
@@ -143,8 +148,13 @@ def solve(
             break
         try:
             response = _issue_query(
-                adapter, round_id, seed_idx,
-                vp.x, vp.y, vp.w, vp.h,
+                adapter,
+                round_id,
+                seed_idx,
+                vp.x,
+                vp.y,
+                vp.w,
+                vp.h,
             )
         except RuntimeError:
             # Budget exhausted
@@ -152,38 +162,60 @@ def solve(
 
         # Update posterior with observation
         posterior = update_posterior(
-            posterior, response, initial_states[seed_idx],
+            posterior,
+            response,
+            initial_states[seed_idx],
             n_inner_runs=n_inner_runs,
             base_seed=base_seed + query_counter * 100,
         )
         record_query(alloc, seed_idx, vp, "bootstrap")
-        transcript.append(QueryRecord(
-            seed_index=seed_idx,
-            viewport_x=vp.x, viewport_y=vp.y,
-            viewport_w=vp.w, viewport_h=vp.h,
-            phase="bootstrap",
-            utility_score=vp.score,
-            ess_after=posterior.ess,
-        ))
+        transcript.append(
+            QueryRecord(
+                seed_index=seed_idx,
+                viewport_x=vp.x,
+                viewport_y=vp.y,
+                viewport_w=vp.w,
+                viewport_h=vp.h,
+                phase="bootstrap",
+                utility_score=vp.score,
+                ess_after=posterior.ess,
+            )
+        )
         query_counter += 1
 
     # 4. Post-bootstrap: prune and resample
     transition_phase(alloc)
     posterior = prune_and_resample_bootstrap(
-        posterior, top_k=8, target_n=12, seed=base_seed + 1000,
+        posterior,
+        top_k=8,
+        target_n=12,
+        seed=base_seed + 1000,
     )
 
+    bootstrap_tensors, _ = predict_all_seeds(
+        posterior,
+        initial_states[:n_seeds],
+        map_height=height,
+        map_width=width,
+        top_k=min(4, len(posterior.particles)),
+        sims_per_seed=16,
+        base_seed=base_seed + 3000,
+    )
+    seed_predictions: dict[int, NDArray[np.float64]] = {
+        i: tensor for i, tensor in enumerate(bootstrap_tensors)
+    }
+
     # 5. Adaptive phase: 6 batches of 5
-    # Build a running prediction for entropy scoring
-    current_prediction: NDArray[np.float64] | None = None
 
     for batch_num in range(ADAPTIVE_BATCHES):
         if alloc.queries_remaining <= 0:
             break
 
         batch = select_adaptive_batch(
-            alloc, posterior, initial_states[:n_seeds],
-            current_prediction=current_prediction,
+            alloc,
+            posterior,
+            initial_states[:n_seeds],
+            seed_predictions=seed_predictions,
             batch_size=ADAPTIVE_BATCH_SIZE,
         )
 
@@ -192,35 +224,58 @@ def solve(
                 break
             try:
                 response = _issue_query(
-                    adapter, round_id, seed_idx,
-                    vp.x, vp.y, vp.w, vp.h,
+                    adapter,
+                    round_id,
+                    seed_idx,
+                    vp.x,
+                    vp.y,
+                    vp.w,
+                    vp.h,
                 )
             except RuntimeError:
                 break
 
             posterior = update_posterior(
-                posterior, response, initial_states[seed_idx],
+                posterior,
+                response,
+                initial_states[seed_idx],
                 n_inner_runs=n_inner_runs,
                 base_seed=base_seed + query_counter * 100,
             )
             record_query(alloc, seed_idx, vp, "adaptive")
-            transcript.append(QueryRecord(
-                seed_index=seed_idx,
-                viewport_x=vp.x, viewport_y=vp.y,
-                viewport_w=vp.w, viewport_h=vp.h,
-                phase="adaptive",
-                utility_score=vp.score,
-                ess_after=posterior.ess,
-            ))
+            transcript.append(
+                QueryRecord(
+                    seed_index=seed_idx,
+                    viewport_x=vp.x,
+                    viewport_y=vp.y,
+                    viewport_w=vp.w,
+                    viewport_h=vp.h,
+                    phase="adaptive",
+                    utility_score=vp.score,
+                    ess_after=posterior.ess,
+                )
+            )
             query_counter += 1
 
         # Resample if ESS collapsed
         posterior = resample_if_needed(
-            posterior, ess_threshold=6.0,
+            posterior,
+            ess_threshold=6.0,
             seed=base_seed + 2000 + batch_num,
         )
         # Temper if top particle dominates
         posterior = temper_if_collapsed(posterior)
+
+        batch_tensors, _ = predict_all_seeds(
+            posterior,
+            initial_states[:n_seeds],
+            map_height=height,
+            map_width=width,
+            top_k=min(4, len(posterior.particles)),
+            sims_per_seed=16,
+            base_seed=base_seed + 4000 + batch_num * 100,
+        )
+        seed_predictions = {i: tensor for i, tensor in enumerate(batch_tensors)}
 
     # 6. Reserve phase
     transition_phase(alloc)
@@ -228,8 +283,10 @@ def solve(
 
     if alloc.queries_remaining > 0:
         reserve_plan = plan_reserve_queries(
-            alloc, posterior, initial_states[:n_seeds],
-            current_prediction=current_prediction,
+            alloc,
+            posterior,
+            initial_states[:n_seeds],
+            seed_predictions=seed_predictions,
         )
 
         for seed_idx, vp in reserve_plan:
@@ -237,26 +294,37 @@ def solve(
                 break
             try:
                 response = _issue_query(
-                    adapter, round_id, seed_idx,
-                    vp.x, vp.y, vp.w, vp.h,
+                    adapter,
+                    round_id,
+                    seed_idx,
+                    vp.x,
+                    vp.y,
+                    vp.w,
+                    vp.h,
                 )
             except RuntimeError:
                 break
 
             posterior = update_posterior(
-                posterior, response, initial_states[seed_idx],
+                posterior,
+                response,
+                initial_states[seed_idx],
                 n_inner_runs=n_inner_runs,
                 base_seed=base_seed + query_counter * 100,
             )
             record_query(alloc, seed_idx, vp, "reserve")
-            transcript.append(QueryRecord(
-                seed_index=seed_idx,
-                viewport_x=vp.x, viewport_y=vp.y,
-                viewport_w=vp.w, viewport_h=vp.h,
-                phase="reserve",
-                utility_score=vp.score,
-                ess_after=posterior.ess,
-            ))
+            transcript.append(
+                QueryRecord(
+                    seed_index=seed_idx,
+                    viewport_x=vp.x,
+                    viewport_y=vp.y,
+                    viewport_w=vp.w,
+                    viewport_h=vp.h,
+                    phase="reserve",
+                    utility_score=vp.score,
+                    ess_after=posterior.ess,
+                )
+            )
             query_counter += 1
 
     transition_phase(alloc)
@@ -267,8 +335,10 @@ def solve(
     runtime_fraction = elapsed / 9000.0
 
     tensors, prediction_metrics = predict_all_seeds(
-        posterior, initial_states[:n_seeds],
-        map_height=height, map_width=width,
+        posterior,
+        initial_states[:n_seeds],
+        map_height=height,
+        map_width=width,
         top_k=6,
         sims_per_seed=sims_per_seed,
         base_seed=base_seed + 5000,
