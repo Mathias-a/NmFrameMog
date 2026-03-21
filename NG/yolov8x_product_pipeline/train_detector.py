@@ -72,13 +72,22 @@ def build_parser() -> argparse.ArgumentParser:
 
 def _archive_epoch_visuals(trainer: Any, archive_root: Path) -> None:
     epoch_dir = ensure_dir(archive_root / f"epoch_{int(trainer.epoch) + 1:03d}")
+    source_dir = Path(trainer.save_dir)
+    source_files = sorted(path.name for path in source_dir.glob("val_batch*.jpg"))
     copied = copy_files_if_present(
-        src_dir=Path(trainer.save_dir),
+        src_dir=source_dir,
         dst_dir=epoch_dir,
         patterns=["val_batch*_labels.jpg", "val_batch*_pred.jpg"],
     )
-    if copied:
-        write_json(epoch_dir / "copied_files.json", copied)
+    write_json(
+        epoch_dir / "debug.json",
+        {
+            "epoch": int(trainer.epoch) + 1,
+            "source_dir": str(source_dir),
+            "source_files": source_files,
+            "copied_files": copied,
+        },
+    )
 
 
 def _best_metrics_from_results(results_csv_path: Path) -> dict[str, Any]:
@@ -154,7 +163,9 @@ def train_detector_runs(args: argparse.Namespace) -> list[dict[str, Any]]:
         event_logger.log("detector_fold_start", fold=fold, model=args.model)
 
         model = YOLO(args.model)
-        model.add_callback("on_fit_epoch_end", lambda trainer, archive_root=visuals_root: _archive_epoch_visuals(trainer, archive_root))
+        archive_callback = lambda trainer, archive_root=visuals_root: _archive_epoch_visuals(trainer, archive_root)
+        model.add_callback("on_val_end", archive_callback)
+        model.add_callback("on_fit_epoch_end", archive_callback)
 
         model.train(
             data=fold_spec["one_class_yaml"],

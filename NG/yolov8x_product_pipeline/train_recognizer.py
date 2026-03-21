@@ -262,6 +262,7 @@ def train_recognizer_runs(args: argparse.Namespace) -> list[dict[str, Any]]:
         from torch.cuda.amp import GradScaler, autocast
         from torch.optim import AdamW
         from torch.optim.lr_scheduler import CosineAnnealingLR
+        from tqdm.auto import tqdm
     except ModuleNotFoundError as exc:
         raise RuntimeError("torch and numpy are required for train_recognizer.py") from exc
 
@@ -306,13 +307,25 @@ def train_recognizer_runs(args: argparse.Namespace) -> list[dict[str, Any]]:
         best_metric = float("-inf")
         best_summary: dict[str, Any] | None = None
 
+        print(
+            f"[recognizer] fold {fold} starting | "
+            f"train_samples={len(train_samples)} val_samples={len(val_samples)} "
+            f"backbone={args.backbone} image_size={args.image_size} batch_size={args.batch_size}"
+        )
+
         for epoch in range(1, args.epochs + 1):
             model.train()
             total_loss = 0.0
             total_ce = 0.0
             total_supcon = 0.0
             total_samples = 0
-            for images, labels, _paths in train_loader:
+            train_progress = tqdm(
+                train_loader,
+                desc=f"Fold {fold} Train {epoch:02d}/{args.epochs}",
+                leave=False,
+                dynamic_ncols=True,
+            )
+            for images, labels, _paths in train_progress:
                 images = images.to(device, non_blocking=True)
                 labels = labels.to(device, non_blocking=True)
                 optimizer.zero_grad(set_to_none=True)
@@ -328,6 +341,12 @@ def train_recognizer_runs(args: argparse.Namespace) -> list[dict[str, Any]]:
                 total_ce += float(ce_loss.item()) * images.size(0)
                 total_supcon += float(supcon_loss.item()) * images.size(0)
                 total_samples += images.size(0)
+                train_progress.set_postfix(
+                    loss=f"{loss.item():.4f}",
+                    ce=f"{ce_loss.item():.4f}",
+                    supcon=f"{supcon_loss.item():.4f}",
+                    lr=f"{optimizer.param_groups[0]['lr']:.2e}",
+                )
 
             if epoch > args.warmup_epochs:
                 scheduler.step()
@@ -339,7 +358,13 @@ def train_recognizer_runs(args: argparse.Namespace) -> list[dict[str, Any]]:
             top5_correct = 0
             confusion_samples = []
             with torch.no_grad():
-                for images, labels, paths in val_loader:
+                val_progress = tqdm(
+                    val_loader,
+                    desc=f"Fold {fold} Val   {epoch:02d}/{args.epochs}",
+                    leave=False,
+                    dynamic_ncols=True,
+                )
+                for images, labels, paths in val_progress:
                     images = images.to(device, non_blocking=True)
                     labels = labels.to(device, non_blocking=True)
                     with autocast(enabled=parse_bool(args.amp)):
@@ -353,6 +378,11 @@ def train_recognizer_runs(args: argparse.Namespace) -> list[dict[str, Any]]:
                     top1_correct += int((top1 == labels).sum().item())
                     top5 = torch.topk(logits, k=min(5, logits.shape[1]), dim=1).indices
                     top5_correct += int((top5 == labels.unsqueeze(1)).any(dim=1).sum().item())
+                    val_progress.set_postfix(
+                        val_loss=f"{(val_loss / max(val_count, 1)):.4f}",
+                        top1=f"{(top1_correct / max(val_count, 1)):.4f}",
+                        top5=f"{(top5_correct / max(val_count, 1)):.4f}",
+                    )
                     if len(confusion_samples) < 32:
                         for path, predicted_index, label_index in zip(paths, top1.tolist(), labels.tolist()):
                             if predicted_index != label_index:
@@ -381,6 +411,12 @@ def train_recognizer_runs(args: argparse.Namespace) -> list[dict[str, Any]]:
             metrics_rows.append(row)
             write_json(fold_root / f"epoch_{epoch:03d}_mistakes.json", confusion_samples)
             event_logger.log("recognizer_epoch", fold=fold, **row)
+            print(
+                f"[recognizer] fold {fold} epoch {epoch:02d}/{args.epochs} | "
+                f"train_loss={row['train_loss']:.4f} val_loss={row['val_loss']:.4f} "
+                f"val_top1={row['val_top1']:.4f} val_top5={row['val_top5']:.4f} "
+                f"lr={row['lr']:.2e}"
+            )
 
             if row["val_top1"] > best_metric:
                 best_metric = row["val_top1"]
