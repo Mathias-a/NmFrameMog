@@ -499,11 +499,10 @@ def evaluate_model(
         targets_for_metric = []
         preds_for_metric = []
 
-        for pred, label_cpu in zip(predictions, batch["labels"]):
-            orig_size = tuple(int(x) for x in label_cpu["orig_size"].tolist())
+        for pred, label_cpu, orig_size_hw in zip(predictions, batch["labels"], batch["orig_size_hw"]):
             boxes = convert_bbox_yolo_to_pascal(
                 label_cpu["boxes"].cpu(),
-                orig_size,
+                orig_size_hw,
             )
             labels_cpu = label_cpu["class_labels"].cpu()
 
@@ -534,6 +533,17 @@ def evaluate_model(
                 logger.log(f"first tgt box: {targets_for_metric[0]['boxes'][0].tolist()}")
             if len(preds_for_metric[0]["boxes"]) > 0:
                 logger.log(f"first pred box: {preds_for_metric[0]['boxes'][0].tolist()}")
+
+        if num_batches == 1 and len(preds_for_metric) > 0 and len(targets_for_metric) > 0:
+            logger.log(f"metric keys: {list(results_main.keys())}")
+            logger.log(
+                f"pred label min/max: "
+                f"{preds_for_metric[0]['labels'].min().item()} / {preds_for_metric[0]['labels'].max().item()}"
+            )
+            logger.log(
+                f"tgt label min/max: "
+                f"{targets_for_metric[0]['labels'].min().item()} / {targets_for_metric[0]['labels'].max().item()}"
+            )
 
         metric_main.update(preds_for_metric, targets_for_metric)
         metric_30.update(preds_for_metric, targets_for_metric)
