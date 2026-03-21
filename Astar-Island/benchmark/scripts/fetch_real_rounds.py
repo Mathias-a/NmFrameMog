@@ -45,7 +45,7 @@ sys.path.insert(0, str(BENCHMARK_DIR / "src"))
 import httpx  # noqa: E402
 
 from astar_twin.contracts.api_models import AnalysisResponse, RoundSummary  # noqa: E402
-from astar_twin.data.models import ParamsSource, RoundFixture  # noqa: E402
+from astar_twin.data.models import GroundTruthSource, ParamsSource, RoundFixture  # noqa: E402
 from astar_twin.fixture_prep.ground_truth import compute_and_attach_ground_truths  # noqa: E402
 from astar_twin.fixture_prep.writer import write_fixture  # noqa: E402
 from astar_twin.params import SimulationParams  # noqa: E402
@@ -201,6 +201,10 @@ def _fetch_and_save_round(
     else:
         print(f"  Analysis unavailable — will compute locally ({GROUND_TRUTH_N_RUNS} MC runs) …")
 
+    gt_source = (
+        GroundTruthSource.API_ANALYSIS if ground_truths is not None else GroundTruthSource.UNKNOWN
+    )
+
     fixture = RoundFixture(
         id=round_id,
         round_number=round_number,
@@ -212,6 +216,7 @@ def _fetch_and_save_round(
         ground_truths=ground_truths,
         simulation_params=SimulationParams(),
         params_source=ParamsSource.DEFAULT_PRIOR,
+        ground_truth_source=gt_source,
         event_date=summary.event_date,
         round_weight=summary.round_weight,
     )

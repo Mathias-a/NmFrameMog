@@ -28,6 +28,25 @@ class ParamsSource(StrEnum):
     DEFAULT_PRIOR = "default_prior"
 
 
+class GroundTruthSource(StrEnum):
+    """Provenance of the ground_truths stored in a RoundFixture.
+
+    Values:
+      api_analysis — ground truths were fetched from the real API's
+                     ``/analysis`` endpoint (server-side MC).  These are the
+                     most trustworthy reference for offline evaluation.
+      local_mc     — ground truths were computed locally via the digital twin
+                     Monte Carlo pipeline.  Useful for development but
+                     reflects twin fidelity, not live server behaviour.
+      unknown      — provenance is not recorded.  Treat as local_mc for
+                     safety when making selection decisions.
+    """
+
+    API_ANALYSIS = "api_analysis"
+    LOCAL_MC = "local_mc"
+    UNKNOWN = "unknown"
+
+
 class RoundFixture(BaseModel):
     model_config = ConfigDict(strict=True, extra="forbid")
 
@@ -41,5 +60,6 @@ class RoundFixture(BaseModel):
     ground_truths: list[list[list[list[float]]]] | None = None
     simulation_params: SimulationParams = SimulationParams()
     params_source: ParamsSource = ParamsSource.DEFAULT_PRIOR
+    ground_truth_source: GroundTruthSource = GroundTruthSource.UNKNOWN
     event_date: str = ""
     round_weight: float = 1.0

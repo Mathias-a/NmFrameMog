@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 from numpy.typing import NDArray
 
-from astar_twin.data.models import ParamsSource, RoundFixture
+from astar_twin.data.models import GroundTruthSource, ParamsSource, RoundFixture
 from astar_twin.engine import Simulator
 from astar_twin.mc import MCRunner, aggregate_runs
 from astar_twin.params import sample_default_prior_params
@@ -41,5 +41,6 @@ def compute_and_attach_ground_truths(
         update={
             "ground_truths": ground_truths,
             "simulation_params": simulation_params,
+            "ground_truth_source": GroundTruthSource.LOCAL_MC,
         }
     )

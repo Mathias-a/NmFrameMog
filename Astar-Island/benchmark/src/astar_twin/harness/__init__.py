@@ -4,6 +4,7 @@ from astar_twin.harness.budget import Budget
 from astar_twin.harness.models import BenchmarkReport, SeedResult, StrategyReport
 from astar_twin.harness.protocol import Strategy
 from astar_twin.harness.runner import BenchmarkRunner
+from astar_twin.harness.tournament import TournamentReport, TournamentRunner
 
 __all__ = [
     "BenchmarkReport",
@@ -12,4 +13,6 @@ __all__ = [
     "SeedResult",
     "Strategy",
     "StrategyReport",
+    "TournamentReport",
+    "TournamentRunner",
 ]
