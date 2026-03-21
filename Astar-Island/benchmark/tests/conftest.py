@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 from astar_twin.api.app import create_app
 from astar_twin.api.store import BudgetStore, RoundStore, SubmissionStore
 from astar_twin.data.loaders import load_fixture
-from astar_twin.data.models import RoundFixture
+from astar_twin.data.models import ParamsSource, RoundFixture
 from astar_twin.scoring import safe_prediction
 
 FIXTURE_PATH = (
@@ -19,7 +19,8 @@ FIXTURE_PATH = (
 
 @pytest.fixture
 def fixture() -> RoundFixture:
-    return load_fixture(FIXTURE_PATH)
+    raw = load_fixture(FIXTURE_PATH)
+    return raw.model_copy(update={"params_source": ParamsSource.BENCHMARK_TRUTH})
 
 
 @pytest.fixture

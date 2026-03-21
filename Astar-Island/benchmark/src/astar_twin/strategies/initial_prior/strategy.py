@@ -5,6 +5,7 @@ from numpy.typing import NDArray
 
 from astar_twin.contracts.api_models import InitialState
 from astar_twin.contracts.types import NUM_CLASSES, TERRAIN_TO_CLASS
+from astar_twin.harness.budget import Budget
 
 _HIGH_CONF = 0.9
 _LOW_CONF = (1.0 - _HIGH_CONF) / (NUM_CLASSES - 1)
@@ -30,7 +31,7 @@ class InitialPriorStrategy:
     def predict(
         self,
         initial_state: InitialState,
-        budget: int,
+        budget: Budget,
         base_seed: int,
     ) -> NDArray[np.float64]:
         grid = initial_state.grid

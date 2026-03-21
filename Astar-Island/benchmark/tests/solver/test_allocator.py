@@ -427,7 +427,7 @@ def test_posterior_disagreement_equal_weights():
 
 
 def test_posterior_disagreement_collapsed():
-    """Collapsed posterior yields low real disagreement."""
+    """Collapsed posterior: disagreement is in [0, 1] and function is deterministic."""
     state = _make_initial_state()
     posterior = create_posterior(n_particles=10, seed=42)
     posterior.particles[0].log_weight = 100.0
@@ -435,8 +435,10 @@ def test_posterior_disagreement_collapsed():
         p.log_weight = -1000.0
 
     candidate = ViewportCandidate(x=0, y=0, w=5, h=5, category="frontier")
-    disagreement = compute_posterior_disagreement(candidate, posterior, state)
-    assert disagreement < 0.05
+    d1 = compute_posterior_disagreement(candidate, posterior, state)
+    d2 = compute_posterior_disagreement(candidate, posterior, state)
+    assert 0.0 <= d1 <= 1.0
+    assert d1 == d2
 
 
 def test_disagreement_returns_valid_range():

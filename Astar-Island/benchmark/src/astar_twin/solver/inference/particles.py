@@ -19,24 +19,35 @@ from astar_twin.params.simulation_params import (
     UpdateOrderMode,
 )
 
-# The 17-parameter subset inferred in v1
+# The extended parameter subset inferred by the particle filter (28 fields)
 INFERRED_PARAMS: list[str] = [
     "adjacency_mode",
     "distance_metric",
     "update_order_mode",
     "prosperity_threshold_port",
+    "prosperity_threshold_longship",
     "prosperity_threshold_expand",
     "expansion_rate",
     "expansion_radius",
     "raid_base_prob",
     "raid_success_scale",
+    "raid_range_base",
+    "raid_range_longship_bonus",
+    "raid_damage_frac",
+    "raid_capture_threshold",
     "trade_range",
     "trade_value_scale",
     "winter_severity_mean",
+    "winter_severity_concentration",
+    "winter_severity_autocorr",
     "winter_food_loss_per_population",
     "collapse_threshold",
     "collapse_softness",
+    "collapse_food_floor",
+    "collapse_raid_stress_weight",
+    "collapse_winter_severity_weight",
     "reclaim_threshold",
+    "reclaim_rate",
     "ruin_forest_rate",
 ]
 
@@ -51,18 +62,29 @@ _UPDATE_ORDER_CHOICES = list(UpdateOrderMode)
 # Continuous parameter ranges (name -> (min, max, default))
 _CONTINUOUS_RANGES: dict[str, tuple[float, float, float]] = {
     "prosperity_threshold_port": (0.5, 3.0, _DEFAULTS.prosperity_threshold_port),
+    "prosperity_threshold_longship": (1.0, 4.0, _DEFAULTS.prosperity_threshold_longship),
     "prosperity_threshold_expand": (0.5, 3.0, _DEFAULTS.prosperity_threshold_expand),
     "expansion_rate": (0.05, 0.50, _DEFAULTS.expansion_rate),
     "expansion_radius": (1, 6, _DEFAULTS.expansion_radius),
     "raid_base_prob": (0.01, 0.20, _DEFAULTS.raid_base_prob),
     "raid_success_scale": (0.3, 1.5, _DEFAULTS.raid_success_scale),
+    "raid_range_base": (2, 10, _DEFAULTS.raid_range_base),
+    "raid_range_longship_bonus": (2, 14, _DEFAULTS.raid_range_longship_bonus),
+    "raid_damage_frac": (0.05, 0.50, _DEFAULTS.raid_damage_frac),
+    "raid_capture_threshold": (0.5, 3.0, _DEFAULTS.raid_capture_threshold),
     "trade_range": (3, 15, _DEFAULTS.trade_range),
     "trade_value_scale": (0.05, 0.50, _DEFAULTS.trade_value_scale),
     "winter_severity_mean": (0.1, 0.9, _DEFAULTS.winter_severity_mean),
+    "winter_severity_concentration": (2.0, 50.0, _DEFAULTS.winter_severity_concentration),
+    "winter_severity_autocorr": (0.0, 0.8, _DEFAULTS.winter_severity_autocorr),
     "winter_food_loss_per_population": (0.02, 0.30, _DEFAULTS.winter_food_loss_per_population),
     "collapse_threshold": (0.3, 2.5, _DEFAULTS.collapse_threshold),
     "collapse_softness": (0.05, 0.80, _DEFAULTS.collapse_softness),
+    "collapse_food_floor": (0.0, 0.5, _DEFAULTS.collapse_food_floor),
+    "collapse_raid_stress_weight": (0.2, 3.0, _DEFAULTS.collapse_raid_stress_weight),
+    "collapse_winter_severity_weight": (0.1, 2.0, _DEFAULTS.collapse_winter_severity_weight),
     "reclaim_threshold": (0.5, 3.5, _DEFAULTS.reclaim_threshold),
+    "reclaim_rate": (0.01, 0.40, _DEFAULTS.reclaim_rate),
     "ruin_forest_rate": (0.02, 0.30, _DEFAULTS.ruin_forest_rate),
 }
 
@@ -113,6 +135,14 @@ def _sample_continuous_param(name: str, rng: Generator, spread: float = 0.3) -> 
     return float(np.clip(value, lo, hi))
 
 
+_INTEGER_PARAMS: dict[str, float] = {
+    "expansion_radius": 1.0,
+    "trade_range": 2.0,
+    "raid_range_base": 1.5,
+    "raid_range_longship_bonus": 2.0,
+}
+
+
 def initialize_particles(
     n_particles: int = 24,
     seed: int = 0,
@@ -140,19 +170,14 @@ def initialize_particles(
         params: dict[str, Any] = {}
         for name in INFERRED_PARAMS:
             if name in ("adjacency_mode", "distance_metric", "update_order_mode"):
-                # 70% keep default, 30% random
                 if rng.random() < 0.7:
                     params[name] = getattr(_DEFAULTS, name)
                 else:
                     params[name] = _sample_enum_param(name, rng)
-            elif name == "expansion_radius":
-                # Integer param — perturb around default
+            elif name in _INTEGER_PARAMS:
                 lo, hi, default = _CONTINUOUS_RANGES[name]
-                params[name] = int(np.clip(rng.normal(default, 1.0), lo, hi))
-            elif name == "trade_range":
-                # Integer param
-                lo, hi, default = _CONTINUOUS_RANGES[name]
-                params[name] = int(np.clip(rng.normal(default, 2.0), lo, hi))
+                sigma = _INTEGER_PARAMS[name]
+                params[name] = int(np.clip(rng.normal(default, sigma), lo, hi))
             else:
                 params[name] = _sample_continuous_param(name, rng)
         particles.append(Particle(params=params, log_weight=0.0))

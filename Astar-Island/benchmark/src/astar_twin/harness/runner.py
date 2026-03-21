@@ -5,8 +5,10 @@ from dataclasses import dataclass, field
 import numpy as np
 from numpy.typing import NDArray
 
+from astar_twin.contracts.types import MAX_QUERIES
 from astar_twin.data.models import RoundFixture
 from astar_twin.engine import Simulator
+from astar_twin.harness.budget import Budget
 from astar_twin.harness.models import BenchmarkReport, SeedResult, StrategyReport
 from astar_twin.harness.protocol import Strategy
 from astar_twin.mc import MCRunner, aggregate_runs
@@ -80,11 +82,12 @@ class BenchmarkRunner:
 
         for strategy in strategies:
             seed_results: list[SeedResult] = []
+            budget = Budget(total=MAX_QUERIES)
             for seed_idx in range(self.fixture.seeds_count):
                 initial_state = self.fixture.initial_states[seed_idx]
                 raw_prediction = strategy.predict(
                     initial_state=initial_state,
-                    budget=50,
+                    budget=budget,
                     base_seed=self.base_seed,
                 )
                 prediction = safe_prediction(raw_prediction)

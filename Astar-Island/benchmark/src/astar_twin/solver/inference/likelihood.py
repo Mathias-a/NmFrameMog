@@ -138,6 +138,7 @@ def compute_stats_loglik(
         ("food_mean", "food_var"),
         ("wealth_mean", "wealth_var"),
         ("defense_mean", "defense_var"),
+        ("prosperity_proxy_mean", "prosperity_proxy_var"),
     ]
 
     loglik = 0.0

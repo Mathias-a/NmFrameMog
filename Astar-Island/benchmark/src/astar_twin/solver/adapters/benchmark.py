@@ -7,6 +7,8 @@ public contract objects (RoundDetail, SimulateResponse, etc.).
 
 from __future__ import annotations
 
+import warnings
+
 import numpy as np
 from numpy.typing import NDArray
 
@@ -19,7 +21,7 @@ from astar_twin.contracts.api_models import (
     ViewportBounds,
 )
 from astar_twin.contracts.types import MAX_QUERIES
-from astar_twin.data.models import RoundFixture
+from astar_twin.data.models import ParamsSource, RoundFixture
 from astar_twin.engine import Simulator
 from astar_twin.mc import MCRunner, aggregate_runs
 from astar_twin.scoring import compute_score, safe_prediction
@@ -37,7 +39,22 @@ class BenchmarkAdapter:
         fixture: RoundFixture,
         n_mc_runs: int = 5,
         sim_seed_offset: int = 0,
+        require_calibrated_params: bool = False,
     ) -> None:
+        if require_calibrated_params and fixture.params_source == ParamsSource.DEFAULT_PRIOR:
+            raise ValueError(
+                f"BenchmarkAdapter: fixture '{fixture.id}' has params_source=DEFAULT_PRIOR. "
+                "The simulator will run with hardcoded defaults, not real server-side params. "
+                "Pass require_calibrated_params=False to suppress this error, or use a fixture "
+                "with params_source=INFERRED or BENCHMARK_TRUTH."
+            )
+        if fixture.params_source == ParamsSource.DEFAULT_PRIOR:
+            warnings.warn(
+                f"BenchmarkAdapter: fixture '{fixture.id}' has params_source=DEFAULT_PRIOR. "
+                "Simulator results reflect default prior parameters, not real competition values. "
+                "Use this adapter for ground-truth generation only, not calibration.",
+                stacklevel=2,
+            )
         self._fixture = fixture
         self._simulator = Simulator(params=fixture.simulation_params)
         self._mc_runner = MCRunner(self._simulator)
@@ -46,7 +63,6 @@ class BenchmarkAdapter:
         self._queries_used = 0
         self._query_seed_counter: int = 1000 + sim_seed_offset
         self._submissions: dict[int, NDArray[np.float64]] = {}
-        # Pre-compute ground truths if not provided
         self._ground_truths: list[NDArray[np.float64]] | None = None
         if fixture.ground_truths is not None:
             self._ground_truths = [np.array(gt, dtype=np.float64) for gt in fixture.ground_truths]
@@ -85,6 +101,12 @@ class BenchmarkAdapter:
         )
 
         # Extract viewport grid
+        x0 = max(0, viewport_x)
+        y0 = max(0, viewport_y)
+        x1 = min(self._fixture.map_width, viewport_x + viewport_w)
+        y1 = min(self._fixture.map_height, viewport_y + viewport_h)
+        actual_w = max(0, x1 - x0)
+        actual_h = max(0, y1 - y0)
         vp_grid = final_state.grid.viewport(viewport_x, viewport_y, viewport_w, viewport_h)
         grid_list = vp_grid.to_list()
 
@@ -113,10 +135,10 @@ class BenchmarkAdapter:
             grid=grid_list,
             settlements=settlements,
             viewport=ViewportBounds(
-                x=viewport_x,
-                y=viewport_y,
-                w=viewport_w,
-                h=viewport_h,
+                x=x0,
+                y=y0,
+                w=actual_w,
+                h=actual_h,
             ),
             width=self._fixture.map_width,
             height=self._fixture.map_height,

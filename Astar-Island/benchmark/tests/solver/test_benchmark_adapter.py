@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import warnings
+
 import numpy as np
+import pytest
 
 from astar_twin.contracts.types import MAX_QUERIES, NUM_CLASSES
-from astar_twin.data.models import RoundFixture
+from astar_twin.data.models import ParamsSource, RoundFixture
 from astar_twin.solver.adapters.benchmark import BenchmarkAdapter
 
 
@@ -93,3 +96,36 @@ def test_budget_exhaustion_raises(fixture: RoundFixture) -> None:
         assert False, "Should have raised RuntimeError"
     except RuntimeError as e:
         assert "budget exhausted" in str(e).lower()
+
+
+def test_default_prior_fixture_emits_warning(fixture: RoundFixture) -> None:
+    default_prior_fixture = fixture.model_copy(update={"params_source": ParamsSource.DEFAULT_PRIOR})
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        BenchmarkAdapter(default_prior_fixture)
+    assert any("DEFAULT_PRIOR" in str(w.message) for w in caught)
+
+
+def test_require_calibrated_params_raises_for_default_prior(fixture: RoundFixture) -> None:
+    default_prior_fixture = fixture.model_copy(update={"params_source": ParamsSource.DEFAULT_PRIOR})
+    with pytest.raises(ValueError, match="DEFAULT_PRIOR"):
+        BenchmarkAdapter(default_prior_fixture, require_calibrated_params=True)
+
+
+def test_require_calibrated_params_ok_for_benchmark_truth(fixture: RoundFixture) -> None:
+    calibrated_fixture = fixture.model_copy(update={"params_source": ParamsSource.BENCHMARK_TRUTH})
+    adapter = BenchmarkAdapter(calibrated_fixture, require_calibrated_params=True)
+    assert adapter is not None
+
+
+def test_params_source_default_is_default_prior() -> None:
+    fresh = RoundFixture(
+        id="x",
+        round_number=1,
+        status="completed",
+        map_width=5,
+        map_height=5,
+        seeds_count=1,
+        initial_states=[],
+    )
+    assert fresh.params_source == ParamsSource.DEFAULT_PRIOR

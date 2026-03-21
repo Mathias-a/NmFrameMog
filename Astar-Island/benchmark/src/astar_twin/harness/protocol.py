@@ -6,6 +6,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from astar_twin.contracts.api_models import InitialState
+from astar_twin.harness.budget import Budget
 
 
 class Strategy(Protocol):
@@ -31,7 +32,7 @@ class Strategy(Protocol):
     def predict(
         self,
         initial_state: InitialState,
-        budget: int,
+        budget: Budget,
         base_seed: int,
     ) -> NDArray[np.float64]:
         """Return a probability tensor of shape ``(H, W, 6)``.
@@ -40,8 +41,14 @@ class Strategy(Protocol):
             initial_state: The starting grid and settlements for this map.
                            ``H = len(initial_state.grid)``,
                            ``W = len(initial_state.grid[0])``.
-            budget:        Number of API-equivalent queries available to this
-                           strategy (mirrors the real challenge limit of 50).
+            budget:        Shared query budget for this round.  The same
+                           ``Budget`` instance is passed into *every* per-seed
+                           ``predict`` call, so spending a query on seed 0
+                           reduces what is available for seeds 1-4.  This
+                           mirrors the real challenge where 50 queries are
+                           shared across all 5 seeds.  Use
+                           ``budget.remaining`` to check availability and
+                           ``budget.consume()`` to spend a query.
             base_seed:     Integer seed that must make the prediction fully
                            reproducible — same seed → same output.
 

@@ -4,6 +4,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from astar_twin.contracts.api_models import InitialState
+from astar_twin.harness.budget import Budget
 
 
 class UniformStrategy:
@@ -14,7 +15,7 @@ class UniformStrategy:
     def predict(
         self,
         initial_state: InitialState,
-        budget: int,
+        budget: Budget,
         base_seed: int,
     ) -> NDArray[np.float64]:
         height = len(initial_state.grid)

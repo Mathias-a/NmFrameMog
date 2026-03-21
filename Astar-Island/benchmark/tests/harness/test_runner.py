@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pytest
 
 from astar_twin.data.loaders import load_fixture
 from astar_twin.data.models import RoundFixture
+from astar_twin.harness.budget import Budget
 from astar_twin.harness.runner import BenchmarkRunner
 from astar_twin.scoring import safe_prediction
 from astar_twin.strategies.uniform.strategy import UniformStrategy
@@ -128,3 +130,82 @@ class TestBenchmarkRunnerDerivedGroundTruths:
             assert len(gt) == fixture.map_height
             assert len(gt[0]) == fixture.map_width
             assert len(gt[0][0]) == 6
+
+
+class TestBenchmarkRunnerSharedBudget:
+    """The runner must pass a single shared Budget instance across all seeds for
+    one strategy run.  A query spent on seed 0 reduces what remains for seeds
+    1-4, mirroring the real challenge's global 50-query pool."""
+
+    def test_budget_is_shared_across_seeds(self, fixture_with_ground_truths: RoundFixture) -> None:
+        """A strategy that consumes one query per seed call should see the
+        budget reduce by seeds_count total, not reset between seeds."""
+        received_budgets: list[Budget] = []
+
+        class BudgetCapturingStrategy(UniformStrategy):
+            @property
+            def name(self) -> str:
+                return "budget_capturing"
+
+            def predict(
+                self,
+                initial_state: Any,
+                budget: Budget,
+                base_seed: int,
+            ) -> np.ndarray:
+                budget.consume()  # spend exactly 1 query per seed call
+                received_budgets.append(budget)
+                return super().predict(initial_state, budget, base_seed)
+
+        BenchmarkRunner(fixture=fixture_with_ground_truths, base_seed=0).run(
+            [BudgetCapturingStrategy()]
+        )
+
+        n_seeds = fixture_with_ground_truths.seeds_count
+        assert len(received_budgets) == n_seeds
+
+        # All calls received the *same* object
+        first = received_budgets[0]
+        for b in received_budgets[1:]:
+            assert b is first, "Expected the same Budget instance across all seed calls"
+
+        # Total consumed equals one-per-seed call
+        assert first.used == n_seeds
+
+    def test_separate_strategy_runs_get_independent_budgets(
+        self, fixture_with_ground_truths: RoundFixture
+    ) -> None:
+        """Two different strategies must each get their own fresh Budget so
+        one strategy's spending cannot corrupt another's remaining count."""
+        budgets_by_strategy: dict[str, list[Budget]] = {}
+
+        def make_strategy(tag: str) -> UniformStrategy:
+            class TaggedStrategy(UniformStrategy):
+                @property
+                def name(self) -> str:
+                    return tag
+
+                def predict(
+                    self,
+                    initial_state: Any,
+                    budget: Budget,
+                    base_seed: int,
+                ) -> np.ndarray:
+                    budgets_by_strategy.setdefault(tag, []).append(budget)
+                    budget.consume()
+                    return super().predict(initial_state, budget, base_seed)
+
+            return TaggedStrategy()
+
+        BenchmarkRunner(fixture=fixture_with_ground_truths, base_seed=0).run(
+            [make_strategy("s1"), make_strategy("s2")]
+        )
+
+        b_s1 = budgets_by_strategy["s1"][0]
+        b_s2 = budgets_by_strategy["s2"][0]
+
+        assert b_s1 is not b_s2, "Each strategy run must receive its own Budget instance"
+        # Each strategy spent one query per seed
+        n_seeds = fixture_with_ground_truths.seeds_count
+        assert b_s1.used == n_seeds
+        assert b_s2.used == n_seeds

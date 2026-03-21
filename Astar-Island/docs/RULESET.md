@@ -111,7 +111,7 @@ Each settlement tracks: [CONFIRMED]
 | defense | No | Yes (float) |
 | tech_level | No | No (implied by docs, never shown in API) |
 | owner_id (faction) | No | Yes |
-| has_longship | No | No (implied by docs, never shown in API) |
+| has_longship | No | No — latent state, never exposed in API. Infer via prosperity proxy (wealth/population ratio). |
 
 > Note: population, food, wealth, defense are **floats** in API responses (e.g., population=2.8).
 
@@ -122,22 +122,22 @@ Each settlement tracks: [CONFIRMED]
 - Different between rounds
 - Control world behavior
 
-[UNKNOWN] What the hidden parameters are. Likely candidates:
-- Winter severity distribution/mean
-- Raid aggression scaling
-- Expansion probability/threshold
-- Trade range/value
-- Food production rates
-- Growth rates
-  - ruin to port
-  - Ruin to forest
-  - ruin to empty
-  - Ruin to reclaim
-  - etc.
-- Combat resolution weights
-- Forest reclamation speed
-- Population growth
-- Food growth rate
+[INFERRED via particle filter — 28-parameter subset] The following SimulationParams fields are actively inferred:
+- adjacency_mode, distance_metric, update_order_mode
+- prosperity_threshold_port, prosperity_threshold_longship, prosperity_threshold_expand
+- expansion_rate, expansion_radius
+- raid_base_prob, raid_success_scale, raid_range_base, raid_range_longship_bonus, raid_damage_frac, raid_capture_threshold
+- trade_range, trade_value_scale
+- winter_severity_mean, winter_severity_concentration, winter_severity_autocorr, winter_food_loss_per_population
+- collapse_threshold, collapse_softness, collapse_food_floor, collapse_raid_stress_weight, collapse_winter_severity_weight
+- reclaim_threshold, reclaim_rate, ruin_forest_rate
+
+[DEFAULT PRIOR] All remaining SimulationParams fields are frozen at SimulationParams() defaults; their true server-side values are unknown.
+
+[STRATEGY] RoundFixture.params_source tracks provenance:
+  - DEFAULT_PRIOR: defaults used, not from server
+  - INFERRED: estimated by particle-filter from API observations
+  - BENCHMARK_TRUTH: known offline (controlled benchmark only)
 
 ## 6. Stochasticity
 

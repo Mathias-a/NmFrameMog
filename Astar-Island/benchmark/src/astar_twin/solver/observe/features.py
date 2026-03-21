@@ -40,6 +40,12 @@ class ObservationFeatures:
     defense_mean: float = 0.0
     defense_var: float = 0.0
 
+    # Latent longship proxy features (derived from visible stats)
+    # prosperity_proxy: mean(wealth / max(population, 1e-3)) across alive settlements
+    # Settlements near or above prosperity_threshold_longship signal longship likelihood.
+    prosperity_proxy_mean: float = 0.0
+    prosperity_proxy_var: float = 0.0
+
 
 def extract_features(response: SimulateResponse) -> ObservationFeatures:
     """Extract observation features from a simulate response."""
@@ -75,5 +81,11 @@ def extract_features(response: SimulateResponse) -> ObservationFeatures:
         features.wealth_var = float(np.var(wealths)) if len(wealths) > 1 else 0.0
         features.defense_mean = float(np.mean(defenses))
         features.defense_var = float(np.var(defenses)) if len(defenses) > 1 else 0.0
+
+        prosperity_proxies = [w / max(p, 1e-3) for w, p in zip(wealths, pops)]
+        features.prosperity_proxy_mean = float(np.mean(prosperity_proxies))
+        features.prosperity_proxy_var = (
+            float(np.var(prosperity_proxies)) if len(prosperity_proxies) > 1 else 0.0
+        )
 
     return features

@@ -102,5 +102,5 @@ def test_uniform_initial_weights() -> None:
         assert p.log_weight == 0.0
 
 
-def test_seventeen_inferred_params() -> None:
-    assert len(INFERRED_PARAMS) == 17
+def test_twenty_eight_inferred_params() -> None:
+    assert len(INFERRED_PARAMS) == 28

@@ -39,7 +39,7 @@ sys.path.insert(0, str(BENCHMARK_DIR / "src"))
 import httpx  # noqa: E402
 
 from astar_twin.contracts.api_models import AnalysisResponse, RoundSummary  # noqa: E402
-from astar_twin.data.models import RoundFixture  # noqa: E402
+from astar_twin.data.models import ParamsSource, RoundFixture  # noqa: E402
 from astar_twin.fixture_prep.ground_truth import compute_and_attach_ground_truths  # noqa: E402
 from astar_twin.fixture_prep.writer import write_fixture  # noqa: E402
 from astar_twin.params import SimulationParams  # noqa: E402
@@ -204,6 +204,7 @@ def _fetch_and_save_round(
         initial_states=initial_states,
         ground_truths=ground_truths,
         simulation_params=SimulationParams(),
+        params_source=ParamsSource.DEFAULT_PRIOR,
         event_date=summary.event_date,
         round_weight=summary.round_weight,
     )
