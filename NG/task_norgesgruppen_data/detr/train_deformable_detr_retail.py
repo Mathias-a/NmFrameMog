@@ -377,13 +377,41 @@ class CocoRetailDetectionDataset(Dataset):
 
 def collate_fn(batch, image_processor):
     pixel_values = [item["pixel_values"] for item in batch]
-    encoding = image_processor.pad(pixel_values, return_tensors="pt")
 
-    labels = [item["labels"] for item in batch]
+    # Hugging Face DETR-style processors vary by version:
+    # some use pad_and_create_pixel_mask, some expose pad differently.
+    if hasattr(image_processor, "pad_and_create_pixel_mask"):
+        encoding = image_processor.pad_and_create_pixel_mask(
+            pixel_values,
+            return_tensors="pt",
+        )
+        pixel_values_batched = encoding["pixel_values"]
+        pixel_mask_batched = encoding["pixel_mask"]
+    else:
+        # Fallback that works across more versions
+        max_h = max(x.shape[1] for x in pixel_values)
+        max_w = max(x.shape[2] for x in pixel_values)
+        batch_size = len(pixel_values)
+        channels = pixel_values[0].shape[0]
+
+        pixel_values_batched = torch.zeros(
+            (batch_size, channels, max_h, max_w),
+            dtype=pixel_values[0].dtype,
+        )
+        pixel_mask_batched = torch.zeros(
+            (batch_size, max_h, max_w),
+            dtype=torch.long,
+        )
+
+        for i, x in enumerate(pixel_values):
+            _, h, w = x.shape
+            pixel_values_batched[i, :, :h, :w] = x
+            pixel_mask_batched[i, :h, :w] = 1
+
     data = {
-        "pixel_values": encoding["pixel_values"],
-        "pixel_mask": encoding["pixel_mask"],
-        "labels": labels,
+        "pixel_values": pixel_values_batched,
+        "pixel_mask": pixel_mask_batched,
+        "labels": [item["labels"] for item in batch],
         "image_ids": [item["image_id"] for item in batch],
         "orig_size_hw": [item["orig_size_hw"] for item in batch],
     }
