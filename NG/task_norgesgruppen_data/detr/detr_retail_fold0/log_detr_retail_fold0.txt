@@ -1,0 +1,7 @@
+[2026-03-21 02:35:35] Run started: detr_retail_fold0
+[2026-03-21 02:35:35] Arguments: {'data_root': PosixPath('/Users/matiasfernandezjr/Data/NM/train'), 'run_name': 'detr_retail_fold0', 'checkpoint': 'SenseTime/deformable-detr', 'epochs': 40, 'batch_size': 2, 'num_workers': 4, 'lr': 2e-05, 'weight_decay': 0.0001, 'warmup_ratio': 0.08, 'grad_accum_steps': 4, 'max_grad_norm': 0.1, 'seed': 42, 'num_folds': 5, 'fold_index': 0, 'shortest_edge': 960, 'longest_edge': 1600, 'score_threshold': 0.05, 'eval_every': 1, 'visualize_every': 1, 'num_vis_images': 4, 'use_aug': True, 'disable_amp': False, 'device': 'cuda'}
+[2026-03-21 02:35:35] Using device=cpu, mixed_precision=False
+[2026-03-21 02:35:35] Num images: 248
+[2026-03-21 02:35:35] Num categories: 356
+[2026-03-21 02:35:35] Num raw annotations: 22731
+[2026-03-21 02:35:35] Sanitization: {'num_invalid_boxes_removed': 0, 'num_boxes_clipped_to_image': 0}
