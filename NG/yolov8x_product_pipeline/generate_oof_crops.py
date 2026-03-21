@@ -10,7 +10,16 @@ if __package__ in {None, ""}:
 
     sys.path.append(str(Path(__file__).resolve().parent))
 
-from common import EventLogger, compute_iou, ensure_dir, padded_box, parse_fold_indices, read_json, write_json
+from common import (
+    EventLogger,
+    compute_iou,
+    ensure_dir,
+    padded_box,
+    parse_fold_indices,
+    patch_torch_load_for_trusted_checkpoints,
+    read_json,
+    write_json,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -63,6 +72,8 @@ def generate_oof_crops(args: argparse.Namespace) -> dict[str, Any]:
         from PIL import Image
     except ModuleNotFoundError as exc:
         raise RuntimeError("Pillow is required for generate_oof_crops.py") from exc
+
+    patch_torch_load_for_trusted_checkpoints()
 
     try:
         from ultralytics import YOLO

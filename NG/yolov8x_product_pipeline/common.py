@@ -88,6 +88,25 @@ def seed_everything(seed: int) -> None:
         np.random.seed(seed)
     except Exception:
         pass
+
+
+def patch_torch_load_for_trusted_checkpoints() -> None:
+    try:
+        import torch
+    except Exception:
+        return
+
+    if getattr(torch.load, "_ng_trusted_patch", False):
+        return
+
+    original_torch_load = torch.load
+
+    def patched_torch_load(*args: Any, **kwargs: Any) -> Any:
+        kwargs.setdefault("weights_only", False)
+        return original_torch_load(*args, **kwargs)
+
+    patched_torch_load._ng_trusted_patch = True  # type: ignore[attr-defined]
+    torch.load = patched_torch_load  # type: ignore[assignment]
     try:
         import torch
 

@@ -14,6 +14,7 @@ from common import (
     EventLogger,
     copy_files_if_present,
     ensure_dir,
+    patch_torch_load_for_trusted_checkpoints,
     parse_bool,
     parse_fold_indices,
     read_csv_rows,
@@ -123,6 +124,7 @@ def _write_human_summary(path: Path, run_name: str, fold_summaries: list[dict[st
 
 def train_detector_runs(args: argparse.Namespace) -> list[dict[str, Any]]:
     seed_everything(args.seed)
+    patch_torch_load_for_trusted_checkpoints()
 
     try:
         from ultralytics import YOLO
