@@ -1,0 +1,64 @@
+{
+  "counts": {
+    "annotation_count": 2,
+    "category_count": 2,
+    "image_count": 2,
+    "reference_product_count": 2
+  },
+  "processed_outputs": {
+    "annotations": {
+      "kind": "file",
+      "path": "annotations/instances.coco.json",
+      "sha256": "38ff80a34e0934e8b5081354447aa806da32ccf37519dcd0d86b1c755c1f7ea3",
+      "size_bytes": 1057
+    },
+    "categories": {
+      "kind": "file",
+      "path": "categories.json",
+      "sha256": "69faee673195664c8c140ce7d361a12bd9536a30362dd361d16fb61df77eaaad",
+      "size_bytes": 174
+    },
+    "images": {
+      "file_count": 2,
+      "kind": "directory",
+      "path": "images",
+      "sha256": "884488b08c441d927b25d619c536031792774ce3fa5a9e7d415b80278b558387",
+      "total_bytes": 44
+    },
+    "product_index": {
+      "kind": "file",
+      "path": "product_index.json",
+      "sha256": "9c47183f2eae795305082daa271df4c6ff25450e9ecbc790eb05c1733bbb04ac",
+      "size_bytes": 596
+    },
+    "reference_images": {
+      "file_count": 3,
+      "kind": "directory",
+      "path": "reference_images",
+      "sha256": "9cdf2661dcd1334d8889936e1e8e33be809587415f59fea38c10e36a2f39fe96",
+      "total_bytes": 103
+    },
+    "reference_metadata": {
+      "kind": "file",
+      "path": "reference_metadata.json",
+      "sha256": "ae63e2903cfb544bca37d17c6cb45f5c61cdab302a3ae408ce5e0a5e07080006",
+      "size_bytes": 389
+    }
+  },
+  "raw_archives": {
+    "coco_dataset": {
+      "extract_path": "extracted/NM_NGD_coco_dataset",
+      "path": "NM_NGD_coco_dataset.zip",
+      "sha256": "363782efc0b306b4ccd816cdacf27cbd697759f289f7ad39975f461a6670f30c",
+      "size_bytes": 721
+    },
+    "product_images": {
+      "extract_path": "extracted/NM_NGD_product_images",
+      "path": "NM_NGD_product_images.zip",
+      "sha256": "c25f720143a635cd95808d59ca3fe1076222d37b886adf469f0439a875110ad7",
+      "size_bytes": 674
+    }
+  },
+  "raw_root_relative": "../raw",
+  "schema_version": 1
+}

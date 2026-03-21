@@ -1,0 +1,31 @@
+{
+  "baseline": "classifier_gt_crops_search",
+  "data": {
+    "annotations_path": "annotations/instances.coco.json",
+    "categories_path": "categories.json",
+    "crop_source": "ground_truth_boxes",
+    "processed_manifest_path": "manifests/dataset_manifest.json",
+    "product_index_path": "product_index.json",
+    "reference_metadata_path": "reference_metadata.json"
+  },
+  "model": {
+    "backbone": "efficientnet_b0",
+    "image_size": 224
+  },
+  "outputs": {
+    "class_map_path": "manifests/classifier_class_map.json",
+    "crop_manifest_path": "manifests/classifier_crop_manifest.json",
+    "crops_dir": "crops/gt"
+  },
+  "runtime": {
+    "backbone_library": "timm",
+    "backbone_library_version": "0.9.12"
+  },
+  "training": {
+    "artifact_name": "best.pt",
+    "device": "cpu",
+    "mode": "timm_classifier_baseline",
+    "weight_decay": 0.0
+  },
+  "schema_version": 1
+}

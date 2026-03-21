@@ -1,0 +1,27 @@
+[
+  {
+    "annotation_count": 1,
+    "category_ids": [
+      0
+    ],
+    "metadata_annotation_count": 1,
+    "product_code": "1111111111111",
+    "product_name": "TEST PRODUCT ONE",
+    "reference_image_paths": [
+      "reference_images/1111111111111/front.jpg",
+      "reference_images/1111111111111/main.jpg"
+    ]
+  },
+  {
+    "annotation_count": 1,
+    "category_ids": [
+      356
+    ],
+    "metadata_annotation_count": 1,
+    "product_code": "2222222222222",
+    "product_name": "unknown_product",
+    "reference_image_paths": [
+      "reference_images/2222222222222/main.jpg"
+    ]
+  }
+]

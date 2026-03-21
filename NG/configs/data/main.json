@@ -1,0 +1,19 @@
+{
+  "processed_layout": {
+    "annotations_path": "annotations/instances.coco.json",
+    "categories_path": "categories.json",
+    "images_dir": "images",
+    "manifest_path": "manifests/dataset_manifest.json",
+    "product_index_path": "product_index.json",
+    "reference_images_dir": "reference_images",
+    "reference_metadata_path": "reference_metadata.json"
+  },
+  "raw_archives": {
+    "coco_dataset": "NM_NGD_coco_dataset.zip",
+    "product_images": "NM_NGD_product_images.zip"
+  },
+  "raw_layout": {
+    "extract_root": "extracted"
+  },
+  "schema_version": 1
+}

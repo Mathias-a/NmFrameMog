@@ -1,0 +1,7 @@
+{
+  "cv_folds": 4,
+  "holdout_fraction": 0.2,
+  "output_path": "manifests/splits.json",
+  "schema_version": 1,
+  "seed": 20260320
+}

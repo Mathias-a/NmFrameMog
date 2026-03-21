@@ -1,0 +1,73 @@
+{
+  "baseline": "classifier_gt_crops_search",
+  "class_map_path": "manifests/classifier_class_map.json",
+  "counts": {
+    "class_count": 2,
+    "crop_count": 2,
+    "image_count": 2
+  },
+  "crop_source": "ground_truth_boxes",
+  "crops": [
+    {
+      "annotation_id": 1,
+      "bbox_xywh": [
+        10.0,
+        20.0,
+        30.0,
+        40.0
+      ],
+      "category_id": 0,
+      "class_id": 0,
+      "corrected": true,
+      "crop_path": "crops/gt/000000/000001_1111111111111.jpg",
+      "image_id": 1,
+      "product_code": "1111111111111",
+      "product_name": "TEST PRODUCT ONE",
+      "reference_image_paths": [
+        "reference_images/1111111111111/front.jpg",
+        "reference_images/1111111111111/main.jpg"
+      ],
+      "source_image_path": "images/shelves/img_00001.jpg"
+    },
+    {
+      "annotation_id": 2,
+      "bbox_xywh": [
+        5.0,
+        6.0,
+        7.0,
+        8.0
+      ],
+      "category_id": 356,
+      "class_id": 1,
+      "corrected": false,
+      "crop_path": "crops/gt/000001/000002_2222222222222.jpg",
+      "image_id": 2,
+      "product_code": "2222222222222",
+      "product_name": "unknown_product",
+      "reference_image_paths": [
+        "reference_images/2222222222222/main.jpg"
+      ],
+      "source_image_path": "images/shelves/img_00002.jpg"
+    }
+  ],
+  "model": {
+    "backbone": "efficientnet_b0",
+    "image_size": 224
+  },
+  "outputs": {
+    "crops_dir": "crops/gt",
+    "manifest_path": "manifests/classifier_crop_manifest.json"
+  },
+  "processed_inputs": {
+    "annotations_path": "annotations/instances.coco.json",
+    "categories_path": "categories.json",
+    "processed_manifest_path": "manifests/dataset_manifest.json",
+    "product_index_path": "product_index.json",
+    "reference_metadata_path": "reference_metadata.json"
+  },
+  "runtime": {
+    "backbone_library": "timm",
+    "backbone_library_version": "0.9.12"
+  },
+  "schema_version": 1
+}

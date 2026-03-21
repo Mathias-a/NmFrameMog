@@ -1,0 +1,101 @@
+{
+  "artifact_references": {
+    "classifier_report": {
+      "exists": true,
+      "metrics": {
+        "classification_map": 0.5,
+        "detection_map": 1.0,
+        "hybrid_score": 0.85
+      },
+      "path": "artifacts/eval/classifier_gt_metrics.json"
+    },
+    "detector_report": {
+      "exists": true,
+      "metrics": {
+        "classification_map": 0.5,
+        "detection_map": 1.0,
+        "hybrid_score": 0.85
+      },
+      "path": "artifacts/eval/detector_holdout_metrics.json"
+    },
+    "retrieval_eval_report": {
+      "exists": false,
+      "path": "artifacts/eval/retrieval_end_to_end_metrics.json"
+    },
+    "retrieval_manifest": {
+      "exists": true,
+      "path": "artifacts/retrieval/gallery_manifest.json"
+    }
+  },
+  "comparison_policy": {
+    "classifier_gt_boxes_are_reference_only": true,
+    "detector_placeholder_exports_are_not_promotion_grade": true,
+    "detector_smoke_evaluations_are_not_promotion_grade": true,
+    "retrieval_gallery_manifest_requires_end_to_end_eval": true
+  },
+  "recommended_baseline_variant": "detector_only",
+  "schema_version": 1,
+  "variants": {
+    "detector_classifier": {
+      "blocking_reasons": [
+        "detector evaluation.mode=smoke is not promotion-grade evidence",
+        "detector export.placeholder=true is not promotion-grade evidence",
+        "detector predictions are detection-only category_id=0 outputs",
+        "classifier evaluation.mode=gt_boxes is upper-bound reference evidence only",
+        "classifier does not have accepted end-to-end detector-box evaluation evidence"
+      ],
+      "eligible": false,
+      "evidence_paths": [
+        "artifacts/eval/detector_holdout_metrics.json",
+        "artifacts/eval/classifier_gt_metrics.json"
+      ],
+      "metrics": {
+        "classification_map": 0.5,
+        "detection_map": 1.0,
+        "hybrid_score": 0.85
+      },
+      "name": "detector_classifier",
+      "status": "ineligible",
+      "summary": "Classifier evidence exists, but current metrics are GT-box reference only and do not prove end-to-end promotion readiness."
+    },
+    "detector_classifier_retrieval": {
+      "blocking_reasons": [
+        "detector evaluation.mode=smoke is not promotion-grade evidence",
+        "detector export.placeholder=true is not promotion-grade evidence",
+        "detector predictions are detection-only category_id=0 outputs",
+        "classifier evaluation.mode=gt_boxes is upper-bound reference evidence only",
+        "classifier does not have accepted end-to-end detector-box evaluation evidence",
+        "retrieval has no end-to-end evaluation artifact; gallery manifest alone is insufficient"
+      ],
+      "eligible": false,
+      "evidence_paths": [
+        "artifacts/eval/detector_holdout_metrics.json",
+        "artifacts/eval/classifier_gt_metrics.json",
+        "artifacts/retrieval/gallery_manifest.json",
+        "artifacts/eval/retrieval_end_to_end_metrics.json"
+      ],
+      "name": "detector_classifier_retrieval",
+      "status": "ineligible",
+      "summary": "Retrieval has gallery foundation artifacts, but no accepted end-to-end evidence for promotion."
+    },
+    "detector_only": {
+      "blocking_reasons": [
+        "detector evaluation.mode=smoke is not promotion-grade evidence",
+        "detector export.placeholder=true is not promotion-grade evidence",
+        "detector predictions are detection-only category_id=0 outputs"
+      ],
+      "eligible": false,
+      "evidence_paths": [
+        "artifacts/eval/detector_holdout_metrics.json"
+      ],
+      "metrics": {
+        "classification_map": 0.5,
+        "detection_map": 1.0,
+        "hybrid_score": 0.85
+      },
+      "name": "detector_only",
+      "status": "ineligible",
+      "summary": "Baseline detector evidence is present but currently smoke-only."
+    }
+  }
+}

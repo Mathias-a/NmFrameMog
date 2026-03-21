@@ -1,0 +1,32 @@
+{
+  "artifacts": {
+    "checkpoints": "gs://ainm26osl-707-ng-artifacts/norgesgruppen-agentic-cv/artifacts/checkpoints/",
+    "data": "gs://ainm26osl-707-ng-artifacts/norgesgruppen-agentic-cv/data/",
+    "eval_outputs": "gs://ainm26osl-707-ng-artifacts/norgesgruppen-agentic-cv/artifacts/eval/",
+    "release_bundles": "gs://ainm26osl-707-ng-artifacts/norgesgruppen-agentic-cv/artifacts/releases/",
+    "run_manifests": "gs://ainm26osl-707-ng-artifacts/norgesgruppen-agentic-cv/artifacts/manifests/",
+    "runs": "gs://ainm26osl-707-ng-artifacts/norgesgruppen-agentic-cv/runs/"
+  },
+  "compute_engine": {
+    "bootstrap_script": "scripts/gcp/bootstrap_vm.sh",
+    "instance_resource": "projects/ainm26osl-707/zones/europe-west1-b/instances/ng-trainer-gpu-01",
+    "local_artifact_dir": "/home/ng/workspace/NG/artifacts",
+    "workspace_dir": "/home/ng/workspace/NG",
+    "zone": "europe-west1-b"
+  },
+  "storage": {
+    "bucket_root": "gs://ainm26osl-707-ng-artifacts/",
+    "checkpoints": "gs://ainm26osl-707-ng-artifacts/norgesgruppen-agentic-cv/artifacts/checkpoints/",
+    "data": "gs://ainm26osl-707-ng-artifacts/norgesgruppen-agentic-cv/data/",
+    "eval_outputs": "gs://ainm26osl-707-ng-artifacts/norgesgruppen-agentic-cv/artifacts/eval/",
+    "namespace_root": "gs://ainm26osl-707-ng-artifacts/norgesgruppen-agentic-cv/",
+    "release_bundles": "gs://ainm26osl-707-ng-artifacts/norgesgruppen-agentic-cv/artifacts/releases/",
+    "run_manifests": "gs://ainm26osl-707-ng-artifacts/norgesgruppen-agentic-cv/artifacts/manifests/",
+    "runs": "gs://ainm26osl-707-ng-artifacts/norgesgruppen-agentic-cv/runs/"
+  },
+  "workflow": {
+    "canonical_storage": "gcs",
+    "primary_execution": "compute_engine",
+    "vertex_ai_mode": "optional_escalation_only"
+  }
+}

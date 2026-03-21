@@ -1,0 +1,60 @@
+{
+  "counts": {
+    "cv_folds": 4,
+    "cv_pool_images": 1,
+    "holdout_images": 1,
+    "total_images": 2
+  },
+  "cv_pool_image_ids": [
+    2
+  ],
+  "folds": [
+    {
+      "fold_index": 0,
+      "train_annotation_count": 0,
+      "train_image_ids": [],
+      "val_annotation_count": 1,
+      "val_image_ids": [
+        2
+      ]
+    },
+    {
+      "fold_index": 1,
+      "train_annotation_count": 1,
+      "train_image_ids": [
+        2
+      ],
+      "val_annotation_count": 0,
+      "val_image_ids": []
+    },
+    {
+      "fold_index": 2,
+      "train_annotation_count": 1,
+      "train_image_ids": [
+        2
+      ],
+      "val_annotation_count": 0,
+      "val_image_ids": []
+    },
+    {
+      "fold_index": 3,
+      "train_annotation_count": 1,
+      "train_image_ids": [
+        2
+      ],
+      "val_annotation_count": 0,
+      "val_image_ids": []
+    }
+  ],
+  "holdout": {
+    "annotation_count": 1,
+    "image_ids": [
+      1
+    ]
+  },
+  "holdout_fraction": 0.2,
+  "schema_version": 1,
+  "seed": 20260320,
+  "source_annotations": "annotations/instances.coco.json",
+  "source_manifest": "manifests/dataset_manifest.json"
+}

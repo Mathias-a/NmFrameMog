@@ -1,0 +1,21 @@
+{
+  "products": [
+    {
+      "annotation_count": 1,
+      "image_names": [
+        "front.jpg",
+        "main.jpg"
+      ],
+      "product_code": "1111111111111",
+      "product_name": "TEST PRODUCT ONE"
+    },
+    {
+      "annotation_count": 1,
+      "image_names": [
+        "main.jpg"
+      ],
+      "product_code": "2222222222222",
+      "product_name": "unknown_product"
+    }
+  ]
+}

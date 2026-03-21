@@ -1,0 +1,55 @@
+{
+  "artifact_provenance": {
+    "train_summary": {
+      "path": "artifacts/models/detector/yolov8m-search-baseline/train_summary.json",
+      "sha256": "7494188697fbe0ecaa28f3bdb4f8b446ea757cf6fda29a5901b9bdf030f5401b",
+      "size_bytes": 1419
+    },
+    "weights": {
+      "contract_version": "detector-train-smoke-v1",
+      "path": "artifacts/models/detector/yolov8m-search-baseline/best.pt",
+      "sha256": "7b390713b222579eb9b3615e080b1f0ba10c0b328b1ce3a32162175a31b91533",
+      "size_bytes": 614
+    }
+  },
+  "evaluation": {
+    "mode": "smoke",
+    "prediction_count": 2,
+    "scoring_rule": "0.7*detection_map + 0.3*classification_map",
+    "split_path": "data/processed/annotations/instances.coco.json"
+  },
+  "export": {
+    "format": "coco_predictions",
+    "placeholder": true,
+    "predictions_path": "artifacts/eval/detector_holdout_metrics.predictions.json",
+    "sha256": "627ee3f7a64d543cbfada8aded2ba2dfcbd5d4978bf0314341029f5bfce1874f",
+    "size_bytes": 269
+  },
+  "metrics": {
+    "classification_map": 0.5,
+    "detection_map": 1.0,
+    "hybrid_score": 0.85
+  },
+  "schema_version": 1,
+  "smoke_contract": {
+    "annotation_count": 2,
+    "annotations_path": "data/processed/annotations/instances.coco.json",
+    "holdout_images": 1,
+    "image_count": 2,
+    "model_name": "yolov8m",
+    "run_name": "yolov8m-search-baseline",
+    "runtime": {
+      "export_format": "pt",
+      "framework": "ultralytics",
+      "version": "8.1.0"
+    },
+    "seed": 20260320,
+    "train_summary_path": "artifacts/models/detector/yolov8m-search-baseline/train_summary.json",
+    "training_output_dir": "artifacts/models/detector/yolov8m-search-baseline"
+  },
+  "split_summary": {
+    "annotation_count": 2,
+    "category_count": 2,
+    "image_count": 2
+  }
+}

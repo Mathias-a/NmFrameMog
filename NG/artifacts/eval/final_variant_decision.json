@@ -1,0 +1,52 @@
+{
+  "decision": {
+    "baseline_variant": "detector_only",
+    "promotion_applied": false,
+    "rationale": [
+      "No variant has promotion-grade end-to-end evidence, so the baseline stays detector-only.",
+      "detector evaluation.mode=smoke is not promotion-grade evidence",
+      "detector export.placeholder=true is not promotion-grade evidence",
+      "detector predictions are detection-only category_id=0 outputs"
+    ],
+    "selected_variant": "detector_only",
+    "selected_variant_eligible": false,
+    "strategy": "keep_detector_only"
+  },
+  "eligible_variants": [],
+  "report_path": "artifacts/eval/retrieval_gate_report.json",
+  "schema_version": 1,
+  "variant_summaries": {
+    "detector_classifier": {
+      "blocking_reasons": [
+        "detector evaluation.mode=smoke is not promotion-grade evidence",
+        "detector export.placeholder=true is not promotion-grade evidence",
+        "detector predictions are detection-only category_id=0 outputs",
+        "classifier evaluation.mode=gt_boxes is upper-bound reference evidence only",
+        "classifier does not have accepted end-to-end detector-box evaluation evidence"
+      ],
+      "eligible": false,
+      "status": "ineligible"
+    },
+    "detector_classifier_retrieval": {
+      "blocking_reasons": [
+        "detector evaluation.mode=smoke is not promotion-grade evidence",
+        "detector export.placeholder=true is not promotion-grade evidence",
+        "detector predictions are detection-only category_id=0 outputs",
+        "classifier evaluation.mode=gt_boxes is upper-bound reference evidence only",
+        "classifier does not have accepted end-to-end detector-box evaluation evidence",
+        "retrieval has no end-to-end evaluation artifact; gallery manifest alone is insufficient"
+      ],
+      "eligible": false,
+      "status": "ineligible"
+    },
+    "detector_only": {
+      "blocking_reasons": [
+        "detector evaluation.mode=smoke is not promotion-grade evidence",
+        "detector export.placeholder=true is not promotion-grade evidence",
+        "detector predictions are detection-only category_id=0 outputs"
+      ],
+      "eligible": false,
+      "status": "ineligible"
+    }
+  }
+}

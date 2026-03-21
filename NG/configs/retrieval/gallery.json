@@ -1,0 +1,14 @@
+{
+  "gallery": {
+    "embedding_dim": 32,
+    "normalize": true,
+    "prototype_strategy": "mean_reference_hash"
+  },
+  "output": {
+    "index_path": "artifacts/retrieval/gallery_index.npz",
+    "manifest_path": "artifacts/retrieval/gallery_manifest.json"
+  },
+  "processed_manifest_path": "manifests/dataset_manifest.json",
+  "processed_root": "data/processed",
+  "schema_version": 1
+}

@@ -1,0 +1,24 @@
+placeholder-detector-weights
+contract_version=detector-train-smoke-v1
+payload_sha256=f7eecd7f9f975771c44f03a89319103fd0c60767e996da86074ac1669bbe99e3
+{
+  "annotation_count": 2,
+  "annotations_path": "data/processed/annotations/instances.coco.json",
+  "batch_size": 16,
+  "cv_folds": 4,
+  "device": "cuda",
+  "epochs": 30,
+  "holdout_images": 1,
+  "image_count": 2,
+  "image_size": 960,
+  "mode": "smoke",
+  "model_name": "yolov8m",
+  "patience": 10,
+  "run_name": "yolov8m-search-baseline",
+  "runtime": {
+    "export_format": "pt",
+    "framework": "ultralytics",
+    "version": "8.1.0"
+  },
+  "seed": 20260320
+}

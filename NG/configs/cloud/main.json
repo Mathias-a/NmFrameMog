@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "provider": "gcp",
+  "project_id": "ainm26osl-707",
+  "region": "europe-west1",
+  "storage": {
+    "bucket": "ainm26osl-707-ng-artifacts",
+    "namespace_prefix": "norgesgruppen-agentic-cv",
+    "prefixes": {
+      "data": "data",
+      "runs": "runs",
+      "checkpoints": "artifacts/checkpoints",
+      "eval_outputs": "artifacts/eval",
+      "release_bundles": "artifacts/releases",
+      "run_manifests": "artifacts/manifests"
+    }
+  },
+  "compute_engine": {
+    "vm_name": "ng-trainer-gpu-01",
+    "zone": "europe-west1-b",
+    "machine_type": "n1-standard-8",
+    "accelerator_type": "nvidia-tesla-t4",
+    "accelerator_count": 1,
+    "boot_disk_gb": 200,
+    "image_project": "deeplearning-platform-release",
+    "image_family": "common-cu128-ubuntu-2204-nvidia-570",
+    "workspace_dir": "/home/ng/workspace/NG",
+    "local_artifact_dir": "/home/ng/workspace/NG/artifacts",
+    "bootstrap_script": "scripts/gcp/bootstrap_vm.sh"
+  },
+  "workflow": {
+    "primary_execution": "compute_engine",
+    "canonical_storage": "gcs",
+    "mirror_local_artifacts_to_gcs": true,
+    "vertex_ai": {
+      "enabled_by_default": false,
+      "mode": "optional_escalation_only",
+      "notes": [
+        "Keep the baseline training loop on the persistent Compute Engine GPU VM.",
+        "Use Vertex AI custom jobs only after the GCE plus GCS path is stable and the run manifests already describe the same bucket layout.",
+        "Do not change the canonical storage layout when escalating to Vertex AI."
+      ]
+    }
+  }
+}

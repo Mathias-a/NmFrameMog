@@ -1,0 +1,8 @@
+path: "/Users/mathias/ai-fun/NmFrameMog/worktree-1/NG/artifacts/runs/detector/yolov8m-search-baseline/dataset"
+train: "/Users/mathias/ai-fun/NmFrameMog/worktree-1/NG/artifacts/runs/detector/yolov8m-search-baseline/dataset/images/train"
+val: "/Users/mathias/ai-fun/NmFrameMog/worktree-1/NG/artifacts/runs/detector/yolov8m-search-baseline/dataset/images/val"
+test: "/Users/mathias/ai-fun/NmFrameMog/worktree-1/NG/artifacts/runs/detector/yolov8m-search-baseline/dataset/images/test"
+names:
+  - "TEST PRODUCT ONE"
+  - "unknown_product"
+nc: 2

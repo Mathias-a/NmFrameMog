@@ -1,0 +1,90 @@
+{
+  "artifact_references": {
+    "classifier_train_summary": {
+      "path": "artifacts/models/classifier/train_summary.json",
+      "snapshot": {
+        "sha256": "90e90e9539d39a77a161fb72f49ec4d1080bc11d0d0653f5f3f196742e290784",
+        "size_bytes": 2205
+      },
+      "summary": {
+        "mode": "timm_classifier_baseline",
+        "output_dir": "artifacts/models/classifier",
+        "weights_artifact_name": "best.pt"
+      }
+    },
+    "decision": {
+      "decision": {
+        "promotion_applied": false,
+        "selected_variant": "detector_only",
+        "selected_variant_eligible": false,
+        "strategy": "keep_detector_only"
+      },
+      "path": "artifacts/eval/final_variant_decision.json",
+      "snapshot": {
+        "sha256": "03858f1ee47f6577f1734b932b25fdc5814ed273c89585e51d6d61f324dfbee2",
+        "size_bytes": 2196
+      }
+    },
+    "detector_train_summary": {
+      "path": "artifacts/models/detector/yolov8m-search-baseline/train_summary.json",
+      "snapshot": {
+        "sha256": "7494188697fbe0ecaa28f3bdb4f8b446ea757cf6fda29a5901b9bdf030f5401b",
+        "size_bytes": 1419
+      },
+      "summary": {
+        "mode": "smoke",
+        "output_dir": "artifacts/models/detector/yolov8m-search-baseline",
+        "run_name": "yolov8m-search-baseline",
+        "runtime_version": "detector-train-smoke-v1",
+        "training_placeholder": true
+      }
+    }
+  },
+  "final_training": {
+    "attempted": false,
+    "blocked": true,
+    "blocking_reasons": [
+      "No variant has promotion-grade end-to-end evidence, so the baseline stays detector-only.",
+      "detector evaluation.mode=smoke is not promotion-grade evidence",
+      "detector export.placeholder=true is not promotion-grade evidence",
+      "detector predictions are detection-only category_id=0 outputs",
+      "detector train summary mode=smoke blocks real final retraining",
+      "detector train summary training.placeholder=true blocks real final retraining"
+    ],
+    "hold_manifest_only": true,
+    "promotion_applied": false,
+    "selected_variant": "detector_only",
+    "selected_variant_eligible": false,
+    "selected_variant_must_be_eligible": true
+  },
+  "frozen_config": {
+    "path": "configs/final/frozen_pipeline.json",
+    "snapshot": {
+      "sha256": "3355926bc4247613a89d645dd4b586408401e47d3f5848b6a8e4babdd5a504f6",
+      "size_bytes": 1097
+    }
+  },
+  "provenance": {
+    "cwd": "/Users/mathias/ai-fun/NmFrameMog/worktree-1/NG",
+    "referenced_files": {
+      "classifier_train_summary": {
+        "sha256": "90e90e9539d39a77a161fb72f49ec4d1080bc11d0d0653f5f3f196742e290784",
+        "size_bytes": 2205
+      },
+      "decision": {
+        "sha256": "03858f1ee47f6577f1734b932b25fdc5814ed273c89585e51d6d61f324dfbee2",
+        "size_bytes": 2196
+      },
+      "detector_train_summary": {
+        "sha256": "7494188697fbe0ecaa28f3bdb4f8b446ea757cf6fda29a5901b9bdf030f5401b",
+        "size_bytes": 1419
+      }
+    }
+  },
+  "release_manifest": {
+    "kind": "final_manifest",
+    "path": "artifacts/release/final_manifest.json"
+  },
+  "schema_version": 1,
+  "status": "blocked_hold_manifest"
+}

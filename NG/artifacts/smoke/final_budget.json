@@ -1,0 +1,95 @@
+{
+  "checks": [
+    {
+      "comparison": "<=",
+      "detail": null,
+      "enforced": true,
+      "name": "zip_uncompressed_bytes",
+      "observed": 2429,
+      "status": "pass",
+      "threshold": 440401920
+    },
+    {
+      "comparison": "<=",
+      "detail": null,
+      "enforced": true,
+      "name": "file_count",
+      "observed": 1,
+      "status": "pass",
+      "threshold": 1000
+    },
+    {
+      "comparison": "<=",
+      "detail": null,
+      "enforced": true,
+      "name": "python_file_count",
+      "observed": 1,
+      "status": "pass",
+      "threshold": 10
+    },
+    {
+      "comparison": "<=",
+      "detail": null,
+      "enforced": true,
+      "name": "weight_file_count",
+      "observed": 0,
+      "status": "pass",
+      "threshold": 3
+    },
+    {
+      "comparison": "<=",
+      "detail": null,
+      "enforced": true,
+      "name": "weight_bytes",
+      "observed": 0,
+      "status": "pass",
+      "threshold": 440401920
+    },
+    {
+      "comparison": "<=",
+      "detail": null,
+      "enforced": true,
+      "name": "smoke_runtime_seconds",
+      "observed": 0.024402415961958468,
+      "status": "pass",
+      "threshold": 240.0
+    },
+    {
+      "comparison": "<=",
+      "detail": "Placeholder only; local budget check does not measure peak memory yet.",
+      "enforced": false,
+      "name": "memory_peak_bytes",
+      "observed": null,
+      "status": "not_measured",
+      "threshold": 8589934592
+    }
+  ],
+  "failed_checks": [],
+  "input_dir": "tests/fixtures/submission_images",
+  "observed": {
+    "file_count": 1,
+    "memory_peak_bytes": null,
+    "prediction_count": 3,
+    "python_file_count": 1,
+    "smoke_runtime_seconds": 0.024402415961958468,
+    "weight_bytes": 0,
+    "weight_file_count": 0,
+    "zip_bytes": 1113,
+    "zip_uncompressed_bytes": 2429
+  },
+  "smoke_error": null,
+  "status": "pass",
+  "summary": "Budget check passed.",
+  "thresholds": {
+    "max_files": 1000,
+    "max_memory_bytes": 8589934592,
+    "max_python_files": 10,
+    "max_smoke_runtime_seconds": 240.0,
+    "max_weight_bytes": 440401920,
+    "max_weight_files": 3,
+    "max_zip_uncompressed_bytes": 440401920,
+    "memory_check": "placeholder_not_measured",
+    "sandbox_timeout_seconds": 300.0
+  },
+  "zip_path": "dist/ng_submission.zip"
+}

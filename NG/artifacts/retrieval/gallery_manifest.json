@@ -1,0 +1,90 @@
+{
+  "config_path": "configs/retrieval/gallery.json",
+  "counts": {
+    "product_count": 2,
+    "products_with_missing_views": 2,
+    "products_without_prototypes": 0,
+    "prototype_count": 2
+  },
+  "coverage": {
+    "reference_view_vocabulary": [
+      "back.jpg",
+      "bottom.jpg",
+      "front.jpg",
+      "left.jpg",
+      "main.jpg",
+      "right.jpg",
+      "top.jpg"
+    ]
+  },
+  "index": {
+    "embedding_dim": 32,
+    "format": "npz",
+    "normalize": true,
+    "path": "artifacts/retrieval/gallery_index.npz",
+    "prototype_strategy": "mean_reference_hash",
+    "sha256": "65b07d1e8e35757d7d374530298c2f7b5e19c70a931603cd7228614669c6b180",
+    "size_bytes": 928
+  },
+  "processed_inputs": {
+    "processed_manifest_path": "data/processed/manifests/dataset_manifest.json",
+    "product_index_path": "data/processed/product_index.json",
+    "reference_metadata_path": "data/processed/reference_metadata.json"
+  },
+  "products": [
+    {
+      "available_views": [
+        "front.jpg",
+        "main.jpg"
+      ],
+      "category_ids": [
+        0
+      ],
+      "missing_views": [
+        "back.jpg",
+        "bottom.jpg",
+        "left.jpg",
+        "right.jpg",
+        "top.jpg"
+      ],
+      "product_code": "1111111111111",
+      "product_name": "TEST PRODUCT ONE",
+      "prototype_count": 1,
+      "prototype_index_range": [
+        0,
+        1
+      ],
+      "reference_image_paths": [
+        "reference_images/1111111111111/front.jpg",
+        "reference_images/1111111111111/main.jpg"
+      ]
+    },
+    {
+      "available_views": [
+        "main.jpg"
+      ],
+      "category_ids": [
+        356
+      ],
+      "missing_views": [
+        "back.jpg",
+        "bottom.jpg",
+        "front.jpg",
+        "left.jpg",
+        "right.jpg",
+        "top.jpg"
+      ],
+      "product_code": "2222222222222",
+      "product_name": "unknown_product",
+      "prototype_count": 1,
+      "prototype_index_range": [
+        1,
+        2
+      ],
+      "reference_image_paths": [
+        "reference_images/2222222222222/main.jpg"
+      ]
+    }
+  ],
+  "schema_version": 1
+}

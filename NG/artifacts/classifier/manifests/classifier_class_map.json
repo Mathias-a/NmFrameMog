@@ -1,0 +1,42 @@
+{
+  "baseline": "classifier_gt_crops_search",
+  "classes": [
+    {
+      "category_ids": [
+        0
+      ],
+      "class_id": 0,
+      "product_code": "1111111111111",
+      "product_name": "TEST PRODUCT ONE",
+      "reference_image_paths": [
+        "reference_images/1111111111111/front.jpg",
+        "reference_images/1111111111111/main.jpg"
+      ]
+    },
+    {
+      "category_ids": [
+        356
+      ],
+      "class_id": 1,
+      "product_code": "2222222222222",
+      "product_name": "unknown_product",
+      "reference_image_paths": [
+        "reference_images/2222222222222/main.jpg"
+      ]
+    }
+  ],
+  "crop_source": "ground_truth_boxes",
+  "index_by_category_id": {
+    "0": 0,
+    "356": 1
+  },
+  "index_by_product_code": {
+    "1111111111111": 0,
+    "2222222222222": 1
+  },
+  "runtime": {
+    "backbone_library": "timm",
+    "backbone_library_version": "0.9.12"
+  },
+  "schema_version": 1
+}

@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "baseline": "detector_only_search",
+  "runtime": {
+    "framework": "ultralytics",
+    "version": "8.1.0",
+    "export_format": "pt"
+  },
+  "model": {
+    "name": "yolov8m",
+    "weights": "yolov8m.pt"
+  },
+  "search": {
+    "device": "cuda",
+    "epochs": 30,
+    "image_size": 960,
+    "batch_size": 16,
+    "patience": 10,
+    "run_name": "yolov8m-search-baseline"
+  }
+}

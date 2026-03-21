@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "output_zip": "dist/ng_submission.zip",
+  "source_files": [
+    "submission/run.py"
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "output_zip": "dist/ng_detector_only_submission.zip",
+  "source_files": [
+    "submission/run.py",
+    "artifacts/models/detector/yolov8m-search-baseline/best.pt",
+    "artifacts/models/detector/yolov8m-search-baseline/train_summary.json"
+  ]
+}

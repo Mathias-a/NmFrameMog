@@ -1,0 +1,14 @@
+{
+  "products": [
+    {
+      "product_code": "1111111111111",
+      "product_name": "TEST PRODUCT ONE",
+      "annotation_count": 1
+    },
+    {
+      "product_code": "2222222222222",
+      "product_name": "unknown_product",
+      "annotation_count": 1
+    }
+  ]
+}

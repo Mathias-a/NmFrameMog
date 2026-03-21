@@ -1,0 +1,103 @@
+{
+  "cloud": {
+    "config_path": "configs/cloud/main.json",
+    "project_id": "ainm26osl-707",
+    "region": "europe-west1",
+    "zone": "europe-west1-b"
+  },
+  "created_at_utc": "2026-03-20T23:58:00Z",
+  "dataset_manifest_snapshot": {
+    "path": "data/processed/manifests/dataset_manifest.json",
+    "snapshot": {
+      "sha256": "3229da5faa879fd22c5cbe6926a5441104657b1aee103626a7befa3cb6d21663",
+      "size_bytes": 1941
+    }
+  },
+  "detector": {
+    "config": {
+      "path": "configs/detector/yolov8m-search.json",
+      "snapshot": {
+        "sha256": "ad038e63d0df396bdd846acc84e50abf31f3a862967abe4d66e427d7d00a37d6",
+        "size_bytes": 401
+      }
+    },
+    "output_dir": "artifacts/models/detector/yolov8m-search-baseline"
+  },
+  "output_artifacts": {
+    "best_pt": {
+      "path": "artifacts/models/detector/yolov8m-search-baseline/best.pt",
+      "snapshot": {
+        "sha256": "7b390713b222579eb9b3615e080b1f0ba10c0b328b1ce3a32162175a31b91533",
+        "size_bytes": 614
+      }
+    },
+    "evaluation_report": {
+      "path": "artifacts/eval/detector_holdout_metrics.json",
+      "snapshot": {
+        "sha256": "63c72fdeb1e0e1846197566fa554668123e6a636e91d5c110334a1a887deb9a9",
+        "size_bytes": 1771
+      }
+    },
+    "submission_zip": {
+      "path": "dist/ng_detector_only_submission.zip",
+      "snapshot": {
+        "sha256": "d4d286d39d002c13be43a170e6cbbc63d91bc6bd56ab4a45a31cd3bfd921a654",
+        "size_bytes": 2220
+      }
+    },
+    "train_summary_json": {
+      "path": "artifacts/models/detector/yolov8m-search-baseline/train_summary.json",
+      "snapshot": {
+        "sha256": "7494188697fbe0ecaa28f3bdb4f8b446ea757cf6fda29a5901b9bdf030f5401b",
+        "size_bytes": 1419
+      }
+    }
+  },
+  "provenance": {
+    "cwd": "/Users/mathias/ai-fun/NmFrameMog/worktree-1/NG",
+    "referenced_files": {
+      "cloud_config": {
+        "sha256": "fd8e792b455bcde6cd99661d3d740632706513820b003a7b2866a0df220c86b2",
+        "size_bytes": 1546
+      },
+      "dataset_manifest": {
+        "sha256": "3229da5faa879fd22c5cbe6926a5441104657b1aee103626a7befa3cb6d21663",
+        "size_bytes": 1941
+      },
+      "detector_config": {
+        "sha256": "ad038e63d0df396bdd846acc84e50abf31f3a862967abe4d66e427d7d00a37d6",
+        "size_bytes": 401
+      },
+      "evaluation_report": {
+        "sha256": "63c72fdeb1e0e1846197566fa554668123e6a636e91d5c110334a1a887deb9a9",
+        "size_bytes": 1771
+      },
+      "split_manifest": {
+        "sha256": "70ee26ff6096ebfce3433cfeb77ff9fc77ea96b1148f043557f24b799a9b2bda",
+        "size_bytes": 1135
+      },
+      "submission_zip": {
+        "sha256": "d4d286d39d002c13be43a170e6cbbc63d91bc6bd56ab4a45a31cd3bfd921a654",
+        "size_bytes": 2220
+      },
+      "train_summary": {
+        "sha256": "7494188697fbe0ecaa28f3bdb4f8b446ea757cf6fda29a5901b9bdf030f5401b",
+        "size_bytes": 1419
+      }
+    }
+  },
+  "run_manifest": {
+    "kind": "detector_run_manifest",
+    "path": "artifacts/run_manifest.json"
+  },
+  "run_name": "yolov8m-search-baseline",
+  "schema_version": 1,
+  "split_manifest_snapshot": {
+    "path": "data/processed/manifests/splits.json",
+    "snapshot": {
+      "sha256": "70ee26ff6096ebfce3433cfeb77ff9fc77ea96b1148f043557f24b799a9b2bda",
+      "size_bytes": 1135
+    }
+  },
+  "updated_at_utc": "2026-03-20T23:58:00Z"
+}

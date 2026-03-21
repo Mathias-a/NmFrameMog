@@ -1,0 +1,81 @@
+{
+  "artifact_provenance": {
+    "train_summary": {
+      "path": "artifacts/models/classifier/train_summary.json",
+      "sha256": "90e90e9539d39a77a161fb72f49ec4d1080bc11d0d0653f5f3f196742e290784",
+      "size_bytes": 2205
+    },
+    "weights": {
+      "checkpoint_format_version": "classifier-timm-state-dict-v1",
+      "path": "artifacts/models/classifier/best.pt",
+      "sha256": "a7729eddce295e80cd06ba204ccb8d032fbe38adcea5db4e2b0a287b027d167c",
+      "size_bytes": 16297637
+    }
+  },
+  "evaluation": {
+    "accuracy_top1": 0.5,
+    "crop_count": 2,
+    "mode": "gt_boxes",
+    "processed_root": "data/processed"
+  },
+  "export": {
+    "format": "coco_predictions",
+    "predictions_path": "artifacts/eval/classifier_gt_metrics.predictions.json",
+    "sha256": "72d41334c521f6c14858e316d3ca02cd854bd3bd2fbc519a5b61ea5cb2ab7414",
+    "size_bytes": 299
+  },
+  "label_space": {
+    "class_count": 2,
+    "class_map_path": "artifacts/models/classifier/manifests/classifier_class_map.json",
+    "crop_manifest_path": "artifacts/models/classifier/manifests/classifier_crop_manifest.json"
+  },
+  "metrics": {
+    "classification_map": 0.5,
+    "detection_map": 1.0,
+    "hybrid_score": 0.85
+  },
+  "predictions": [
+    {
+      "annotation_id": 1,
+      "confidence": 0.5649377107620239,
+      "expected_category_id": 0,
+      "expected_class_id": 0,
+      "image_id": 1,
+      "predicted_category_id": 0,
+      "predicted_class_id": 0,
+      "product_code": "1111111111111"
+    },
+    {
+      "annotation_id": 2,
+      "confidence": 0.5057626366615295,
+      "expected_category_id": 356,
+      "expected_class_id": 1,
+      "image_id": 2,
+      "predicted_category_id": 0,
+      "predicted_class_id": 0,
+      "product_code": "1111111111111"
+    }
+  ],
+  "preprocessing": {
+    "color_mode": "RGB",
+    "crop_pct": 0.875,
+    "feature_representation": "timm_resolved_transform",
+    "input_size": [
+      3,
+      224,
+      224
+    ],
+    "interpolation": "bicubic",
+    "mean": [
+      0.485,
+      0.456,
+      0.406
+    ],
+    "std": [
+      0.229,
+      0.224,
+      0.225
+    ]
+  },
+  "schema_version": 1
+}

@@ -1,0 +1,62 @@
+{
+  "annotations": [
+    {
+      "area": 1200,
+      "bbox": [
+        10,
+        20,
+        30,
+        40
+      ],
+      "category_id": 0,
+      "corrected": true,
+      "id": 1,
+      "image_id": 1,
+      "iscrowd": 0,
+      "product_code": "1111111111111",
+      "product_name": "TEST PRODUCT ONE"
+    },
+    {
+      "area": 56,
+      "bbox": [
+        5,
+        6,
+        7,
+        8
+      ],
+      "category_id": 356,
+      "corrected": false,
+      "id": 2,
+      "image_id": 2,
+      "iscrowd": 0,
+      "product_code": "2222222222222",
+      "product_name": "unknown_product"
+    }
+  ],
+  "categories": [
+    {
+      "id": 0,
+      "name": "TEST PRODUCT ONE",
+      "supercategory": "product"
+    },
+    {
+      "id": 356,
+      "name": "unknown_product",
+      "supercategory": "product"
+    }
+  ],
+  "images": [
+    {
+      "file_name": "shelves/img_00001.jpg",
+      "height": 480,
+      "id": 1,
+      "width": 640
+    },
+    {
+      "file_name": "shelves/img_00002.jpg",
+      "height": 240,
+      "id": 2,
+      "width": 320
+    }
+  ]
+}

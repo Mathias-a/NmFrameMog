@@ -1,0 +1,76 @@
+{
+  "artifact_provenance": {
+    "class_map": {
+      "path": "artifacts/models/classifier/manifests/classifier_class_map.json",
+      "sha256": "9c77aa522812620252425990b83eab05f607d9d9a40c9db841c331e2aef90997",
+      "size_bytes": 911
+    },
+    "crop_manifest": {
+      "path": "artifacts/models/classifier/manifests/classifier_crop_manifest.json",
+      "sha256": "d82d8df78ee223005d60b3ad8e1cdebbd84df45ae779da7119ce34cd8b7c9d77",
+      "size_bytes": 1917
+    },
+    "weights": {
+      "checkpoint_format_version": "classifier-timm-state-dict-v1",
+      "path": "artifacts/models/classifier/best.pt",
+      "sha256": "a7729eddce295e80cd06ba204ccb8d032fbe38adcea5db4e2b0a287b027d167c",
+      "size_bytes": 16297637
+    }
+  },
+  "config_path": "configs/classifier/search.json",
+  "output_artifacts": {
+    "best_weights": "artifacts/models/classifier/best.pt",
+    "class_map": "artifacts/models/classifier/manifests/classifier_class_map.json",
+    "crop_manifest": "artifacts/models/classifier/manifests/classifier_crop_manifest.json",
+    "summary_json": "artifacts/models/classifier/train_summary.json"
+  },
+  "output_dir": "artifacts/models/classifier",
+  "preprocessing": {
+    "color_mode": "RGB",
+    "crop_pct": 0.875,
+    "feature_representation": "timm_resolved_transform",
+    "input_size": [
+      3,
+      224,
+      224
+    ],
+    "interpolation": "bicubic",
+    "mean": [
+      0.485,
+      0.456,
+      0.406
+    ],
+    "std": [
+      0.229,
+      0.224,
+      0.225
+    ]
+  },
+  "processed_root": "data/processed",
+  "runtime": {
+    "backbone": "efficientnet_b0",
+    "backbone_library": "timm",
+    "backbone_library_version": "0.9.12",
+    "device": "cpu",
+    "execution_backend": "timm_torch"
+  },
+  "schema_version": 1,
+  "training": {
+    "best_accuracy_top1": 0.5,
+    "class_count": 2,
+    "crop_count": 2,
+    "deterministic": true,
+    "epochs": 25,
+    "fit_method": "ridge_closed_form_classifier_head",
+    "last_loss": 0.6482387185096741,
+    "learning_rate": 0.05,
+    "mode": "timm_classifier_baseline",
+    "sample_counts": {
+      "gt_crop": 2,
+      "reference_image": 3,
+      "total": 5
+    },
+    "weight_decay": 0.0,
+    "weights_artifact_name": "best.pt"
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "config_path": "configs/detector/yolov8m-search.json",
+  "mode": "smoke",
+  "model_name": "yolov8m",
+  "output_artifacts": {
+    "best_weights": "artifacts/models/detector/yolov8m-search-baseline/best.pt",
+    "summary_json": "artifacts/models/detector/yolov8m-search-baseline/train_summary.json"
+  },
+  "output_dir": "artifacts/models/detector/yolov8m-search-baseline",
+  "placeholder_bytes": 614,
+  "placeholder_sha256": "7b390713b222579eb9b3615e080b1f0ba10c0b328b1ce3a32162175a31b91533",
+  "processed_manifest_path": "data/processed/manifests/dataset_manifest.json",
+  "runtime": {
+    "export_format": "pt",
+    "framework": "ultralytics",
+    "version": "8.1.0"
+  },
+  "runtime_version": "detector-train-smoke-v1",
+  "search": {
+    "batch_size": 16,
+    "device": "cuda",
+    "epochs": 30,
+    "image_size": 960,
+    "patience": 10,
+    "run_name": "yolov8m-search-baseline"
+  },
+  "source_annotations": "annotations/instances.coco.json",
+  "source_manifest": "manifests/dataset_manifest.json",
+  "split_counts": {
+    "cv_folds": 4,
+    "cv_pool_images": 1,
+    "holdout_images": 1,
+    "total_images": 2
+  },
+  "splits_path": "data/processed/manifests/splits.json",
+  "summary_format": "json",
+  "training": {
+    "counts": {
+      "annotation_count": 2,
+      "category_count": 2,
+      "image_count": 2,
+      "reference_product_count": 2
+    },
+    "placeholder": true,
+    "weights": "yolov8m.pt"
+  }
+}

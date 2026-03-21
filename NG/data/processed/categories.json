@@ -1,0 +1,12 @@
+[
+  {
+    "id": 0,
+    "name": "TEST PRODUCT ONE",
+    "supercategory": "product"
+  },
+  {
+    "id": 356,
+    "name": "unknown_product",
+    "supercategory": "product"
+  }
+]
