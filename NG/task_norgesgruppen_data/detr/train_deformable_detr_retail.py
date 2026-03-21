@@ -700,7 +700,7 @@ def main():
     logger.log(f"Num raw annotations: {len(coco['annotations'])}")
     logger.log(f"Sanitization: {sanitize_stats}")
 
-    if not (0 <= args.fold-index < args.num-folds):
+    if not (0 <= args.fold_index < args.num_folds):
         raise ValueError("--fold-index must be in [0, num_folds-1]")
 
     folds = stable_multilabel_kfold(
