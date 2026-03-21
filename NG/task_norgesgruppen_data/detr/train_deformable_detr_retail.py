@@ -794,7 +794,7 @@ def main():
         lr_lambda=build_warmup_cosine_lambda(total_optimizer_steps, warmup_steps),
     )
 
-    scaler = torch.cuda.amp.GradScaler(enabled=use_amp)
+    scaler = torch.amp.GradScaler("cuda", enabled=use_amp)
 
     best_map50 = -1.0
     history = []
@@ -802,7 +802,7 @@ def main():
     optimizer_step_count = 0
 
     config_snapshot = {
-        "args": vars(args),
+        "args": {k: str(v) if isinstance(v, Path) else v for k, v in vars(args).items()},
         "sanitize_stats": sanitize_stats,
         "num_images": len(images),
         "num_categories": len(categories),
@@ -827,7 +827,7 @@ def main():
             pixel_mask = batch["pixel_mask"].to(device, non_blocking=True)
             labels = [{k: v.to(device) for k, v in label.items()} for label in batch["labels"]]
 
-            with torch.cuda.amp.autocast(enabled=use_amp):
+            with torch.amp.autocast("cuda", enabled=use_amp):
                 outputs = model(
                     pixel_values=pixel_values,
                     pixel_mask=pixel_mask,
