@@ -70,3 +70,52 @@ Prediction (submit):       prediction[H][W][6] — probabilities summing to 1.0 
 | `POST /astar-island/simulate` | Observe one viewport (costs 1 query) | Team |
 | `POST /astar-island/submit` | Submit H x W x 6 tensor for one seed | Team |
 | `GET /astar-island/analysis/{round_id}/{seed}` | Post-round ground truth (after completion) | Team |
+
+## Digital Twin Benchmark
+
+### Overview
+The `benchmark/` directory contains a local digital twin of the remote Astar Island simulator.
+Strategies are evaluated offline against this twin using the `BenchmarkRunner` harness.
+Use it to compare approaches before burning real API budget.
+
+### Running the benchmark
+```bash
+cd Astar-Island/benchmark
+uv run python -c "
+from astar_twin.harness.runner import BenchmarkRunner
+from astar_twin.strategies import REGISTRY
+from astar_twin.data.loaders import load_fixture
+from pathlib import Path
+
+fixture = load_fixture(Path('data/rounds/test-round-001'))
+strategies = [cls() for cls in REGISTRY.values()]
+report = BenchmarkRunner(fixture=fixture, base_seed=42).run(strategies)
+
+for sr in report.strategy_reports:
+    print(f'{sr.strategy_name}: mean={sr.mean_score:.2f}, per-seed={sr.scores}')
+"
+```
+
+### Adding a new strategy
+1. Create `benchmark/src/astar_twin/strategies/<your_strategy>/strategy.py`
+2. Implement the `Strategy` protocol: `name` property + `predict(initial_state, budget, base_seed) -> NDArray[float64]`
+3. Register it in `benchmark/src/astar_twin/strategies/__init__.py`'s `REGISTRY`
+4. Add tests in `benchmark/tests/strategies/`
+
+### ⛔ Hard Rules for Strategy Authors
+- **DO NOT** modify `SimulationParams` default field values
+- **DO NOT** import from `astar_twin.phases`, `astar_twin.api`, or `astar_twin.data`
+- **DO NOT** write to any files in `benchmark/src/astar_twin/engine/`, `benchmark/src/astar_twin/phases/`, or `benchmark/src/astar_twin/mc/`
+- The simulator is a shared, stable black box. Your strategy passes params **in** via constructor; it never changes the engine.
+- Violating these rules corrupts the benchmark for all agents working in this branch.
+
+### Strategy contract
+```python
+class Strategy(Protocol):
+    @property
+    def name(self) -> str: ...
+    def predict(self, initial_state: InitialState, budget: int, base_seed: int) -> NDArray[np.float64]: ...
+```
+- Output shape: `(H, W, 6)` where H, W from `initial_state.grid`
+- The harness applies `safe_prediction()` before scoring — do NOT floor zeros yourself
+- Deterministic: same `base_seed` MUST produce identical output
