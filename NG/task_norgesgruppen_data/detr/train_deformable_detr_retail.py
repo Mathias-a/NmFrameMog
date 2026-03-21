@@ -537,12 +537,16 @@ def evaluate_model(
     metrics = {
         "val_loss": round(avg_val_loss, 6),
         "val_map": round(float(results_main["map"].item()), 6),
-        "val_mar_100": round(float(results_main["mar_100"].item()), 6),
         "val_map30": round(float(results_30["map"].item()), 6),
         "val_map50": round(float(results_50["map"].item()), 6),
         "val_map75": round(float(results_75["map"].item()), 6),
     }
 
+    # Add whichever mAR key actually exists
+    for k in ["mar_100", "mar_300", "mar_10", "mar_1"]:
+        if k in results_main:
+            metrics[f"val_{k}"] = round(float(results_main[k].item()), 6)
+            
     if "classes" in results_50 and "map_per_class" in results_50:
         classes = results_50["classes"].tolist()
         map_per_class = results_50["map_per_class"].tolist()
