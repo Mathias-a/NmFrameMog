@@ -45,6 +45,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--label-smoothing", type=float, default=0.03)
     parser.add_argument("--warmup-epochs", type=int, default=3)
     parser.add_argument("--prototype-temperature", type=float, default=0.10)
+    parser.add_argument("--val-every", type=int, default=1)
     parser.add_argument("--amp", default="true")
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--use-detector-oof", default="true")
@@ -310,7 +311,8 @@ def train_recognizer_runs(args: argparse.Namespace) -> list[dict[str, Any]]:
         print(
             f"[recognizer] fold {fold} starting | "
             f"train_samples={len(train_samples)} val_samples={len(val_samples)} "
-            f"backbone={args.backbone} image_size={args.image_size} batch_size={args.batch_size}"
+            f"backbone={args.backbone} image_size={args.image_size} batch_size={args.batch_size} "
+            f"val_every={args.val_every}"
         )
 
         for epoch in range(1, args.epochs + 1):
@@ -351,74 +353,91 @@ def train_recognizer_runs(args: argparse.Namespace) -> list[dict[str, Any]]:
             if epoch > args.warmup_epochs:
                 scheduler.step()
 
-            model.eval()
-            val_loss = 0.0
-            val_count = 0
-            top1_correct = 0
-            top5_correct = 0
-            confusion_samples = []
-            with torch.no_grad():
-                val_progress = tqdm(
-                    val_loader,
-                    desc=f"Fold {fold} Val   {epoch:02d}/{args.epochs}",
-                    leave=False,
-                    dynamic_ncols=True,
-                )
-                for images, labels, paths in val_progress:
-                    images = images.to(device, non_blocking=True)
-                    labels = labels.to(device, non_blocking=True)
-                    with autocast(enabled=parse_bool(args.amp)):
-                        embeddings, logits = model(images)
-                        ce_loss = criterion_ce(logits, labels)
-                        supcon_loss = criterion_supcon(embeddings, labels)
-                        loss = args.ce_weight * ce_loss + args.supcon_weight * supcon_loss
-                    val_loss += float(loss.item()) * images.size(0)
-                    val_count += images.size(0)
-                    top1 = logits.argmax(dim=1)
-                    top1_correct += int((top1 == labels).sum().item())
-                    top5 = torch.topk(logits, k=min(5, logits.shape[1]), dim=1).indices
-                    top5_correct += int((top5 == labels.unsqueeze(1)).any(dim=1).sum().item())
-                    val_progress.set_postfix(
-                        val_loss=f"{(val_loss / max(val_count, 1)):.4f}",
-                        top1=f"{(top1_correct / max(val_count, 1)):.4f}",
-                        top5=f"{(top5_correct / max(val_count, 1)):.4f}",
+            should_validate = epoch == 1 or epoch == args.epochs or (epoch % max(1, args.val_every) == 0)
+            val_loss = None
+            val_top1 = None
+            val_top5 = None
+            confusion_samples: list[dict[str, Any]] = []
+
+            if should_validate:
+                model.eval()
+                raw_val_loss = 0.0
+                val_count = 0
+                top1_correct = 0
+                top5_correct = 0
+                with torch.no_grad():
+                    val_progress = tqdm(
+                        val_loader,
+                        desc=f"Fold {fold} Val   {epoch:02d}/{args.epochs}",
+                        leave=False,
+                        dynamic_ncols=True,
                     )
-                    if len(confusion_samples) < 32:
-                        for path, predicted_index, label_index in zip(paths, top1.tolist(), labels.tolist()):
-                            if predicted_index != label_index:
-                                confusion_samples.append(
-                                    {
-                                        "image_path": path,
-                                        "predicted_category_id": inverse_category_index[predicted_index],
-                                        "true_category_id": inverse_category_index[label_index],
-                                    }
-                                )
-                            if len(confusion_samples) >= 32:
-                                break
+                    for images, labels, paths in val_progress:
+                        images = images.to(device, non_blocking=True)
+                        labels = labels.to(device, non_blocking=True)
+                        with autocast(enabled=parse_bool(args.amp)):
+                            embeddings, logits = model(images)
+                            ce_loss = criterion_ce(logits, labels)
+                            supcon_loss = criterion_supcon(embeddings, labels)
+                            loss = args.ce_weight * ce_loss + args.supcon_weight * supcon_loss
+                        raw_val_loss += float(loss.item()) * images.size(0)
+                        val_count += images.size(0)
+                        top1 = logits.argmax(dim=1)
+                        top1_correct += int((top1 == labels).sum().item())
+                        top5 = torch.topk(logits, k=min(5, logits.shape[1]), dim=1).indices
+                        top5_correct += int((top5 == labels.unsqueeze(1)).any(dim=1).sum().item())
+                        val_progress.set_postfix(
+                            val_loss=f"{(raw_val_loss / max(val_count, 1)):.4f}",
+                            top1=f"{(top1_correct / max(val_count, 1)):.4f}",
+                            top5=f"{(top5_correct / max(val_count, 1)):.4f}",
+                        )
+                        if len(confusion_samples) < 32:
+                            for path, predicted_index, label_index in zip(paths, top1.tolist(), labels.tolist()):
+                                if predicted_index != label_index:
+                                    confusion_samples.append(
+                                        {
+                                            "image_path": path,
+                                            "predicted_category_id": inverse_category_index[predicted_index],
+                                            "true_category_id": inverse_category_index[label_index],
+                                        }
+                                    )
+                                if len(confusion_samples) >= 32:
+                                    break
+                val_loss = raw_val_loss / max(val_count, 1)
+                val_top1 = top1_correct / max(val_count, 1)
+                val_top5 = top5_correct / max(val_count, 1)
 
             row = {
                 "epoch": epoch,
                 "train_loss": total_loss / max(total_samples, 1),
                 "train_ce_loss": total_ce / max(total_samples, 1),
                 "train_supcon_loss": total_supcon / max(total_samples, 1),
-                "val_loss": val_loss / max(val_count, 1),
-                "val_top1": top1_correct / max(val_count, 1),
-                "val_top5": top5_correct / max(val_count, 1),
+                "val_loss": val_loss,
+                "val_top1": val_top1,
+                "val_top5": val_top5,
                 "lr": optimizer.param_groups[0]["lr"],
                 "train_samples": len(train_samples),
                 "val_samples": len(val_samples),
+                "validated": should_validate,
             }
             metrics_rows.append(row)
-            write_json(fold_root / f"epoch_{epoch:03d}_mistakes.json", confusion_samples)
+            if should_validate:
+                write_json(fold_root / f"epoch_{epoch:03d}_mistakes.json", confusion_samples)
             event_logger.log("recognizer_epoch", fold=fold, **row)
-            print(
-                f"[recognizer] fold {fold} epoch {epoch:02d}/{args.epochs} | "
-                f"train_loss={row['train_loss']:.4f} val_loss={row['val_loss']:.4f} "
-                f"val_top1={row['val_top1']:.4f} val_top5={row['val_top5']:.4f} "
-                f"lr={row['lr']:.2e}"
-            )
+            if should_validate:
+                print(
+                    f"[recognizer] fold {fold} epoch {epoch:02d}/{args.epochs} | "
+                    f"train_loss={row['train_loss']:.4f} val_loss={row['val_loss']:.4f} "
+                    f"val_top1={row['val_top1']:.4f} val_top5={row['val_top5']:.4f} "
+                    f"lr={row['lr']:.2e}"
+                )
+            else:
+                print(
+                    f"[recognizer] fold {fold} epoch {epoch:02d}/{args.epochs} | "
+                    f"train_loss={row['train_loss']:.4f} val=skipped lr={row['lr']:.2e}"
+                )
 
-            if row["val_top1"] > best_metric:
+            if should_validate and row["val_top1"] is not None and row["val_top1"] > best_metric:
                 best_metric = row["val_top1"]
                 best_summary = row
                 torch.save(
