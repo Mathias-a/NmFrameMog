@@ -79,6 +79,9 @@ Strategies are evaluated offline against this twin using the `BenchmarkRunner` h
 Use it to compare approaches before burning real API budget.
 
 ### Running the benchmark
+
+Use the most recent real round (round 15, 40×40 map with real ground truths from the API):
+
 ```bash
 cd Astar-Island/benchmark
 uv run python -c "
@@ -87,13 +90,23 @@ from astar_twin.strategies import REGISTRY
 from astar_twin.data.loaders import load_fixture
 from pathlib import Path
 
-fixture = load_fixture(Path('data/rounds/test-round-001'))
+fixture = load_fixture(Path('data/rounds/cc5442dd-bc5d-418b-911b-7eb960cb0390'))
 strategies = [cls() for cls in REGISTRY.values()]
 report = BenchmarkRunner(fixture=fixture, base_seed=42).run(strategies)
 
 for sr in report.strategy_reports:
     print(f'{sr.strategy_name}: mean={sr.mean_score:.2f}, per-seed={sr.scores}')
 "
+```
+
+All 15 completed real rounds (rounds 1–15, each 40×40) are available under
+`benchmark/data/rounds/`. The synthetic `test-round-001` (10×10) remains for
+unit tests but should not be used as a benchmark reference.
+
+To refresh the local fixture database (e.g. after new rounds complete):
+```bash
+cd Astar-Island/benchmark
+uv run python scripts/fetch_real_rounds.py
 ```
 
 ### Adding a new strategy
