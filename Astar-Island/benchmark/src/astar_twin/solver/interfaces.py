@@ -5,7 +5,7 @@ FastAPI internals, or fixture data directly.
 """
 from __future__ import annotations
 
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 from astar_twin.contracts.api_models import (
     AnalysisResponse,
@@ -19,6 +19,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 
+@runtime_checkable
 class SolverAdapter(Protocol):
     """Adapter that the solver pipeline uses to interact with any backend.
 
