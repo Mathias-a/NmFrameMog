@@ -797,7 +797,7 @@ def main():
         id2label=id2label,
         label2id=label2id,
         ignore_mismatched_sizes=True,
-        num_queries=100,
+        num_queries=300,
     )
     model.to(device)
 
