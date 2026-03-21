@@ -67,13 +67,22 @@ def apply_conflict(
         weights = np.array(
             [
                 math.exp(-_dist(raider, t, p.distance_metric) / max(raid_range, 1))
-                * (1.0 + t.food + t.wealth)
-                / (1.0 + t.defense)
+                * max(
+                    1e-6,
+                    1.0
+                    + (t.food if math.isfinite(t.food) else 0.0)
+                    + (t.wealth if math.isfinite(t.wealth) else 0.0),
+                )
+                / max(1e-6, 1.0 + (t.defense if math.isfinite(t.defense) else 0.0))
                 for t in targets
             ],
             dtype=np.float64,
         )
-        weights /= weights.sum()
+        total = float(weights.sum())
+        if not math.isfinite(total) or total <= 0.0:
+            weights = np.ones(len(targets), dtype=np.float64)
+            total = float(len(targets))
+        weights /= total
         target = targets[int(rng.choice(len(targets), p=weights))]
 
         tech_mil = p.tech_military_bonus
