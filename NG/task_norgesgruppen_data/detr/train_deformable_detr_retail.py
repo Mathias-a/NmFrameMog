@@ -520,6 +520,7 @@ def evaluate_model(
                     "labels": pred["labels"].detach().cpu(),
                 }
             )
+
         if num_batches == 1 and len(preds_for_metric) > 0 and len(targets_for_metric) > 0:
             logger.log(
                 f"eval sample: "
@@ -534,8 +535,6 @@ def evaluate_model(
             if len(preds_for_metric[0]["boxes"]) > 0:
                 logger.log(f"first pred box: {preds_for_metric[0]['boxes'][0].tolist()}")
 
-        if num_batches == 1 and len(preds_for_metric) > 0 and len(targets_for_metric) > 0:
-            logger.log(f"metric keys: {list(results_main.keys())}")
             logger.log(
                 f"pred label min/max: "
                 f"{preds_for_metric[0]['labels'].min().item()} / {preds_for_metric[0]['labels'].max().item()}"
@@ -554,6 +553,8 @@ def evaluate_model(
     results_30 = metric_30.compute()
     results_50 = metric_50.compute()
     results_75 = metric_75.compute()
+
+    logger.log(f"metric keys: {list(results_main.keys())}")
 
     avg_val_loss = val_loss_sum / max(1, num_batches)
 
