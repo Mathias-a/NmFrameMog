@@ -522,18 +522,18 @@ def evaluate_model(
                 }
             )
         if num_batches == 1 and len(preds_for_metric) > 0 and len(targets_for_metric) > 0:
-        logger.log(
-            f"eval sample: "
-            f"num_pred={len(preds_for_metric[0]['boxes'])}, "
-            f"num_tgt={len(targets_for_metric[0]['boxes'])}, "
-            f"pred_labels_dtype={preds_for_metric[0]['labels'].dtype}, "
-            f"tgt_labels_dtype={targets_for_metric[0]['labels'].dtype}"
-        )
+            logger.log(
+                f"eval sample: "
+                f"num_pred={len(preds_for_metric[0]['boxes'])}, "
+                f"num_tgt={len(targets_for_metric[0]['boxes'])}, "
+                f"pred_labels_dtype={preds_for_metric[0]['labels'].dtype}, "
+                f"tgt_labels_dtype={targets_for_metric[0]['labels'].dtype}"
+            )
 
-        if len(targets_for_metric[0]["boxes"]) > 0:
-            logger.log(f"first tgt box: {targets_for_metric[0]['boxes'][0].tolist()}")
-        if len(preds_for_metric[0]["boxes"]) > 0:
-            logger.log(f"first pred box: {preds_for_metric[0]['boxes'][0].tolist()}")
+            if len(targets_for_metric[0]["boxes"]) > 0:
+                logger.log(f"first tgt box: {targets_for_metric[0]['boxes'][0].tolist()}")
+            if len(preds_for_metric[0]["boxes"]) > 0:
+                logger.log(f"first pred box: {preds_for_metric[0]['boxes'][0].tolist()}")
 
         metric_main.update(preds_for_metric, targets_for_metric)
         metric_30.update(preds_for_metric, targets_for_metric)
