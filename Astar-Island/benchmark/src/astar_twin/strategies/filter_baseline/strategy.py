@@ -7,8 +7,8 @@ from astar_twin.contracts.api_models import InitialState
 from astar_twin.contracts.types import NUM_CLASSES, ClassIndex, TerrainCode
 from astar_twin.harness.budget import Budget
 
-_INLAND_TEMPLATE = np.array([0.55, 0.18, 0.0, 0.07, 0.20, 0.0], dtype=np.float64)
-_COASTAL_TEMPLATE = np.array([0.48, 0.17, 0.12, 0.06, 0.17, 0.0], dtype=np.float64)
+_INLAND_TEMPLATE = np.array([0.5496, 0.1798, 0.0002, 0.0706, 0.1996, 0.0002], dtype=np.float64)
+_COASTAL_TEMPLATE = np.array([0.4798, 0.1698, 0.1198, 0.0604, 0.1700, 0.0002], dtype=np.float64)
 
 
 class FilterBaselineStrategy:

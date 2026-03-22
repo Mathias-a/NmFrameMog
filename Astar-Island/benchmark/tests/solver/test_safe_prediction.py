@@ -10,7 +10,7 @@ def test_adversarial_floor() -> None:
 
     result = safe_prediction(tensor)
 
-    assert result.min() >= 0.01 - 1e-9
+    assert result.min() >= 0.0001 - 1e-12
 
 
 def test_sums_to_one() -> None:

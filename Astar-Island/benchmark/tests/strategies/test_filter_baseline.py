@@ -9,8 +9,8 @@ from astar_twin.harness.budget import Budget
 from astar_twin.strategies import REGISTRY
 from astar_twin.strategies.filter_baseline.strategy import FilterBaselineStrategy
 
-_INLAND_TEMPLATE = np.array([0.55, 0.18, 0.0, 0.07, 0.20, 0.0], dtype=np.float64)
-_COASTAL_TEMPLATE = np.array([0.48, 0.17, 0.12, 0.06, 0.17, 0.0], dtype=np.float64)
+_INLAND_TEMPLATE = np.array([0.5496, 0.1798, 0.0002, 0.0706, 0.1996, 0.0002], dtype=np.float64)
+_COASTAL_TEMPLATE = np.array([0.4798, 0.1698, 0.1198, 0.0604, 0.1700, 0.0002], dtype=np.float64)
 
 
 def _make_state(grid: list[list[int]]) -> InitialState:
@@ -59,7 +59,7 @@ def test_ports_only_allowed_next_to_water(strategy: FilterBaselineStrategy) -> N
     )
     result = strategy.predict(state, budget=Budget(total=50), base_seed=0)
     assert result[0, 1, ClassIndex.PORT] > 0.0
-    assert result[1, 1, ClassIndex.PORT] == 0.0
+    assert result[1, 1, ClassIndex.PORT] < 0.001  # near-zero for inland
     np.testing.assert_allclose(result[0, 1], _COASTAL_TEMPLATE)
     np.testing.assert_allclose(result[1, 1], _INLAND_TEMPLATE)
 
@@ -72,7 +72,7 @@ def test_diagonal_water_does_not_make_cell_coastal(strategy: FilterBaselineStrat
         ]
     )
     result = strategy.predict(state, budget=Budget(total=50), base_seed=0)
-    assert result[1, 1, ClassIndex.PORT] == 0.0
+    assert result[1, 1, ClassIndex.PORT] < 0.001  # near-zero for inland
     np.testing.assert_allclose(result[1, 1], _INLAND_TEMPLATE)
 
 

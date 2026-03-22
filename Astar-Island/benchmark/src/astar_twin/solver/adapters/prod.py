@@ -33,7 +33,7 @@ from astar_twin.contracts.api_models import (
 logger = logging.getLogger(__name__)
 
 DEFAULT_BASE_URL = "https://api.ainm.no"
-_ENV_FILE_SEARCH_LIMIT = 5  # max parent dirs to search for .env
+_ENV_FILE_SEARCH_LIMIT = 10  # max parent dirs to search for .env
 
 
 def _resolve_token(explicit_token: str | None = None) -> str:

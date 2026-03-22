@@ -11,11 +11,12 @@ def safe_prediction(tensor: NDArray[np.float64]) -> NDArray[np.float64]:
     if np.any(zero_mask):
         result[zero_mask.repeat(result.shape[2], axis=2)] = 1.0 / result.shape[2]
 
+    floor = 0.0001
     for _ in range(10):
-        result = np.maximum(result, 0.01)
+        result = np.maximum(result, floor)
         sums = np.sum(result, axis=2, keepdims=True)
         result = result / sums
-        if float(np.min(result)) >= 0.01 - 1e-9:
+        if float(np.min(result)) >= floor - 1e-12:
             break
 
     return result
