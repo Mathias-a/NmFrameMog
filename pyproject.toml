@@ -1,0 +1,40 @@
+[project]
+name = "nmframemog-monorepo"
+version = "0.1.0"
+description = "Monorepo for A* island challenge."
+requires-python = ">=3.13"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "basedmypy==2.10.0",
+    "pytest==8.4.2",
+    "ruff==0.15.6",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = [
+    "apps/astar-island",
+]
+
+[tool.ruff]
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["B", "E", "F", "I", "UP"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+files = ["apps"]
+explicit_package_bases = true
+mypy_path = [
+    "apps/astar-island/src",
+]
+exclude = ["tests/"]
+
+[tool.pytest.ini_options]
+testpaths = ["apps/astar-island/tests"]
