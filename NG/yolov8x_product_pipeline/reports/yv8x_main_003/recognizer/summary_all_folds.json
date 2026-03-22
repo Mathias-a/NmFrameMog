@@ -1,0 +1,87 @@
+[
+  {
+    "fold": 0,
+    "best": {
+      "epoch": 20,
+      "train_loss": 0.3511523457258974,
+      "train_ce_loss": 0.3488825672270916,
+      "train_supcon_loss": 0.015131854882732781,
+      "val_loss": 0.6383375798164769,
+      "val_top1": 0.9585348997926745,
+      "val_top5": 0.9887122782768947,
+      "lr": 1.25e-05,
+      "train_samples": 41905,
+      "val_samples": 4341,
+      "validated": true
+    },
+    "best_checkpoint": "/home/matiasfernandezjr/NmFrameMog/NG/yolov8x_product_pipeline/workspace/runs/yv8x_main_003/recognizer/fold_0/best.pt"
+  },
+  {
+    "fold": 1,
+    "best": {
+      "epoch": 20,
+      "train_loss": 0.36687822118058183,
+      "train_ce_loss": 0.3646496097269695,
+      "train_supcon_loss": 0.014857407614613818,
+      "val_loss": 0.6316692415859224,
+      "val_top1": 0.961284645842499,
+      "val_top5": 0.9883413990321162,
+      "lr": 1.25e-05,
+      "train_samples": 41700,
+      "val_samples": 4546,
+      "validated": true
+    },
+    "best_checkpoint": "/home/matiasfernandezjr/NmFrameMog/NG/yolov8x_product_pipeline/workspace/runs/yv8x_main_003/recognizer/fold_1/best.pt"
+  },
+  {
+    "fold": 2,
+    "best": {
+      "epoch": 20,
+      "train_loss": 0.3586956290528178,
+      "train_ce_loss": 0.3560835125821608,
+      "train_supcon_loss": 0.017414109604033,
+      "val_loss": 0.6202480431491807,
+      "val_top1": 0.9634404057480981,
+      "val_top5": 0.9911242603550295,
+      "lr": 1.25e-05,
+      "train_samples": 41514,
+      "val_samples": 4732,
+      "validated": true
+    },
+    "best_checkpoint": "/home/matiasfernandezjr/NmFrameMog/NG/yolov8x_product_pipeline/workspace/runs/yv8x_main_003/recognizer/fold_2/best.pt"
+  },
+  {
+    "fold": 3,
+    "best": {
+      "epoch": 20,
+      "train_loss": 0.36105364897171566,
+      "train_ce_loss": 0.3586063713898456,
+      "train_supcon_loss": 0.01631518295142273,
+      "val_loss": 0.6297476713800749,
+      "val_top1": 0.9608017817371938,
+      "val_top5": 0.9866369710467706,
+      "lr": 1.25e-05,
+      "train_samples": 41756,
+      "val_samples": 4490,
+      "validated": true
+    },
+    "best_checkpoint": "/home/matiasfernandezjr/NmFrameMog/NG/yolov8x_product_pipeline/workspace/runs/yv8x_main_003/recognizer/fold_3/best.pt"
+  },
+  {
+    "fold": 4,
+    "best": {
+      "epoch": 20,
+      "train_loss": 0.35687338144033975,
+      "train_ce_loss": 0.35431450007283566,
+      "train_supcon_loss": 0.017059206339656057,
+      "val_loss": 0.6123517722420133,
+      "val_top1": 0.9636520986585894,
+      "val_top5": 0.9898312418866292,
+      "lr": 1.25e-05,
+      "train_samples": 41624,
+      "val_samples": 4622,
+      "validated": true
+    },
+    "best_checkpoint": "/home/matiasfernandezjr/NmFrameMog/NG/yolov8x_product_pipeline/workspace/runs/yv8x_main_003/recognizer/fold_4/best.pt"
+  }
+]

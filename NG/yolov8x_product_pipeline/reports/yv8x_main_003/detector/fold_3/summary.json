@@ -1,0 +1,8 @@
+{
+  "fold": 3,
+  "results_csv": "/home/matiasfernandezjr/NmFrameMog/NG/yolov8x_product_pipeline/workspace/runs/yv8x_main_003/detector/fold_3/ultralytics/train/results.csv",
+  "best_weights": "/home/matiasfernandezjr/NmFrameMog/NG/yolov8x_product_pipeline/workspace/runs/yv8x_main_003/detector/fold_3/ultralytics/train/weights/best.pt",
+  "last_weights": "/home/matiasfernandezjr/NmFrameMog/NG/yolov8x_product_pipeline/workspace/runs/yv8x_main_003/detector/fold_3/ultralytics/train/weights/last.pt",
+  "best_epoch": null,
+  "best_row": null
+}

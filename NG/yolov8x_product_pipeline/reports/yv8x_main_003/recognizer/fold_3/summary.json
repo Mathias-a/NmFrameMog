@@ -1,0 +1,17 @@
+{
+  "fold": 3,
+  "best": {
+    "epoch": 20,
+    "train_loss": 0.36105364897171566,
+    "train_ce_loss": 0.3586063713898456,
+    "train_supcon_loss": 0.01631518295142273,
+    "val_loss": 0.6297476713800749,
+    "val_top1": 0.9608017817371938,
+    "val_top5": 0.9866369710467706,
+    "lr": 1.25e-05,
+    "train_samples": 41756,
+    "val_samples": 4490,
+    "validated": true
+  },
+  "best_checkpoint": "/home/matiasfernandezjr/NmFrameMog/NG/yolov8x_product_pipeline/workspace/runs/yv8x_main_003/recognizer/fold_3/best.pt"
+}
