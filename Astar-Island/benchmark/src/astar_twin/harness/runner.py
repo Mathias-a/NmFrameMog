@@ -14,6 +14,7 @@ from astar_twin.harness.protocol import Strategy
 from astar_twin.mc import MCRunner, aggregate_runs
 from astar_twin.params import sample_default_prior_params
 from astar_twin.scoring import compute_score, safe_prediction
+from astar_twin.solver.adapters.benchmark import BenchmarkAdapter
 
 
 def _derive_ground_truths(
@@ -95,7 +96,18 @@ class BenchmarkRunner:
 
         for strategy in strategies:
             seed_results: list[SeedResult] = []
-            budget = Budget(total=MAX_QUERIES)
+
+            adapter = BenchmarkAdapter(
+                fixture=self.fixture,
+                sim_seed_offset=self.base_seed + hash(strategy.name) % 10000,
+                require_calibrated_params=False,
+            )
+
+            def _observe_callback(seed_idx: int, vx: int, vy: int, vw: int, vh: int):
+                return adapter.simulate(self.fixture.id, seed_idx, vx, vy, vw, vh)
+
+            budget = Budget(total=MAX_QUERIES, _query_callback=_observe_callback)
+
             for seed_idx in range(self.fixture.seeds_count):
                 initial_state = self.fixture.initial_states[seed_idx]
                 raw_prediction = strategy.predict(

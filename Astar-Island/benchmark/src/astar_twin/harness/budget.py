@@ -9,6 +9,9 @@ reduces what remains for seeds 1-4.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Callable
+
+from astar_twin.contracts.api_models import SimulateResponse
 
 
 @dataclass
@@ -29,6 +32,9 @@ class Budget:
 
     total: int
     _used: int = field(default=0, init=False, repr=False)
+    _query_callback: Callable[[int, int, int, int, int], SimulateResponse] | None = field(
+        default=None, repr=False
+    )
 
     @property
     def remaining(self) -> int:
@@ -54,6 +60,28 @@ class Budget:
                 f"{self.remaining} remain ({self._used}/{self.total} used)"
             )
         self._used += n
+
+    def observe(
+        self,
+        seed_index: int,
+        viewport_x: int,
+        viewport_y: int,
+        viewport_w: int,
+        viewport_h: int,
+    ) -> SimulateResponse:
+        """Spend 1 query to observe a viewport on the real/twin simulator.
+
+        Raises:
+            RuntimeError: If the budget is exhausted.
+            NotImplementedError: If this budget instance does not support active sensing.
+        """
+        if self._query_callback is None:
+            raise NotImplementedError(
+                "Active sensing is not supported by this budget instance. "
+                "Ensure you run via BenchmarkRunner or a capable harness."
+            )
+        self.consume(1)
+        return self._query_callback(seed_index, viewport_x, viewport_y, viewport_w, viewport_h)
 
     def __int__(self) -> int:
         """Return remaining queries as an int for backwards-compatible usage."""
