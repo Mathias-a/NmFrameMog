@@ -158,6 +158,10 @@ You get a different stochastic outcome every time for the same viewport.
 
 **Budget: 50 queries total per round, shared across all 5 seeds.**
 
+**Round timing: each round lasts approximately 160 minutes.** The entire window is
+available for prediction — there is no separate "observation" vs "submission" phase.
+You can query, compute, and submit at any point within the round.
+
 ## Hidden parameters
 
 Every numeric coefficient in every formula is a hidden parameter. The admin sets these
