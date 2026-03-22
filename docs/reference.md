@@ -38,6 +38,8 @@ discover the map. All viewport positions can be pre-planned before spending any 
 Generation follows this structure:
 
 - Ocean borders form the outer edge of the 40×40 grid
+- **The ocean border is static** — these cells are always ocean (class 0) with zero entropy.
+  Viewports placed on the border waste coverage on cells excluded from scoring.
 - Fjords cut inland from random edges (ocean cells extending into land — increases coastal-adjacent cell count)
 - Mountain chains form via random walks (mountains cluster, not scatter randomly)
 - Forest patches cover land as clustered groves (forest neighbours cluster spatially)
@@ -139,6 +141,9 @@ isolated settlements would.
 `POST /astar-island/simulate` runs one independent 50-year simulation from t=0 and returns:
 
 **Grid:** terrain codes for the viewport region only (5–15 cells per side).
+
+**Always use 15×15 viewports** to maximise observed entropy per query. The API allows
+5–15 cells per side; anything less than 15×15 wastes budget on fewer cells.
 
 **Settlements in viewport** — only terrain codes 1 (Settlement) and 2 (Port) produce stat
 objects. Ruins, forests, plains, ocean, and mountains appear only as grid codes.
