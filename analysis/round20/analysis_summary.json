@@ -1,0 +1,412 @@
+[
+  {
+    "seed": 0,
+    "official_score": 51.6887,
+    "n_dynamic": 1328,
+    "n_total": 1600,
+    "gt_class_means_all": [
+      0.7429343750000004,
+      0.032243750000000085,
+      0.001621874999999999,
+      0.004281249999999956,
+      0.20954374999999936,
+      0.009375
+    ],
+    "gt_class_means_dynamic": [
+      0.7015775602409652,
+      0.03884789156626516,
+      0.0019540662650602398,
+      0.005158132530120429,
+      0.2524623493975896,
+      0.0
+    ],
+    "submitted_local_score": 51.688678258098534,
+    "submitted_kl_mean": 0.21342976838647565,
+    "submitted_kl_max": 0.6129891601405911,
+    "submitted_kl_p95": 0.38567426539547867,
+    "submitted_per_class_errors": {
+      "Empty": {
+        "n_cells": 1249,
+        "gt_mean_prob": 0.9385,
+        "pred_mean_prob": 0.7336,
+        "error": -0.2049,
+        "kl_mean": 0.1944
+      },
+      "Forest": {
+        "n_cells": 347,
+        "gt_mean_prob": 0.8853,
+        "pred_mean_prob": 0.6503,
+        "error": -0.235,
+        "kl_mean": 0.2264
+      },
+      "Mountain": {
+        "n_cells": 15,
+        "gt_mean_prob": 1.0,
+        "pred_mean_prob": 0.8848,
+        "error": -0.1152,
+        "kl_mean": 0.1226
+      }
+    },
+    "new_model_score": 43.260034608784025,
+    "new_vs_official": -8.43,
+    "new_model_per_class_errors": {
+      "Empty": {
+        "n_cells": 1249,
+        "gt_mean_prob": 0.9385,
+        "pred_mean_prob": 0.704,
+        "error": -0.2345,
+        "kl_mean": 0.228
+      },
+      "Forest": {
+        "n_cells": 347,
+        "gt_mean_prob": 0.8853,
+        "pred_mean_prob": 0.5796,
+        "error": -0.3057,
+        "kl_mean": 0.3097
+      },
+      "Mountain": {
+        "n_cells": 15,
+        "gt_mean_prob": 1.0,
+        "pred_mean_prob": 0.8579,
+        "error": -0.1421,
+        "kl_mean": 0.1534
+      }
+    },
+    "settlement_analysis": {
+      "gt_mean_all": 0.0322,
+      "gt_mean_dynamic": 0.0388,
+      "new_pred_mean_all": 0.2079,
+      "new_pred_mean_dynamic": 0.2431,
+      "old_pred_mean_all": 0.1866,
+      "old_pred_mean_dynamic": 0.2093
+    }
+  },
+  {
+    "seed": 1,
+    "official_score": 75.8189,
+    "n_dynamic": 1359,
+    "n_total": 1600,
+    "gt_class_means_all": [
+      0.7294875000000016,
+      0.03652187500000008,
+      0.0018218749999999986,
+      0.005246874999999959,
+      0.217546874999999,
+      0.009375
+    ],
+    "gt_class_means_dynamic": [
+      0.6925533480500384,
+      0.042998528329654256,
+      0.0021449595290654877,
+      0.0061773362766739765,
+      0.25612582781456833,
+      0.0
+    ],
+    "submitted_local_score": 75.81888468116216,
+    "submitted_kl_mean": 0.09415906533951714,
+    "submitted_kl_max": 0.5912056068177963,
+    "submitted_kl_p95": 0.22475780819291485,
+    "submitted_per_class_errors": {
+      "Empty": {
+        "n_cells": 1233,
+        "gt_mean_prob": 0.9323,
+        "pred_mean_prob": 0.8264,
+        "error": -0.1059,
+        "kl_mean": 0.0868
+      },
+      "Forest": {
+        "n_cells": 359,
+        "gt_mean_prob": 0.8893,
+        "pred_mean_prob": 0.7642,
+        "error": -0.1251,
+        "kl_mean": 0.1059
+      },
+      "Mountain": {
+        "n_cells": 15,
+        "gt_mean_prob": 1.0,
+        "pred_mean_prob": 0.9413,
+        "error": -0.0587,
+        "kl_mean": 0.0606
+      }
+    },
+    "new_model_score": 72.72989763868604,
+    "new_vs_official": -3.09,
+    "new_model_per_class_errors": {
+      "Empty": {
+        "n_cells": 1233,
+        "gt_mean_prob": 0.9323,
+        "pred_mean_prob": 0.7922,
+        "error": -0.1401,
+        "kl_mean": 0.1122
+      },
+      "Forest": {
+        "n_cells": 359,
+        "gt_mean_prob": 0.8893,
+        "pred_mean_prob": 0.7179,
+        "error": -0.1714,
+        "kl_mean": 0.1386
+      },
+      "Mountain": {
+        "n_cells": 15,
+        "gt_mean_prob": 1.0,
+        "pred_mean_prob": 0.9322,
+        "error": -0.0678,
+        "kl_mean": 0.0703
+      }
+    },
+    "settlement_analysis": {
+      "gt_mean_all": 0.0365,
+      "gt_mean_dynamic": 0.043,
+      "new_pred_mean_all": 0.1365,
+      "new_pred_mean_dynamic": 0.1555,
+      "old_pred_mean_all": 0.1129,
+      "old_pred_mean_dynamic": 0.1272
+    }
+  },
+  {
+    "seed": 2,
+    "official_score": 64.2614,
+    "n_dynamic": 1384,
+    "n_total": 1600,
+    "gt_class_means_all": [
+      0.7233343750000024,
+      0.037540625000000064,
+      0.0015124999999999987,
+      0.005243749999999955,
+      0.22236874999999906,
+      0.01
+    ],
+    "gt_class_means_dynamic": [
+      0.6917160404624296,
+      0.04339956647398851,
+      0.001748554913294796,
+      0.006062138728323647,
+      0.25707369942196423,
+      0.0
+    ],
+    "submitted_local_score": 64.26140201218686,
+    "submitted_kl_mean": 0.14482086738067554,
+    "submitted_kl_max": 0.586015544205385,
+    "submitted_kl_p95": 0.2983875522358619,
+    "submitted_per_class_errors": {
+      "Empty": {
+        "n_cells": 1225,
+        "gt_mean_prob": 0.9285,
+        "pred_mean_prob": 0.7758,
+        "error": -0.1527,
+        "kl_mean": 0.1276
+      },
+      "Forest": {
+        "n_cells": 365,
+        "gt_mean_prob": 0.8847,
+        "pred_mean_prob": 0.6966,
+        "error": -0.1881,
+        "kl_mean": 0.1614
+      },
+      "Mountain": {
+        "n_cells": 16,
+        "gt_mean_prob": 1.0,
+        "pred_mean_prob": 0.939,
+        "error": -0.061,
+        "kl_mean": 0.0631
+      }
+    },
+    "new_model_score": 58.79244327908671,
+    "new_vs_official": -5.47,
+    "new_model_per_class_errors": {
+      "Empty": {
+        "n_cells": 1225,
+        "gt_mean_prob": 0.9285,
+        "pred_mean_prob": 0.7476,
+        "error": -0.1809,
+        "kl_mean": 0.1522
+      },
+      "Forest": {
+        "n_cells": 365,
+        "gt_mean_prob": 0.8847,
+        "pred_mean_prob": 0.6563,
+        "error": -0.2284,
+        "kl_mean": 0.1984
+      },
+      "Mountain": {
+        "n_cells": 16,
+        "gt_mean_prob": 1.0,
+        "pred_mean_prob": 0.9364,
+        "error": -0.0636,
+        "kl_mean": 0.0663
+      }
+    },
+    "settlement_analysis": {
+      "gt_mean_all": 0.0375,
+      "gt_mean_dynamic": 0.0434,
+      "new_pred_mean_all": 0.1625,
+      "new_pred_mean_dynamic": 0.1857,
+      "old_pred_mean_all": 0.1471,
+      "old_pred_mean_dynamic": 0.1649
+    }
+  },
+  {
+    "seed": 3,
+    "official_score": 78.2898,
+    "n_dynamic": 1325,
+    "n_total": 1600,
+    "gt_class_means_all": [
+      0.7253843750000003,
+      0.040175000000000134,
+      0.002028124999999997,
+      0.004899999999999946,
+      0.21001249999999924,
+      0.0175
+    ],
+    "gt_class_means_dynamic": [
+      0.6895207547169819,
+      0.04851320754716997,
+      0.002449056603773581,
+      0.005916981132075406,
+      0.2535999999999991,
+      0.0
+    ],
+    "submitted_local_score": 78.28976444145542,
+    "submitted_kl_mean": 0.09396151687991465,
+    "submitted_kl_max": 0.5092897927773508,
+    "submitted_kl_p95": 0.21447504518694743,
+    "submitted_per_class_errors": {
+      "Empty": {
+        "n_cells": 1236,
+        "gt_mean_prob": 0.9237,
+        "pred_mean_prob": 0.8202,
+        "error": -0.1035,
+        "kl_mean": 0.086
+      },
+      "Forest": {
+        "n_cells": 339,
+        "gt_mean_prob": 0.8839,
+        "pred_mean_prob": 0.7491,
+        "error": -0.1348,
+        "kl_mean": 0.1113
+      },
+      "Mountain": {
+        "n_cells": 28,
+        "gt_mean_prob": 1.0,
+        "pred_mean_prob": 0.9496,
+        "error": -0.0504,
+        "kl_mean": 0.0518
+      }
+    },
+    "new_model_score": 78.69112764427231,
+    "new_vs_official": 0.4,
+    "new_model_per_class_errors": {
+      "Empty": {
+        "n_cells": 1236,
+        "gt_mean_prob": 0.9237,
+        "pred_mean_prob": 0.8123,
+        "error": -0.1114,
+        "kl_mean": 0.0829
+      },
+      "Forest": {
+        "n_cells": 339,
+        "gt_mean_prob": 0.8839,
+        "pred_mean_prob": 0.7367,
+        "error": -0.1472,
+        "kl_mean": 0.1119
+      },
+      "Mountain": {
+        "n_cells": 28,
+        "gt_mean_prob": 1.0,
+        "pred_mean_prob": 0.9387,
+        "error": -0.0613,
+        "kl_mean": 0.0633
+      }
+    },
+    "settlement_analysis": {
+      "gt_mean_all": 0.0402,
+      "gt_mean_dynamic": 0.0485,
+      "new_pred_mean_all": 0.11,
+      "new_pred_mean_dynamic": 0.1303,
+      "old_pred_mean_all": 0.106,
+      "old_pred_mean_dynamic": 0.1212
+    }
+  },
+  {
+    "seed": 4,
+    "official_score": 84.9189,
+    "n_dynamic": 1382,
+    "n_total": 1600,
+    "gt_class_means_all": [
+      0.7424843750000011,
+      0.039665625000000065,
+      0.001968749999999997,
+      0.004781249999999945,
+      0.20234999999999925,
+      0.00875
+    ],
+    "gt_class_means_dynamic": [
+      0.7119934876989893,
+      0.04592257597684523,
+      0.0022793053545586074,
+      0.005535455861070848,
+      0.23426917510853748,
+      0.0
+    ],
+    "submitted_local_score": 84.91888753303938,
+    "submitted_kl_mean": 0.06587832525259786,
+    "submitted_kl_max": 0.3441698286071525,
+    "submitted_kl_p95": 0.16958121707687548,
+    "submitted_per_class_errors": {
+      "Empty": {
+        "n_cells": 1271,
+        "gt_mean_prob": 0.9194,
+        "pred_mean_prob": 0.8452,
+        "error": -0.0742,
+        "kl_mean": 0.0617
+      },
+      "Forest": {
+        "n_cells": 327,
+        "gt_mean_prob": 0.8651,
+        "pred_mean_prob": 0.7831,
+        "error": -0.0819,
+        "kl_mean": 0.0755
+      },
+      "Mountain": {
+        "n_cells": 14,
+        "gt_mean_prob": 1.0,
+        "pred_mean_prob": 0.9326,
+        "error": -0.0674,
+        "kl_mean": 0.0699
+      }
+    },
+    "new_model_score": 82.26276483203044,
+    "new_vs_official": -2.66,
+    "new_model_per_class_errors": {
+      "Empty": {
+        "n_cells": 1271,
+        "gt_mean_prob": 0.9194,
+        "pred_mean_prob": 0.8059,
+        "error": -0.1135,
+        "kl_mean": 0.0847
+      },
+      "Forest": {
+        "n_cells": 327,
+        "gt_mean_prob": 0.8651,
+        "pred_mean_prob": 0.7355,
+        "error": -0.1296,
+        "kl_mean": 0.1025
+      },
+      "Mountain": {
+        "n_cells": 14,
+        "gt_mean_prob": 1.0,
+        "pred_mean_prob": 0.9158,
+        "error": -0.0842,
+        "kl_mean": 0.0885
+      }
+    },
+    "settlement_analysis": {
+      "gt_mean_all": 0.0397,
+      "gt_mean_dynamic": 0.0459,
+      "new_pred_mean_all": 0.1198,
+      "new_pred_mean_dynamic": 0.1347,
+      "old_pred_mean_all": 0.0851,
+      "old_pred_mean_dynamic": 0.0951
+    }
+  }
+]

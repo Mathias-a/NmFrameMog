@@ -36,5 +36,16 @@ mypy_path = [
 ]
 exclude = ["tests/"]
 
+[[tool.mypy.overrides]]
+module = [
+    "sklearn.*",
+    "scipy.*",
+    "joblib.*",
+]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 testpaths = ["apps/astar-island/tests"]
+markers = [
+    "benchmark: slow benchmark tests simulating active-round performance",
+]
