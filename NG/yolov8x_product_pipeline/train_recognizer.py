@@ -29,6 +29,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Train the SKU recognizer for the NG pipeline.")
     parser.add_argument("--workspace-root", required=True)
     parser.add_argument("--run-name", required=True)
+    parser.add_argument("--data-run-name", default="")
     parser.add_argument("--selected-folds", default="all")
     parser.add_argument("--seed", type=int, default=20260321)
     parser.add_argument("--backbone", default="convnextv2_base.fcmae_ft_in22k_in1k")
@@ -46,6 +47,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--warmup-epochs", type=int, default=3)
     parser.add_argument("--prototype-temperature", type=float, default=0.10)
     parser.add_argument("--val-every", type=int, default=1)
+    parser.add_argument("--init-from-run-name", default="")
+    parser.add_argument("--init-checkpoint-path", default="")
     parser.add_argument("--amp", default="true")
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--use-detector-oof", default="true")
@@ -221,7 +224,7 @@ def _make_loaders(
     train_transform, val_transform = _build_transforms(args.image_size)
     gt_samples, auxiliary_samples = _load_samples(
         workspace_root=Path(args.workspace_root).resolve(),
-        run_name=args.run_name,
+        run_name=args.data_run_name or args.run_name,
         use_detector_oof=parse_bool(args.use_detector_oof),
     )
 
@@ -304,6 +307,26 @@ def train_recognizer_runs(args: argparse.Namespace) -> list[dict[str, Any]]:
         criterion_supcon = SupConLoss(temperature=args.prototype_temperature)
         scaler = GradScaler(enabled=parse_bool(args.amp))
 
+        init_checkpoint_path = ""
+        if args.init_checkpoint_path:
+            init_checkpoint_path = args.init_checkpoint_path
+        elif args.init_from_run_name:
+            init_checkpoint_path = str(
+                workspace_root / "runs" / args.init_from_run_name / "recognizer" / f"fold_{fold}" / "best.pt"
+            )
+
+        if init_checkpoint_path:
+            checkpoint_file = Path(init_checkpoint_path).expanduser().resolve()
+            if not checkpoint_file.exists():
+                raise FileNotFoundError(f"Initializer checkpoint not found: {checkpoint_file}")
+            checkpoint = torch.load(checkpoint_file, map_location="cpu")
+            checkpoint_category_to_index = checkpoint.get("category_to_index")
+            if checkpoint_category_to_index and checkpoint_category_to_index != category_to_index:
+                raise ValueError(
+                    f"Category index mapping mismatch for fold {fold} between current data and {checkpoint_file}"
+                )
+            model.load_state_dict(checkpoint["model_state_dict"], strict=True)
+
         metrics_rows: list[dict[str, Any]] = []
         best_metric = float("-inf")
         best_summary: dict[str, Any] | None = None
@@ -312,7 +335,7 @@ def train_recognizer_runs(args: argparse.Namespace) -> list[dict[str, Any]]:
             f"[recognizer] fold {fold} starting | "
             f"train_samples={len(train_samples)} val_samples={len(val_samples)} "
             f"backbone={args.backbone} image_size={args.image_size} batch_size={args.batch_size} "
-            f"val_every={args.val_every}"
+            f"val_every={args.val_every} init_checkpoint={init_checkpoint_path or 'none'}"
         )
 
         for epoch in range(1, args.epochs + 1):
@@ -443,6 +466,11 @@ def train_recognizer_runs(args: argparse.Namespace) -> list[dict[str, Any]]:
                 torch.save(
                     {
                         "model_state_dict": model.state_dict(),
+                        "optimizer_state_dict": optimizer.state_dict(),
+                        "scheduler_state_dict": scheduler.state_dict(),
+                        "scaler_state_dict": scaler.state_dict(),
+                        "epoch": epoch,
+                        "best_metric": best_metric,
                         "category_to_index": category_to_index,
                         "args": vars(args),
                     },
