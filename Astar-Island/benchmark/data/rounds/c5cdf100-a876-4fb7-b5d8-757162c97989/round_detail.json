@@ -74295,6 +74295,8 @@
     "ruin_forest_rate": 0.1,
     "ruin_plain_rate": 0.06
   },
+  "params_source": "default_prior",
+  "ground_truth_source": "api_analysis",
   "event_date": "2026-03-20",
   "round_weight": 1.4775
 }

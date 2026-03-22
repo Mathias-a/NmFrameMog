@@ -80,7 +80,7 @@ Use it to compare approaches before burning real API budget.
 
 ### Running the benchmark
 
-Use the most recent real round (round 15, 40×40 map with real ground truths from the API):
+Use the most recent real round (round 18, 40×40 map with real ground truths from the API):
 
 ```bash
 cd Astar-Island/benchmark
@@ -90,7 +90,7 @@ from astar_twin.strategies import REGISTRY
 from astar_twin.data.loaders import load_fixture
 from pathlib import Path
 
-fixture = load_fixture(Path('data/rounds/cc5442dd-bc5d-418b-911b-7eb960cb0390'))
+fixture = load_fixture(Path('data/rounds/b0f9d1bf-4b71-4e6e-816c-19c718d29056'))
 strategies = [cls() for cls in REGISTRY.values()]
 report = BenchmarkRunner(fixture=fixture, base_seed=42).run(strategies)
 
@@ -99,7 +99,7 @@ for sr in report.strategy_reports:
 "
 ```
 
-All 15 completed real rounds (rounds 1–15, each 40×40) are available under
+All 18 completed real rounds (rounds 1–18, each 40×40) are available under
 `benchmark/data/rounds/`. The synthetic `test-round-001` (10×10) remains for
 unit tests but should not be used as a benchmark reference.
 
