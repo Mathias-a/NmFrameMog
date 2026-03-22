@@ -101,6 +101,7 @@ class ActiveSensingEnsembleMCStrategy:
                 break
 
         has_empirical = queries_spent > 0
+        empirical_probs: NDArray[np.float64] = np.zeros_like(empirical_counts)
         if has_empirical:
             empirical_probs = empirical_counts / queries_spent
 
@@ -108,7 +109,7 @@ class ActiveSensingEnsembleMCStrategy:
         expert_tensors = []
         log_likelihoods = []
 
-        for name, params in self._experts:
+        for _name, params in self._experts:
             runner = MCRunner(Simulator(params=params))
             runs = runner.run_batch(
                 initial_state, n_runs=50, base_seed=base_seed + self._seed_call_count * 1000
@@ -118,7 +119,7 @@ class ActiveSensingEnsembleMCStrategy:
 
             if has_empirical:
                 vp_tensor = tensor[vp_y : vp_y + 15, vp_x : vp_x + 15, :]
-                vp_tensor = np.clip(vp_tensor, 1e-6, 1.0)
+                vp_tensor = np.clip(vp_tensor, 1e-3, 1.0)
                 vp_tensor /= vp_tensor.sum(axis=-1, keepdims=True)
 
                 # Cross-entropy: sum( P_emp * log(P_expert) )
@@ -133,6 +134,11 @@ class ActiveSensingEnsembleMCStrategy:
                             p_emp = empirical_probs[y, x, c]
                             if p_emp > 0:
                                 ll += p_emp * np.log(vp_tensor[y, x, c])
+
+                # Normalize log-likelihood by the number of valid cells
+                num_cells = max(1, valid_y * valid_x)
+                ll /= num_cells
+
                 log_likelihoods.append(ll)
             else:
                 log_likelihoods.append(0.0)
@@ -140,8 +146,7 @@ class ActiveSensingEnsembleMCStrategy:
         # 4. Softmax weights
         if has_empirical:
             lls = np.array(log_likelihoods)
-            # Scale up differences to make selection sharper
-            scaled_lls = lls * 5.0
+            scaled_lls = lls / 0.1
             max_ll = np.max(scaled_lls)
             exp_lls = np.exp(scaled_lls - max_ll)
             weights = exp_lls / np.sum(exp_lls)
