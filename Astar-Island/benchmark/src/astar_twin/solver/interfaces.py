@@ -25,7 +25,7 @@ class SolverAdapter(Protocol):
 
     Implementations:
       - BenchmarkAdapter: drives the local digital twin
-      - (future) ProdAdapter: drives the real competition API
+      - ProdAdapter: drives the real competition API
     """
 
     def get_round_detail(self, round_id: str) -> RoundDetail:
