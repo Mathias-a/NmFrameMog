@@ -154,7 +154,10 @@ on dead settlements). The useful inference signal is `food` ≤ 0 indicating sta
 `tech_level` and `has_longship` are **never returned** by any endpoint.
 
 **Each query is a fresh independent simulation.** You are not stepping through one run.
-You get a different stochastic outcome every time for the same viewport.
+You get a different stochastic outcome every time for the same viewport. Each outcome
+is a single sample from the same underlying distribution that the ground truth
+represents — the ground truth is the aggregate of hundreds of such samples. Repeated
+queries over the same viewport converge to the ground truth probabilities.
 
 **Budget: 50 queries total per round, shared across all 5 seeds.**
 
