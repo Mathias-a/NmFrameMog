@@ -38,3 +38,24 @@ exclude = ["tests/"]
 
 [tool.pytest.ini_options]
 testpaths = ["apps/astar-island/tests"]
+markers = ["slow: marks tests as slow (deselect with '-m \"not slow\"')"]
+
+[[tool.mypy.overrides]]
+module = "scipy.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "lightgbm.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "sklearn.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "astar_island.*"
+allow_any_expr = true
+
+[[tool.mypy.overrides]]
+module = "joblib.*"
+ignore_missing_imports = true
