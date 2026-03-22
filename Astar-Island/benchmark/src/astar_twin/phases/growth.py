@@ -100,7 +100,7 @@ def apply_growth(state: RoundState, p: SimulationParams, rng: Generator) -> Roun
             p.food_base_yield
             + p.food_per_adjacent_forest * adj_forest
             - p.food_crowding_penalty * adj_settlements
-        )
+        ) * s.population
         s.food += production - p.population_food_upkeep * s.population
 
         capacity = (

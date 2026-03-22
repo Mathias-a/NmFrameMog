@@ -98,6 +98,7 @@ def apply_environment(
                     grid.set(ruin.y, ruin.x, TerrainCode.FOREST)
                 else:
                     grid.set(ruin.y, ruin.x, TerrainCode.PLAINS)
+                settlements.remove(ruin)
 
     result = state.copy()
     result.grid = grid
