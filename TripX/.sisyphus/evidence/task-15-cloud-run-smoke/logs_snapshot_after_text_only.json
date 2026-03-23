@@ -1,0 +1,332 @@
+{
+    "status": "ok",
+    "trace": {
+        "started_at": 1774113527.7227435,
+        "finished_at": 1774113543.1114953,
+        "elapsed_seconds": 15.39,
+        "prompt": "Opprett en ansatt med navn Ola Nordmann, ola@example.org. Han skal v\u00e6re kontoadministrator.",
+        "request_context": {
+            "current_date_iso": "2026-03-21",
+            "budget": {
+                "endpoint_timeout_seconds": 300,
+                "reserved_headroom_seconds": 30,
+                "execution_budget_seconds": 270,
+                "max_model_turns": 24,
+                "max_tool_calls": 48
+            },
+            "guardrails": [
+                "inject_current_iso_date_when_prompt_omits_date",
+                "preserve_explicit_user_dates",
+                "keep_solve_synchronous",
+                "enforce_request_budget_caps",
+                "minimize_redundant_api_calls"
+            ],
+            "execution_mode": "synchronous",
+            "solve_response_contract": "{\"status\":\"completed\"}"
+        },
+        "status": "completed",
+        "error": null,
+        "entries": [
+            {
+                "ts": 1774113527.722779,
+                "event": "request_context_initialized",
+                "detail": {
+                    "current_date_iso": "2026-03-21",
+                    "budget": {
+                        "endpoint_timeout_seconds": 300,
+                        "reserved_headroom_seconds": 30,
+                        "execution_budget_seconds": 270,
+                        "max_model_turns": 24,
+                        "max_tool_calls": 48
+                    },
+                    "guardrails": [
+                        "inject_current_iso_date_when_prompt_omits_date",
+                        "preserve_explicit_user_dates",
+                        "keep_solve_synchronous",
+                        "enforce_request_budget_caps",
+                        "minimize_redundant_api_calls"
+                    ],
+                    "execution_mode": "synchronous",
+                    "solve_response_contract": "{\"status\":\"completed\"}"
+                }
+            },
+            {
+                "ts": 1774113527.7309644,
+                "event": "request_context_decision",
+                "detail": {
+                    "decision": "inject_current_date_when_needed",
+                    "current_date_iso": "2026-03-21",
+                    "preserve_explicit_user_dates": true,
+                    "execution_mode": "synchronous",
+                    "prompt_length": 91,
+                    "file_count": 0
+                }
+            },
+            {
+                "ts": 1774113527.7469115,
+                "event": "model_context_injected",
+                "detail": {
+                    "current_date_iso": "2026-03-21",
+                    "budget": {
+                        "endpoint_timeout_seconds": 300,
+                        "reserved_headroom_seconds": 30,
+                        "execution_budget_seconds": 270,
+                        "max_model_turns": 24,
+                        "max_tool_calls": 48
+                    },
+                    "guardrails": [
+                        "inject_current_iso_date_when_prompt_omits_date",
+                        "preserve_explicit_user_dates",
+                        "keep_solve_synchronous",
+                        "enforce_request_budget_caps",
+                        "minimize_redundant_api_calls"
+                    ],
+                    "execution_mode": "synchronous",
+                    "solve_response_contract": "{\"status\":\"completed\"}"
+                }
+            },
+            {
+                "ts": 1774113527.746934,
+                "event": "model_runtime_configured",
+                "detail": {
+                    "model": "gemini-3.1-pro-preview",
+                    "temperature": 0.0,
+                    "top_p": 1.0,
+                    "candidate_count": 1,
+                    "seed": 0,
+                    "thinking_level": "HIGH",
+                    "include_thoughts": true,
+                    "endpoint_timeout_seconds": 300,
+                    "reserved_headroom_seconds": 30,
+                    "execution_budget_seconds": 270,
+                    "max_model_turns": 24,
+                    "max_tool_calls": 48
+                }
+            },
+            {
+                "ts": 1774113527.7469563,
+                "event": "llm_call",
+                "detail": {
+                    "message": "initial_prompt",
+                    "prompt_length": 91,
+                    "remaining_budget_seconds": 269.98
+                }
+            },
+            {
+                "ts": 1774113534.6469617,
+                "event": "llm_response",
+                "detail": {
+                    "text": "",
+                    "function_call_count": 1,
+                    "remaining_budget_seconds": 263.08
+                }
+            },
+            {
+                "ts": 1774113534.6470103,
+                "event": "api_call",
+                "detail": {
+                    "step": 0,
+                    "method": "GET",
+                    "path": "/department",
+                    "query": {
+                        "count": "1",
+                        "fields": "id,name"
+                    },
+                    "body_keys": null,
+                    "tool_call_index": 1,
+                    "remaining_budget_seconds": 263.08
+                }
+            },
+            {
+                "ts": 1774113534.6470678,
+                "event": "request_cache_miss",
+                "detail": {
+                    "step": 0,
+                    "tool_call_index": 1,
+                    "method": "GET",
+                    "path": "/department",
+                    "cache_key": "GET|/department|{\"count\":\"1\",\"fields\":\"id,name\"}",
+                    "serialized_query": "{\"count\":\"1\",\"fields\":\"id,name\"}",
+                    "remaining_budget_seconds": 263.08
+                }
+            },
+            {
+                "ts": 1774113534.851631,
+                "event": "response_shaping_summary",
+                "detail": {
+                    "method": "GET",
+                    "path": "/department",
+                    "status_code": 200,
+                    "response_kind": "list",
+                    "returned_value_count": 1,
+                    "omitted_value_count": 0,
+                    "values_truncated": false,
+                    "sample_value_keys": [
+                        "id",
+                        "name"
+                    ]
+                }
+            },
+            {
+                "ts": 1774113534.85165,
+                "event": "api_response",
+                "detail": {
+                    "step": 0,
+                    "method": "GET",
+                    "path": "/department",
+                    "status_code": 200,
+                    "tool_call_index": 1,
+                    "response_source": "upstream"
+                }
+            },
+            {
+                "ts": 1774113534.8517604,
+                "event": "llm_call",
+                "detail": {
+                    "message": "function_responses",
+                    "step": 0,
+                    "response_count": 1,
+                    "tool_calls_completed": 1,
+                    "remaining_budget_seconds": 262.88
+                }
+            },
+            {
+                "ts": 1774113539.068112,
+                "event": "llm_response",
+                "detail": {
+                    "step": 0,
+                    "text": "",
+                    "function_call_count": 1,
+                    "tool_calls_completed": 1,
+                    "remaining_budget_seconds": 258.66
+                }
+            },
+            {
+                "ts": 1774113539.0681667,
+                "event": "api_call",
+                "detail": {
+                    "step": 1,
+                    "method": "POST",
+                    "path": "/employee",
+                    "query": {},
+                    "body_keys": [
+                        "lastName",
+                        "dateOfBirth",
+                        "department",
+                        "firstName",
+                        "userType",
+                        "email"
+                    ],
+                    "tool_call_index": 2,
+                    "remaining_budget_seconds": 258.66
+                }
+            },
+            {
+                "ts": 1774113539.2279084,
+                "event": "request_cache_invalidate",
+                "detail": {
+                    "step": 1,
+                    "tool_call_index": 2,
+                    "method": "GET",
+                    "resource_family": "/employee",
+                    "path": "/employee",
+                    "invalidated_entry_count": 0,
+                    "invalidated_keys": [],
+                    "remaining_budget_seconds": 258.5
+                }
+            },
+            {
+                "ts": 1774113539.2279375,
+                "event": "response_shaping_summary",
+                "detail": {
+                    "method": "POST",
+                    "path": "/employee",
+                    "status_code": 201,
+                    "response_kind": "value",
+                    "value_keys": [
+                        "address",
+                        "allowInformationRegistration",
+                        "bankAccountNumber",
+                        "bic",
+                        "comments",
+                        "companyId",
+                        "creditorBankCountryId",
+                        "dateOfBirth",
+                        "department",
+                        "displayName",
+                        "dnumber",
+                        "email",
+                        "employeeCategory",
+                        "employeeNumber",
+                        "employments",
+                        "firstName",
+                        "holidayAllowanceEarned",
+                        "iban",
+                        "id",
+                        "internationalId",
+                        "isAuthProjectOverviewURL",
+                        "isContact",
+                        "isProxy",
+                        "lastName",
+                        "nationalIdentityNumber",
+                        "phoneNumberHome",
+                        "phoneNumberMobile",
+                        "phoneNumberMobileCountry",
+                        "phoneNumberWork",
+                        "pictureId",
+                        "url",
+                        "userType",
+                        "usesAbroadPayment",
+                        "version",
+                        "vismaConnect2FAactive"
+                    ]
+                }
+            },
+            {
+                "ts": 1774113539.2279584,
+                "event": "api_response",
+                "detail": {
+                    "step": 1,
+                    "method": "POST",
+                    "path": "/employee",
+                    "status_code": 201,
+                    "tool_call_index": 2,
+                    "response_source": "upstream"
+                }
+            },
+            {
+                "ts": 1774113539.2280686,
+                "event": "llm_call",
+                "detail": {
+                    "message": "function_responses",
+                    "step": 1,
+                    "response_count": 1,
+                    "tool_calls_completed": 2,
+                    "remaining_budget_seconds": 258.5
+                }
+            },
+            {
+                "ts": 1774113543.1109955,
+                "event": "llm_response",
+                "detail": {
+                    "step": 1,
+                    "text": "Jeg har n\u00e5 opprettet Ola Nordmann som ansatt og kontoadministrator.\n\nTASK COMPLETED",
+                    "function_call_count": 0,
+                    "tool_calls_completed": 2,
+                    "remaining_budget_seconds": 254.62
+                }
+            },
+            {
+                "ts": 1774113543.11103,
+                "event": "task_completed",
+                "detail": {
+                    "step": 2,
+                    "tool_calls_completed": 2,
+                    "budget_state": "completed_with_budget_remaining",
+                    "remaining_budget_seconds": 254.62
+                }
+            }
+        ],
+        "entry_count": 19
+    }
+}

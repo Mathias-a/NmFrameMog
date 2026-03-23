@@ -1,0 +1,9 @@
+{
+  "url": "https://tripletex-124894558027.europe-north1.run.app/solve",
+  "status_code": 200,
+  "content_type": "application/json",
+  "body_raw": "{\"status\":\"completed\"}",
+  "classification": "success",
+  "contract_match": true,
+  "attachment_file": "smoke_attachment.pdf"
+}

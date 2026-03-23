@@ -1,0 +1,144 @@
+{
+  "case": "create_employee_admin",
+  "attempt": 1,
+  "started_at_epoch": 1774112660.478009,
+  "elapsed_seconds_local": 24.833,
+  "returncode": 0,
+  "timed_out": false,
+  "stdout": "{\n  \"case\": {\n    \"case_id\": \"create_employee_admin\",\n    \"description\": \"Starter fixture based on the documented create-employee scoring example. Uses a unique email to avoid collision with prior test runs.\",\n    \"tier\": 1\n  },\n  \"endpoint_run\": {\n    \"proxy_base_url\": \"http://127.0.0.1:34151/v2\",\n    \"elapsed_seconds\": 18.18300567800179,\n    \"contract\": {\n      \"response_status_code\": 200,\n      \"response_content_type\": null,\n      \"response_json\": {\n        \"status\": \"completed\"\n      },\n      \"response_text\": \"{\\\"status\\\":\\\"completed\\\"}\",\n      \"exact_success_response\": true,\n      \"errors\": [\n        \"Solve URL is not HTTPS.\",\n        \"Solve endpoint did not return application/json.\"\n      ]\n    }\n  },\n  \"proxy_metrics\": {\n    \"total_calls\": 2,\n    \"write_calls\": 1,\n    \"client_error_calls\": 0,\n    \"invalid_auth_paths\": [],\n    \"invalid_forward_paths\": [],\n    \"calls\": [\n      {\n        \"method\": \"GET\",\n        \"path\": \"/v2/department\",\n        \"forwarded_url\": \"https://kkpqfuj-amager.tripletex.dev/v2/department?count=1&fields=id%2Cname\",\n        \"response_status_code\": 200,\n        \"write_call\": false,\n        \"client_error\": false,\n        \"used_expected_basic_auth\": true\n      },\n      {\n        \"method\": \"POST\",\n        \"path\": \"/v2/employee\",\n        \"forwarded_url\": \"https://kkpqfuj-amager.tripletex.dev/v2/employee\",\n        \"response_status_code\": 201,\n        \"write_call\": true,\n        \"client_error\": false,\n        \"used_expected_basic_auth\": true\n      }\n    ]\n  },\n  \"verification\": {\n    \"points_earned\": 5.0,\n    \"max_points\": 5.0,\n    \"correctness\": 1.0,\n    \"snapshots\": {\n      \"employees\": [\n        {\n          \"id\": 18500017,\n          \"firstName\": \"Ola\",\n          \"lastName\": \"Nordmann\",\n          \"email\": \"ola@example.com\"\n        },\n        {\n          \"id\": 18564565,\n          \"firstName\": \"Ola\",\n          \"lastName\": \"Nordmann\",\n          \"email\": \"ola@example.org\"\n        },\n        {\n          \"id\": 18572319,\n          \"firstName\": \"Ola\",\n          \"lastName\": \"Nordmann\",\n          \"email\": \"ola.nordmann@test.no\"\n        },\n        {\n          \"id\": 18622053,\n          \"firstName\": \"Ola\",\n          \"lastName\": \"Nordmann\",\n          \"email\": \"ola.nordmann.2@example.org\"\n        },\n        {\n          \"id\": 18622094,\n          \"firstName\": \"Ola\",\n          \"lastName\": \"Nordmann\",\n          \"email\": \"ola@example.org\"\n        },\n        {\n          \"id\": 18622288,\n          \"firstName\": \"Ola\",\n          \"lastName\": \"Nordmann\",\n          \"email\": \"ola.admin.test@example.org\"\n        },\n        {\n          \"id\": 18625420,\n          \"firstName\": \"Ola\",\n          \"lastName\": \"Nordmann\",\n          \"email\": \"ola@example.org\"\n        },\n        {\n          \"id\": 18625601,\n          \"firstName\": \"Ola\",\n          \"lastName\": \"Nordmann\",\n          \"email\": \"ola.admin.test@example.org\"\n        },\n        {\n          \"id\": 18640411,\n          \"firstName\": \"Ola\",\n          \"lastName\": \"Nordmann\",\n          \"email\": \"ola.admin.test@example.org\"\n        },\n        {\n          \"id\": 18640454,\n          \"firstName\": \"Ola\",\n          \"lastName\": \"Nordmann\",\n          \"email\": \"ola.admin.test@example.org\"\n        }\n      ]\n    }\n  },\n  \"score\": {\n    \"base_score\": 0.0,\n    \"efficiency_bonus\": 0.0,\n    \"total_score\": 0.0,\n    \"write_efficiency\": 0.0,\n    \"error_efficiency\": 0.0,\n    \"combined_efficiency\": 0.0,\n    \"contract_valid\": false,\n    \"proxy_valid\": true,\n    \"disqualification_reasons\": [\n      \"Solve URL is not HTTPS.\"\n    ]\n  }\n}\n",
+  "stderr": "",
+  "parsed": {
+    "case": {
+      "case_id": "create_employee_admin",
+      "description": "Starter fixture based on the documented create-employee scoring example. Uses a unique email to avoid collision with prior test runs.",
+      "tier": 1
+    },
+    "endpoint_run": {
+      "proxy_base_url": "http://127.0.0.1:34151/v2",
+      "elapsed_seconds": 18.18300567800179,
+      "contract": {
+        "response_status_code": 200,
+        "response_content_type": null,
+        "response_json": {
+          "status": "completed"
+        },
+        "response_text": "{\"status\":\"completed\"}",
+        "exact_success_response": true,
+        "errors": [
+          "Solve URL is not HTTPS.",
+          "Solve endpoint did not return application/json."
+        ]
+      }
+    },
+    "proxy_metrics": {
+      "total_calls": 2,
+      "write_calls": 1,
+      "client_error_calls": 0,
+      "invalid_auth_paths": [],
+      "invalid_forward_paths": [],
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/v2/department",
+          "forwarded_url": "https://kkpqfuj-amager.tripletex.dev/v2/department?count=1&fields=id%2Cname",
+          "response_status_code": 200,
+          "write_call": false,
+          "client_error": false,
+          "used_expected_basic_auth": true
+        },
+        {
+          "method": "POST",
+          "path": "/v2/employee",
+          "forwarded_url": "https://kkpqfuj-amager.tripletex.dev/v2/employee",
+          "response_status_code": 201,
+          "write_call": true,
+          "client_error": false,
+          "used_expected_basic_auth": true
+        }
+      ]
+    },
+    "verification": {
+      "points_earned": 5.0,
+      "max_points": 5.0,
+      "correctness": 1.0,
+      "snapshots": {
+        "employees": [
+          {
+            "id": 18500017,
+            "firstName": "Ola",
+            "lastName": "Nordmann",
+            "email": "ola@example.com"
+          },
+          {
+            "id": 18564565,
+            "firstName": "Ola",
+            "lastName": "Nordmann",
+            "email": "ola@example.org"
+          },
+          {
+            "id": 18572319,
+            "firstName": "Ola",
+            "lastName": "Nordmann",
+            "email": "ola.nordmann@test.no"
+          },
+          {
+            "id": 18622053,
+            "firstName": "Ola",
+            "lastName": "Nordmann",
+            "email": "ola.nordmann.2@example.org"
+          },
+          {
+            "id": 18622094,
+            "firstName": "Ola",
+            "lastName": "Nordmann",
+            "email": "ola@example.org"
+          },
+          {
+            "id": 18622288,
+            "firstName": "Ola",
+            "lastName": "Nordmann",
+            "email": "ola.admin.test@example.org"
+          },
+          {
+            "id": 18625420,
+            "firstName": "Ola",
+            "lastName": "Nordmann",
+            "email": "ola@example.org"
+          },
+          {
+            "id": 18625601,
+            "firstName": "Ola",
+            "lastName": "Nordmann",
+            "email": "ola.admin.test@example.org"
+          },
+          {
+            "id": 18640411,
+            "firstName": "Ola",
+            "lastName": "Nordmann",
+            "email": "ola.admin.test@example.org"
+          },
+          {
+            "id": 18640454,
+            "firstName": "Ola",
+            "lastName": "Nordmann",
+            "email": "ola.admin.test@example.org"
+          }
+        ]
+      }
+    },
+    "score": {
+      "base_score": 0.0,
+      "efficiency_bonus": 0.0,
+      "total_score": 0.0,
+      "write_efficiency": 0.0,
+      "error_efficiency": 0.0,
+      "combined_efficiency": 0.0,
+      "contract_valid": false,
+      "proxy_valid": true,
+      "disqualification_reasons": [
+        "Solve URL is not HTTPS."
+      ]
+    }
+  },
+  "parse_error": null
+}

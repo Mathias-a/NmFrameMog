@@ -7,3 +7,4 @@ Imported reference docs for the Tripletex AI accounting agent task.
 - [Endpoint Specification](./endpoint.md)
 - [Scoring](./scoring.md)
 - [Examples](./examples.md)
+- [Testing Framework](./testing_framework.md)

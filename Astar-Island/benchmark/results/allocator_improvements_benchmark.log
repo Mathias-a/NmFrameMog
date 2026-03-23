@@ -1,0 +1,2 @@
+/Users/mathias/ai-fun/NmFrameMog/worktree-10/Astar-Island/benchmark/src/astar_twin/solver/eval/run_benchmark_suite.py:246: UserWarning: BenchmarkAdapter: fixture '71451d74-be9f-471f-aacd-a41f3b68a9cd' has params_source=DEFAULT_PRIOR. Simulator results reflect benchmark prior parameters, not real competition values. Use this adapter for ground-truth generation only, not calibration.
+  adapter = BenchmarkAdapter(fixture, n_mc_runs=5, sim_seed_offset=run_idx * 100)

@@ -1,0 +1,78 @@
+{
+  "case_id": "create_project_basic",
+  "description": "Baseline packaged fixture for project creation. It keeps the project-manager linkage visible in the prompt and selectors so later runtime work can tighten employee lookup/create behavior without changing fixture semantics.",
+  "tier": 2,
+  "prompt": "Opprett et prosjekt med navn Fjordbro Forprosjekt, prosjektnummer PROJ-BASIC-001, startdato 2026-03-21 og prosjektleder Kari Prosjektleder med e-post kari.project.basic@example.org.",
+  "files": [],
+  "expected_min_proxy_calls": 2,
+  "verification": {
+    "reads": [
+      {
+        "name": "projects",
+        "path": "/project",
+        "query": {
+          "name": "Fjordbro Forprosjekt",
+          "fields": "id,name,number,startDate,projectManager(id,email,firstName,lastName)",
+          "count": 50
+        },
+        "mode": "list_values"
+      }
+    ],
+    "checks": [
+      {
+        "name": "Project found with linked manager",
+        "points": 2,
+        "read_name": "projects",
+        "kind": "entity_exists",
+        "selector": {
+          "name": "Fjordbro Forprosjekt",
+          "number": "PROJ-BASIC-001",
+          "projectManager.email": "kari.project.basic@example.org"
+        }
+      },
+      {
+        "name": "Project number matches",
+        "points": 1,
+        "read_name": "projects",
+        "kind": "field_equals",
+        "selector": {
+          "name": "Fjordbro Forprosjekt",
+          "projectManager.email": "kari.project.basic@example.org"
+        },
+        "field_path": "number",
+        "expected": "PROJ-BASIC-001"
+      },
+      {
+        "name": "Project start date matches",
+        "points": 1,
+        "read_name": "projects",
+        "kind": "field_equals",
+        "selector": {
+          "name": "Fjordbro Forprosjekt",
+          "projectManager.email": "kari.project.basic@example.org"
+        },
+        "field_path": "startDate",
+        "expected": "2026-03-21"
+      },
+      {
+        "name": "Project manager email matches",
+        "points": 1,
+        "read_name": "projects",
+        "kind": "field_equals",
+        "selector": {
+          "name": "Fjordbro Forprosjekt",
+          "number": "PROJ-BASIC-001"
+        },
+        "field_path": "projectManager.email",
+        "expected": "kari.project.basic@example.org"
+      }
+    ]
+  },
+  "efficiency": {
+    "best_write_calls": 2,
+    "max_write_calls": 4,
+    "max_4xx_errors": 1,
+    "write_weight": 0.7,
+    "error_weight": 0.3
+  }
+}

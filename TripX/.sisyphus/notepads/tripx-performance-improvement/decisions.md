@@ -1,0 +1,13 @@
+# Decisions
+- Added scaffold packaged fixtures as valid JSON under `task_tripletex/testing/fixtures/` instead of weakening loader rules; this preserves later tasks' ability to enrich assertions without renaming packaged case files.
+- For Tier 1 create-customer/create-product scoring, chose deterministic selectors around documented writable/readable fields (`customer`: `name/email/phoneNumber`; `product`: `name/number/priceExcludingVatCurrency`) and tightened efficiency bounds to a single-write, zero-4xx happy path.
+- For Task 3 linked-entity fixtures, standardized on documented readback fields: project `number` + `projectManager.email`, voucher `date` + nested `postings.0/1.amountGrossCurrency`, and travel expense `title` + `employee.email`, so later runtime work can tighten behavior without changing fixture semantics.
+- For Task 3 linked-entity fixtures, standardized on documented readback fields: project  + , voucher Sat Mar 21 17:03:44 CET 2026 + nested , and travel expense  + , so later runtime work can tighten behavior without changing fixture semantics.
+
+- For Task 6 request-budget guardrails, chose a runtime policy of 300-second endpoint ceiling with 30 seconds reserved headroom, yielding a 270-second execution budget plus caps of 24 model turns and 48 tool calls; exposed the same markers in both `/logs` trace metadata and agent log entries for later retry/cache/file work.
+
+- For Task 12 deterministic-budget hardening, kept the existing `gemini-3.1-pro-preview` model and preserved the prior 300s/30s/270s request budget policy, while adding only SDK-supported reproducibility controls (`temperature=0.0`, `top_p=1.0`, `candidate_count=1`, `seed=0`) plus a focused regression proving the employee-admin baseline still scores correctness `1.0` with `total_calls == 2`, `write_calls == 1`, and `client_error_calls == 0` in repo-local integration coverage.
+
+- For Task 13 traceability enrichment, kept `/logs` as the existing in-memory snapshot shape and added compact summary events in `task_tripletex/agent.py` (`request_context_decision`, `response_shaping_summary`, `retry_decision_summary`, plus enriched file/cache/budget details) while enforcing logger-side redaction in `task_tripletex/task_log.py` for sensitive keys such as `session_token` and `content_base64`, so debugging breadcrumbs improve without exposing raw file bodies or auth material.
+
+- For Task 13 traceability enrichment, kept  as the existing in-memory snapshot shape and added compact summary events in  (, , , enriched file/cache/budget details) while enforcing logger-side redaction in  for sensitive keys such as  and , so debugging breadcrumbs improve without exposing raw file bodies or auth material.

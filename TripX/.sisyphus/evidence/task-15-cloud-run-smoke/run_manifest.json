@@ -1,0 +1,38 @@
+{
+  "task": "15-cloud-run-smoke",
+  "deploy": {
+    "project": "ainm26osl-707",
+    "region": "europe-north1",
+    "service": "tripletex",
+    "build_id": "78aaeda5-b1c2-4462-954d-45efe0f96bd9",
+    "build_status": "SUCCESS",
+    "revision": "tripletex-00011-sh9",
+    "service_url": "https://tripletex-124894558027.europe-north1.run.app"
+  },
+  "smokes": [
+    {
+      "name": "text_only_employee_admin",
+      "status_code": 200,
+      "content_type": "application/json",
+      "body_raw": "{\"status\":\"completed\"}",
+      "contract_match": true,
+      "evidence_file": "text_only_solve_response.json"
+    },
+    {
+      "name": "file_backed_pdf_acknowledgement",
+      "status_code": 200,
+      "content_type": "application/json",
+      "body_raw": "{\"status\":\"completed\"}",
+      "classification": "success",
+      "contract_match": true,
+      "attachment_file": "smoke_attachment.pdf",
+      "evidence_file": "file_backed_solve_response.json",
+      "logs_evidence_file": "logs_snapshot_after_file_backed_success.json"
+    }
+  ],
+  "logs": {
+    "successful_trace_file": "logs_snapshot_after_text_only.json",
+    "file_backed_success_trace_file": "logs_snapshot_after_file_backed_success.json",
+    "rejection_trace_file": "logs_snapshot.json"
+  }
+}

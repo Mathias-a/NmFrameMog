@@ -19,6 +19,7 @@ from dataclasses import dataclass, field
 import numpy as np
 from numpy.typing import NDArray
 
+from astar_twin.contracts.api_models import SimulateResponse
 from astar_twin.contracts.types import MAX_QUERIES, MAX_SEEDS
 from astar_twin.solver.inference.posterior import (
     create_posterior,
@@ -28,6 +29,13 @@ from astar_twin.solver.inference.posterior import (
     update_posterior,
 )
 from astar_twin.solver.interfaces import SolverAdapter
+from astar_twin.solver.observe.features import extract_features
+from astar_twin.solver.observe.ledger import (
+    ObservationLedger,
+    ViewportObservation,
+    create_ledger,
+    record_observation,
+)
 from astar_twin.solver.policy.allocator import (
     ADAPTIVE_BATCH_SIZE,
     ADAPTIVE_BATCHES,
@@ -70,6 +78,7 @@ class SolveResult:
     runtime_seconds: float = 0.0
     final_ess: float = 0.0
     contradiction_triggered: bool = False
+    observation_ledger: ObservationLedger | None = None
 
 
 def _issue_query(
@@ -80,7 +89,7 @@ def _issue_query(
     viewport_y: int,
     viewport_w: int,
     viewport_h: int,
-):
+) -> SimulateResponse:
     """Issue a single simulate query through the adapter."""
     return adapter.simulate(
         round_id,
@@ -137,6 +146,7 @@ def solve(
     # 2. Initialize posterior and allocation
     posterior = create_posterior(n_particles=n_particles, seed=base_seed)
     alloc = initialize_allocation(initial_states[:n_seeds], height, width)
+    ledger = create_ledger(n_seeds, height, width)
 
     # 3. Bootstrap phase: 2 queries per seed
     bootstrap_plan = plan_bootstrap_queries(alloc)
@@ -160,10 +170,27 @@ def solve(
             break
 
         # Update posterior with observation
+        features = extract_features(response)
+        record_observation(
+            ledger,
+            ViewportObservation(
+                seed_index=seed_idx,
+                phase="bootstrap",
+                viewport_x=response.viewport.x,
+                viewport_y=response.viewport.y,
+                viewport_w=response.viewport.w,
+                viewport_h=response.viewport.h,
+                grid=response.grid,
+                settlements=response.settlements,
+                features=features,
+                utility_score=vp.score,
+            ),
+        )
         posterior = update_posterior(
             posterior,
             response,
             initial_states[seed_idx],
+            observed_features=features,
             n_inner_runs=n_inner_runs,
             base_seed=base_seed + query_counter * 100,
         )
@@ -199,6 +226,7 @@ def solve(
         top_k=min(4, len(posterior.particles)),
         sims_per_seed=16,
         base_seed=base_seed + 3000,
+        observation_ledger=ledger,
     )
     seed_predictions: dict[int, NDArray[np.float64]] = {
         i: tensor for i, tensor in enumerate(bootstrap_tensors)
@@ -216,6 +244,7 @@ def solve(
             initial_states[:n_seeds],
             seed_predictions=seed_predictions,
             batch_size=ADAPTIVE_BATCH_SIZE,
+            observation_ledger=ledger,
         )
 
         for seed_idx, vp in batch:
@@ -234,10 +263,27 @@ def solve(
             except RuntimeError:
                 break
 
+            features = extract_features(response)
+            record_observation(
+                ledger,
+                ViewportObservation(
+                    seed_index=seed_idx,
+                    phase="adaptive",
+                    viewport_x=response.viewport.x,
+                    viewport_y=response.viewport.y,
+                    viewport_w=response.viewport.w,
+                    viewport_h=response.viewport.h,
+                    grid=response.grid,
+                    settlements=response.settlements,
+                    features=features,
+                    utility_score=vp.score,
+                ),
+            )
             posterior = update_posterior(
                 posterior,
                 response,
                 initial_states[seed_idx],
+                observed_features=features,
                 n_inner_runs=n_inner_runs,
                 base_seed=base_seed + query_counter * 100,
             )
@@ -273,11 +319,18 @@ def solve(
             top_k=min(4, len(posterior.particles)),
             sims_per_seed=16,
             base_seed=base_seed + 4000 + batch_num * 100,
+            observation_ledger=ledger,
         )
         seed_predictions = {i: tensor for i, tensor in enumerate(batch_tensors)}
 
     transition_phase(alloc)
-    contradiction = check_contradiction_triggers(alloc, posterior)
+    contradiction = check_contradiction_triggers(
+        alloc,
+        posterior,
+        initial_states[:n_seeds],
+        seed_predictions=seed_predictions,
+        observation_ledger=ledger,
+    )
 
     reserve_remaining = min(RESERVE_QUERIES, alloc.queries_remaining)
     if reserve_remaining > 0:
@@ -290,6 +343,8 @@ def solve(
             initial_states[:n_seeds],
             seed_predictions=seed_predictions,
             n_queries=batch_1_size,
+            observation_ledger=ledger,
+            contradiction_triggered=contradiction,
         )
 
         for seed_idx, vp in reserve_batch_1:
@@ -308,10 +363,27 @@ def solve(
             except RuntimeError:
                 break
 
+            features = extract_features(response)
+            record_observation(
+                ledger,
+                ViewportObservation(
+                    seed_index=seed_idx,
+                    phase="reserve",
+                    viewport_x=response.viewport.x,
+                    viewport_y=response.viewport.y,
+                    viewport_w=response.viewport.w,
+                    viewport_h=response.viewport.h,
+                    grid=response.grid,
+                    settlements=response.settlements,
+                    features=features,
+                    utility_score=vp.score,
+                ),
+            )
             posterior = update_posterior(
                 posterior,
                 response,
                 initial_states[seed_idx],
+                observed_features=features,
                 n_inner_runs=n_inner_runs,
                 base_seed=base_seed + query_counter * 100,
             )
@@ -344,6 +416,8 @@ def solve(
                 initial_states[:n_seeds],
                 seed_predictions=seed_predictions,
                 n_queries=batch_2_size,
+                observation_ledger=ledger,
+                contradiction_triggered=contradiction,
             )
 
             for seed_idx, vp in reserve_batch_2:
@@ -362,10 +436,27 @@ def solve(
                 except RuntimeError:
                     break
 
+                features = extract_features(response)
+                record_observation(
+                    ledger,
+                    ViewportObservation(
+                        seed_index=seed_idx,
+                        phase="reserve",
+                        viewport_x=response.viewport.x,
+                        viewport_y=response.viewport.y,
+                        viewport_w=response.viewport.w,
+                        viewport_h=response.viewport.h,
+                        grid=response.grid,
+                        settlements=response.settlements,
+                        features=features,
+                        utility_score=vp.score,
+                    ),
+                )
                 posterior = update_posterior(
                     posterior,
                     response,
                     initial_states[seed_idx],
+                    observed_features=features,
                     n_inner_runs=n_inner_runs,
                     base_seed=base_seed + query_counter * 100,
                 )
@@ -399,6 +490,7 @@ def solve(
         top_k=6,
         sims_per_seed=sims_per_seed,
         base_seed=base_seed + 5000,
+        observation_ledger=ledger,
         runtime_fraction=runtime_fraction,
     )
 
@@ -409,4 +501,5 @@ def solve(
         runtime_seconds=time.monotonic() - t_start,
         final_ess=posterior.ess,
         contradiction_triggered=contradiction,
+        observation_ledger=ledger,
     )

@@ -1,0 +1,148 @@
+{
+  "task": "Task 14 VM proxy regression wave",
+  "vm_solve_url": "http://127.0.0.1:8080/solve",
+  "sandbox_base_url": "https://kkpqfuj-amager.tripletex.dev/v2",
+  "notes": [
+    "All packaged cases were executed against the documented GCE VM localhost proxy workflow.",
+    "All cases inherit the evaluator localhost-contract warning: solve URL is not HTTPS and response_content_type is null on the proxy path.",
+    "Non-green cases were rerun once when needed; repeated outcomes were used for classification."
+  ],
+  "cases": [
+    {
+      "case_id": "create_employee_admin",
+      "status": "green",
+      "classification": null,
+      "attempts": [
+        1
+      ],
+      "evidence_files": [
+        "create_employee_admin.attempt1.json"
+      ],
+      "details": "Correctness 1.0 with 2 proxy calls and 0 client errors. Baseline remained optimal on the VM localhost path."
+    },
+    {
+      "case_id": "create_customer",
+      "status": "failing",
+      "classification": "runtime bug",
+      "attempts": [
+        1,
+        2
+      ],
+      "evidence_files": [
+        "create_customer.attempt1.json",
+        "create_customer.attempt2.json"
+      ],
+      "details": "Both attempts returned 200 completed and performed a single POST /customer, but verification correctness stayed 0.0 because no customer matched the expected name+email+phone selector. Snapshot evidence shows matching-name records with blank email/phone values, indicating the solve path created an incomplete customer payload rather than a verifier crash."
+    },
+    {
+      "case_id": "create_product",
+      "status": "green",
+      "classification": null,
+      "attempts": [
+        1
+      ],
+      "evidence_files": [
+        "create_product.attempt1.json"
+      ],
+      "details": "Correctness 1.0 with a single proxy write call and 0 client errors."
+    },
+    {
+      "case_id": "create_project_basic",
+      "status": "blocked",
+      "classification": "fixture issue",
+      "attempts": [
+        1,
+        2
+      ],
+      "evidence_files": [
+        "create_project_basic.attempt1.json",
+        "create_project_basic.attempt2.json"
+      ],
+      "details": "Both attempts crashed in verification before scoring: tripletex_read_helper raised ValueError because GET /project returned 400 for the fixture read query. This points to an invalid verification read shape/fields on the packaged fixture path, not a solve-endpoint contract failure."
+    },
+    {
+      "case_id": "create_journal_entry_basic",
+      "status": "blocked",
+      "classification": "fixture issue",
+      "attempts": [
+        1,
+        2
+      ],
+      "evidence_files": [
+        "create_journal_entry_basic.attempt1.json",
+        "create_journal_entry_basic.attempt2.json"
+      ],
+      "details": "Both attempts crashed in verification with ValueError: GET /ledger/voucher returned 400. The failure occurs in the verifier read query, so the packaged verification fixture is the blocking issue."
+    },
+    {
+      "case_id": "create_travel_expense_basic",
+      "status": "blocked",
+      "classification": "fixture issue",
+      "attempts": [
+        1,
+        2
+      ],
+      "evidence_files": [
+        "create_travel_expense_basic.attempt1.json",
+        "create_travel_expense_basic.attempt2.json"
+      ],
+      "details": "Both attempts crashed in verification with ValueError: GET /travelExpense returned 400. Repeated verifier-read failure indicates a packaged read/query issue rather than a transient VM problem."
+    },
+    {
+      "case_id": "create_invoice_basic",
+      "status": "blocked",
+      "classification": "fixture issue",
+      "attempts": [
+        1,
+        2
+      ],
+      "evidence_files": [
+        "create_invoice_basic.attempt1.json",
+        "create_invoice_basic.attempt2.json"
+      ],
+      "details": "Both attempts crashed in verification with ValueError: GET /order returned 400. The solve run did not yield machine-readable scoring output because the verifier read failed first, so this is classified as a packaged verification/read issue."
+    },
+    {
+      "case_id": "invoice_with_payment",
+      "status": "blocked",
+      "classification": "fixture issue",
+      "attempts": [
+        1,
+        2
+      ],
+      "evidence_files": [
+        "invoice_with_payment.attempt1.json",
+        "invoice_with_payment.attempt2.json"
+      ],
+      "details": "Both attempts crashed in verification with ValueError: GET /order returned 400 on the packaged read query. This matches the invoice fixture pattern and is classified as a verification-fixture blocker."
+    },
+    {
+      "case_id": "supplier_invoice_basic",
+      "status": "blocked",
+      "classification": "fixture issue",
+      "attempts": [
+        1,
+        2
+      ],
+      "evidence_files": [
+        "supplier_invoice_basic.attempt1.json",
+        "supplier_invoice_basic.attempt2.json"
+      ],
+      "details": "Both attempts crashed in verification with ValueError: GET /supplierInvoice returned 422. The fixture read query itself is the failing step, so this is blocked by packaged verification shape/endpoint expectations."
+    },
+    {
+      "case_id": "bank_reconciliation_file",
+      "status": "failing",
+      "classification": "runtime bug",
+      "attempts": [
+        1,
+        2
+      ],
+      "evidence_files": [
+        "bank_reconciliation_file.attempt1.json",
+        "bank_reconciliation_file.attempt2.json"
+      ],
+      "details": "Both attempts returned HTTP 422 from /solve before any proxy call: unsupported file MIME type text/csv for the packaged bank reconciliation attachment. This is a deterministic runtime attachment-policy gap relative to the packaged case expectations."
+    }
+  ]
+}

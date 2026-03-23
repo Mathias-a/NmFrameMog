@@ -1,0 +1,70 @@
+[
+  {
+    "case": "create_employee_admin",
+    "attempts": [
+      1
+    ]
+  },
+  {
+    "case": "create_customer",
+    "attempts": [
+      1,
+      2
+    ]
+  },
+  {
+    "case": "create_product",
+    "attempts": [
+      1
+    ]
+  },
+  {
+    "case": "create_project_basic",
+    "attempts": [
+      1,
+      2
+    ]
+  },
+  {
+    "case": "create_journal_entry_basic",
+    "attempts": [
+      1,
+      2
+    ]
+  },
+  {
+    "case": "create_travel_expense_basic",
+    "attempts": [
+      1,
+      2
+    ]
+  },
+  {
+    "case": "create_invoice_basic",
+    "attempts": [
+      1,
+      2
+    ]
+  },
+  {
+    "case": "invoice_with_payment",
+    "attempts": [
+      1,
+      2
+    ]
+  },
+  {
+    "case": "supplier_invoice_basic",
+    "attempts": [
+      1,
+      2
+    ]
+  },
+  {
+    "case": "bank_reconciliation_file",
+    "attempts": [
+      1,
+      2
+    ]
+  }
+]

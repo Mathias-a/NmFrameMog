@@ -1,0 +1,107 @@
+{
+  "case_id": "invoice_with_payment",
+  "description": "Creates a customer, an order with inline orderLines, an invoice, and a payment mutation, then verifies the paid invoice through date-ranged order and invoice reads.",
+  "tier": 3,
+  "prompt": "Opprett en faktura til kunden Borealis Betalingstest AS, e-post betaling.invoice@example.org, med ordrereferanse INVOICE-PAYMENT-2026-001. Legg inn ordrelinjen \"Årsavtale support\" med antall 1 og pris 2400 kroner eks. mva, opprett fakturaen og registrer deretter full betaling på fakturaen uten ekstra ordrelinje-kall.",
+  "files": [],
+  "expected_min_proxy_calls": 4,
+  "verification": {
+    "reads": [
+      {
+        "name": "customers",
+        "path": "/customer",
+        "query": {
+          "name": "Borealis Betalingstest AS",
+          "fields": "id,name,email",
+          "count": 200
+        },
+        "mode": "list_values"
+      },
+      {
+        "name": "orders",
+        "path": "/order",
+        "query": {
+          "orderDateFrom": "2024-01-01",
+          "orderDateTo": "2026-12-31",
+          "fields": "id,number,reference,customer(id,name),orderLines(id,description,count,unitPriceExcludingVatCurrency)",
+          "count": 20,
+          "sorting": "-id"
+        },
+        "mode": "list_values"
+      },
+      {
+        "name": "invoices",
+        "path": "/invoice",
+        "query": {
+          "invoiceDateFrom": "2024-01-01",
+          "invoiceDateTo": "2026-12-31",
+          "fields": "id,invoiceNumber,invoiceDate,invoiceDueDate,comment,customer(id,name),orders(id,number),amount,amountOutstanding",
+          "count": 50,
+          "sorting": "-id"
+        },
+        "mode": "list_values"
+      }
+    ],
+    "checks": [
+      {
+        "name": "Customer for paid invoice found",
+        "points": 2,
+        "read_name": "customers",
+        "kind": "entity_exists",
+        "selector": {
+          "name": "Borealis Betalingstest AS",
+          "email": "betaling.invoice@example.org"
+        }
+      },
+      {
+        "name": "Paid invoice order found",
+        "points": 2,
+        "read_name": "orders",
+        "kind": "entity_exists",
+        "selector": {
+          "reference": "INVOICE-PAYMENT-2026-001",
+          "customer.name": "Borealis Betalingstest AS"
+        }
+      },
+      {
+        "name": "Paid invoice order keeps inline order line description",
+        "points": 1,
+        "read_name": "orders",
+        "kind": "field_equals",
+        "selector": {
+          "reference": "INVOICE-PAYMENT-2026-001",
+          "customer.name": "Borealis Betalingstest AS"
+        },
+        "field_path": "orderLines.0.description",
+        "expected": "Årsavtale support"
+      },
+      {
+        "name": "Invoice for payment flow found with order link",
+        "points": 2,
+        "read_name": "invoices",
+        "kind": "entity_exists",
+        "selector": {
+          "customer.name": "Borealis Betalingstest AS"
+        }
+      },
+      {
+        "name": "Invoice payment reduces outstanding to zero",
+        "points": 1,
+        "read_name": "invoices",
+        "kind": "field_equals",
+        "selector": {
+          "customer.name": "Borealis Betalingstest AS"
+        },
+        "field_path": "amountOutstanding",
+        "expected": 0.0
+      }
+    ]
+  },
+  "efficiency": {
+    "best_write_calls": 4,
+    "max_write_calls": 6,
+    "max_4xx_errors": 0,
+    "write_weight": 0.7,
+    "error_weight": 0.3
+  }
+}

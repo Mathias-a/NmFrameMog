@@ -13,17 +13,16 @@ import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import numpy as np
 import pytest
 
-from astar_twin.solver.eval.run_benchmark_suite import SuiteResult, RunResult
+from astar_twin.data.models import RoundFixture
+from astar_twin.solver.eval.run_benchmark_suite import RunResult, SuiteResult
 from astar_twin.solver.eval.run_multi_fixture_suite import (
     FixtureResult,
     MultiFixtureSuiteResult,
     _is_real_round,
     run_multi_fixture_suite,
 )
-from astar_twin.data.models import RoundFixture
 
 # Path used by existing suite tests — 10x10 synthetic fixture, no simulation_params needed
 TEST_ROUND_PATH = (
@@ -143,7 +142,6 @@ def test_print_summary_does_not_crash():
 
 def test_run_multi_fixture_suite_with_mocked_run_suite(tmp_path: Path):
     """run_multi_fixture_suite aggregates results from mocked per-fixture runs."""
-    import shutil
 
     # Create a synthetic data_dir with one real-looking fixture
     rounds_dir = tmp_path / "rounds"

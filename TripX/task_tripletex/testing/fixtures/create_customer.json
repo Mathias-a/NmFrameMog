@@ -1,0 +1,75 @@
+{
+  "case_id": "create_customer",
+  "description": "Tier 1 customer-creation fixture with deterministic unique identifiers and field-by-field verification for the scored customer entity.",
+  "tier": 1,
+  "prompt": "Opprett en kunde med navn Nordlys Testkunde Create Customer AS, e-post kunde.create_customer@example.org og telefonnummer 40010001.",
+  "files": [],
+  "expected_min_proxy_calls": 1,
+  "verification": {
+    "reads": [
+      {
+        "name": "customers",
+        "path": "/customer",
+        "query": {
+          "email": "kunde.create_customer@example.org",
+          "fields": "id,name,email,phoneNumber",
+          "count": 50
+        },
+        "mode": "list_values"
+      }
+    ],
+    "checks": [
+      {
+        "name": "Customer found",
+        "points": 2,
+        "read_name": "customers",
+        "kind": "entity_exists",
+        "selector": {
+          "name": "Nordlys Testkunde Create Customer AS",
+          "email": "kunde.create_customer@example.org",
+          "phoneNumber": "40010001"
+        }
+      },
+      {
+        "name": "Customer name matches",
+        "points": 1,
+        "read_name": "customers",
+        "kind": "field_equals",
+        "selector": {
+          "email": "kunde.create_customer@example.org"
+        },
+        "field_path": "name",
+        "expected": "Nordlys Testkunde Create Customer AS"
+      },
+      {
+        "name": "Customer email matches",
+        "points": 1,
+        "read_name": "customers",
+        "kind": "field_equals",
+        "selector": {
+          "name": "Nordlys Testkunde Create Customer AS"
+        },
+        "field_path": "email",
+        "expected": "kunde.create_customer@example.org"
+      },
+      {
+        "name": "Customer phone number matches",
+        "points": 1,
+        "read_name": "customers",
+        "kind": "field_equals",
+        "selector": {
+          "email": "kunde.create_customer@example.org"
+        },
+        "field_path": "phoneNumber",
+        "expected": "40010001"
+      }
+    ]
+  },
+  "efficiency": {
+    "best_write_calls": 1,
+    "max_write_calls": 1,
+    "max_4xx_errors": 0,
+    "write_weight": 0.7,
+    "error_weight": 0.3
+  }
+}

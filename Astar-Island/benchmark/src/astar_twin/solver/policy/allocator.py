@@ -13,8 +13,8 @@ Adaptive phase (30 queries, 6 batches of 5 globally selected):
       0.35 * posterior_disagreement
       0.20 * expected_stat_gain
       - 0.25 * overlap_penalty
-  - Reject windows with >60% overlap with previously queried window
-    (unless contradiction-flagged).
+  - Apply a steep soft penalty to windows with >60% overlap with previously
+    queried windows, with lighter penalties during contradiction handling.
 
 Reserve phase (10 queries):
   - Held until contradiction trigger fires.
@@ -29,6 +29,8 @@ Contradiction triggers:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from math import log
+from typing import cast
 
 import numpy as np
 from numpy.typing import NDArray
@@ -36,6 +38,7 @@ from numpy.typing import NDArray
 from astar_twin.contracts.api_models import InitialState
 from astar_twin.contracts.types import MAX_QUERIES, MAX_SEEDS, NUM_CLASSES
 from astar_twin.solver.inference.posterior import PosteriorState
+from astar_twin.solver.observe.ledger import ObservationLedger
 from astar_twin.solver.policy.hotspots import ViewportCandidate, generate_hotspots
 
 # Budget constants
@@ -57,6 +60,12 @@ MAX_OVERLAP_FRACTION = 0.60
 CONTRADICTION_CELL_THRESHOLD = 0.20
 ESS_CONTRADICTION_THRESHOLD = 6.0
 MIN_QUERIES_PER_SEED = 8
+
+# Soft-selection tuning
+HIGH_OVERLAP_SOFT_PENALTY = 2.5
+RELAXED_HIGH_OVERLAP_SOFT_PENALTY = 1.0
+SEED_BALANCE_BONUS_PER_QUERY = 0.06
+MAX_SEED_BALANCE_BONUS = 0.30
 
 
 @dataclass
@@ -169,6 +178,197 @@ def _pick_by_category_priority(
     return None
 
 
+def _clone_candidate(candidate: ViewportCandidate, score: float) -> ViewportCandidate:
+    """Return a scored copy of a candidate viewport."""
+    return ViewportCandidate(
+        x=candidate.x,
+        y=candidate.y,
+        w=candidate.w,
+        h=candidate.h,
+        category=candidate.category,
+        score=score,
+    )
+
+
+def _compute_overlap_penalty(max_overlap: float, allow_high_overlap: bool) -> float:
+    """Convert raw overlap into a soft penalty with steep post-threshold growth."""
+    if max_overlap <= MAX_OVERLAP_FRACTION:
+        return max_overlap
+
+    normalized_excess = (max_overlap - MAX_OVERLAP_FRACTION) / max(
+        1.0 - MAX_OVERLAP_FRACTION,
+        1e-6,
+    )
+    extra_penalty = (
+        RELAXED_HIGH_OVERLAP_SOFT_PENALTY if allow_high_overlap else HIGH_OVERLAP_SOFT_PENALTY
+    )
+    return max_overlap + extra_penalty * normalized_excess * normalized_excess
+
+
+def _compute_entropy_maps(
+    seed_predictions: dict[int, NDArray[np.float64]] | None,
+) -> dict[int, NDArray[np.float64]]:
+    """Materialize per-seed entropy maps once for a selection pass."""
+    entropy_maps: dict[int, NDArray[np.float64]] = {}
+    if seed_predictions is None:
+        return entropy_maps
+
+    for seed_idx, prediction in seed_predictions.items():
+        entropy_maps[seed_idx] = compute_entropy_map(prediction)
+    return entropy_maps
+
+
+def _collect_scored_candidates(
+    state: AllocationState,
+    posterior: PosteriorState,
+    initial_states: list[InitialState],
+    seed_predictions: dict[int, NDArray[np.float64]] | None = None,
+    allow_high_overlap: bool = False,
+    observation_ledger: ObservationLedger | None = None,
+) -> list[tuple[float, int, ViewportCandidate]]:
+    """Score every currently available candidate across seeds."""
+    scored: list[tuple[float, int, ViewportCandidate]] = []
+    entropy_maps = _compute_entropy_maps(seed_predictions)
+
+    for seed_idx, candidates in state.seed_candidates.items():
+        if seed_idx >= len(initial_states):
+            continue
+
+        initial_state = initial_states[seed_idx]
+        queried_vps = [q.viewport for q in state.queries_for_seed(seed_idx)]
+        entropy_map = entropy_maps.get(seed_idx)
+
+        for candidate in candidates:
+            score = score_candidate(
+                candidate,
+                seed_idx,
+                posterior,
+                initial_state,
+                queried_vps,
+                entropy_map,
+                allow_high_overlap=allow_high_overlap,
+                observation_ledger=observation_ledger,
+            )
+            if np.isfinite(score):
+                scored.append((score, seed_idx, candidate))
+
+    return scored
+
+
+def _pair_overlap_fraction(lhs: ViewportCandidate, rhs: ViewportCandidate) -> float:
+    """Symmetric overlap proxy for redundancy checks between two viewports."""
+    return max(lhs.overlap_fraction(rhs), rhs.overlap_fraction(lhs))
+
+
+def _is_redundant_with_selected(
+    candidate: ViewportCandidate,
+    selected: list[tuple[int, ViewportCandidate]],
+) -> bool:
+    """Whether a candidate overlaps too strongly with already-selected batch items."""
+    return any(
+        _pair_overlap_fraction(candidate, selected_candidate) > MAX_OVERLAP_FRACTION
+        for _, selected_candidate in selected
+    )
+
+
+def _seed_balance_bonus(
+    seed_index: int,
+    state: AllocationState,
+    selected: list[tuple[int, ViewportCandidate]],
+) -> float:
+    """Soft bonus for seeds that are behind current allocation levels."""
+    if not state.seed_candidates:
+        return 0.0
+
+    projected_counts = {
+        candidate_seed: len(state.queries_for_seed(candidate_seed))
+        for candidate_seed in state.seed_candidates
+    }
+    for selected_seed, _ in selected:
+        projected_counts[selected_seed] = projected_counts.get(selected_seed, 0) + 1
+
+    seed_count = projected_counts.get(seed_index, 0)
+    max_count = max(projected_counts.values(), default=seed_count)
+    deficit = max_count - seed_count
+    if deficit <= 0:
+        return 0.0
+
+    return min(MAX_SEED_BALANCE_BONUS, deficit * SEED_BALANCE_BONUS_PER_QUERY)
+
+
+def _select_scored_batch(
+    scored: list[tuple[float, int, ViewportCandidate]],
+    state: AllocationState,
+    batch_size: int,
+    *,
+    apply_seed_balance: bool = True,
+    avoid_batch_redundancy: bool = True,
+) -> list[tuple[int, ViewportCandidate]]:
+    """Greedily fill a batch while backfilling around redundant top choices."""
+    remaining = list(scored)
+    selected: list[tuple[int, ViewportCandidate]] = []
+
+    while remaining and len(selected) < batch_size:
+        best_idx: int | None = None
+        best_adjusted = float("-inf")
+        fallback_idx: int | None = None
+        fallback_adjusted = float("-inf")
+
+        for idx, (base_score, seed_idx, candidate) in enumerate(remaining):
+            adjusted_score = base_score
+            if apply_seed_balance:
+                adjusted_score += _seed_balance_bonus(seed_idx, state, selected)
+
+            if adjusted_score > fallback_adjusted:
+                fallback_idx = idx
+                fallback_adjusted = adjusted_score
+
+            if avoid_batch_redundancy and _is_redundant_with_selected(candidate, selected):
+                continue
+
+            if adjusted_score > best_adjusted:
+                best_idx = idx
+                best_adjusted = adjusted_score
+
+        pick_idx = best_idx if best_idx is not None else fallback_idx
+        if pick_idx is None:
+            break
+
+        base_score, seed_idx, candidate = remaining.pop(pick_idx)
+        final_score = base_score
+        if apply_seed_balance:
+            final_score += _seed_balance_bonus(seed_idx, state, selected)
+        selected.append((seed_idx, _clone_candidate(candidate, final_score)))
+
+    return selected
+
+
+def _select_top_contradiction_candidate(
+    state: AllocationState,
+    posterior: PosteriorState,
+    initial_states: list[InitialState],
+    seed_predictions: dict[int, NDArray[np.float64]] | None = None,
+    observation_ledger: ObservationLedger | None = None,
+) -> tuple[int, ViewportCandidate] | None:
+    """Pick the strongest contradiction-resolution candidate, if any."""
+    scored = _collect_scored_candidates(
+        state,
+        posterior,
+        initial_states,
+        seed_predictions=seed_predictions,
+        allow_high_overlap=True,
+        observation_ledger=observation_ledger,
+    )
+    batch = _select_scored_batch(
+        scored,
+        state,
+        batch_size=1,
+        apply_seed_balance=True,
+        avoid_batch_redundancy=False,
+    )
+    return batch[0] if batch else None
+
+
 def score_candidate(
     candidate: ViewportCandidate,
     seed_index: int,
@@ -177,6 +377,7 @@ def score_candidate(
     queried_viewports: list[ViewportCandidate],
     entropy_map: NDArray[np.float64] | None = None,
     allow_high_overlap: bool = False,
+    observation_ledger: ObservationLedger | None = None,
 ) -> float:
     """Score a candidate viewport for adaptive selection.
 
@@ -194,24 +395,21 @@ def score_candidate(
         overlap = candidate.overlap_fraction(queried)
         max_overlap = max(max_overlap, overlap)
 
-    # Reject if overlap too high (unless contradiction-flagged)
-    if max_overlap > MAX_OVERLAP_FRACTION and not allow_high_overlap:
-        return -1.0  # sentinel: rejected
-
-    overlap_penalty = max_overlap  # already in [0, 1]
+    overlap_penalty = _compute_overlap_penalty(max_overlap, allow_high_overlap)
 
     # --- Entropy mass ---
     entropy_score = 0.0
     if entropy_map is not None:
-        h, w = entropy_map.shape[:2]
+        h = int(entropy_map.shape[0])
+        w = int(entropy_map.shape[1])
         y_start = min(candidate.y, h)
         y_end = min(candidate.y + candidate.h, h)
         x_start = min(candidate.x, w)
         x_end = min(candidate.x + candidate.w, w)
         if y_end > y_start and x_end > x_start:
-            window_entropy = entropy_map[y_start:y_end, x_start:x_end]
+            window_entropy = cast(NDArray[np.float64], entropy_map[y_start:y_end, x_start:x_end])
             # Normalize: max possible entropy per cell is log(NUM_CLASSES)
-            max_entropy = np.log(NUM_CLASSES) * (y_end - y_start) * (x_end - x_start)
+            max_entropy = log(NUM_CLASSES) * float(y_end - y_start) * float(x_end - x_start)
             entropy_score = float(np.sum(window_entropy)) / max(max_entropy, 1e-6)
 
     # --- Posterior disagreement ---
@@ -226,6 +424,15 @@ def score_candidate(
         + W_STAT_GAIN * stat_gain
         - W_OVERLAP_PENALTY * overlap_penalty
     )
+
+    # Coverage penalty: reduce score for already-well-observed areas
+    if observation_ledger is not None:
+        mean_visits = observation_ledger.mean_visit_count_in_window(
+            seed_index, candidate.x, candidate.y, candidate.w, candidate.h
+        )
+        coverage_penalty = min(mean_visits / 3.0, 0.3)
+        score -= coverage_penalty
+
     return float(score)
 
 
@@ -263,19 +470,31 @@ def compute_posterior_disagreement(
         runner = MCRunner(simulator)
         runs = runner.run_batch(initial_state, n_runs=2, base_seed=base_seed)
         tensor = aggregate_runs(runs, map_height, map_width)
-        window = tensor[
-            candidate.y : candidate.y + candidate.h,
-            candidate.x : candidate.x + candidate.w,
-        ]
-        viewport_argmaxes.append(np.argmax(window, axis=2))
+        window = cast(
+            NDArray[np.float64],
+            tensor[
+                candidate.y : candidate.y + candidate.h,
+                candidate.x : candidate.x + candidate.w,
+            ],
+        )
+        viewport_argmaxes.append(cast(NDArray[np.int64], np.argmax(window, axis=2)))
 
     argmax_1, argmax_2 = viewport_argmaxes
     total_cells = int(argmax_1.size)
     if total_cells == 0:
         return 0.0
 
-    disagreement = np.sum(argmax_1 != argmax_2) / total_cells
-    return float(np.clip(disagreement, 0.0, 1.0))
+    disagreement_count = 0
+    height = int(argmax_1.shape[0])
+    width = int(argmax_1.shape[1])
+    for y in range(height):
+        for x in range(width):
+            lhs = int(cast(np.int64, argmax_1[y, x]))
+            rhs = int(cast(np.int64, argmax_2[y, x]))
+            if lhs != rhs:
+                disagreement_count += 1
+    disagreement = disagreement_count / total_cells
+    return float(cast(np.float64, np.clip(disagreement, 0.0, 1.0)))
 
 
 def _estimate_stat_gain(
@@ -309,11 +528,17 @@ def compute_entropy_map(
 
     Returns H×W array of Shannon entropy values.
     """
-    # Clip to prevent log(0)
-    p = np.clip(prediction_tensor, 1e-10, 1.0)
-    # Normalize along class axis
-    p = p / np.sum(p, axis=2, keepdims=True)
-    entropy = -np.sum(p * np.log(p), axis=2)
+    height = int(prediction_tensor.shape[0])
+    width = int(prediction_tensor.shape[1])
+    entropy = cast(NDArray[np.float64], np.zeros((height, width), dtype=np.float64))
+    for y in range(height):
+        for x in range(width):
+            probs: list[float] = []
+            for cls_idx in range(NUM_CLASSES):
+                probs.append(max(float(cast(np.float64, prediction_tensor[y, x, cls_idx])), 1e-10))
+            total = sum(probs)
+            normalized = [prob / total for prob in probs]
+            entropy[y, x] = -sum(prob * log(prob) for prob in normalized)
     return entropy
 
 
@@ -323,60 +548,69 @@ def select_adaptive_batch(
     initial_states: list[InitialState],
     seed_predictions: dict[int, NDArray[np.float64]] | None = None,
     batch_size: int = ADAPTIVE_BATCH_SIZE,
+    observation_ledger: ObservationLedger | None = None,
 ) -> list[tuple[int, ViewportCandidate]]:
     """Select the next batch of adaptive queries across all seeds.
 
-    Scores all candidate viewports across all seeds and picks the top batch_size.
+    Greedily fills the batch with soft seed balancing and non-redundant backfill.
     """
     if state.queries_remaining <= 0:
         return []
 
     actual_batch = min(batch_size, state.queries_remaining)
 
-    # Score all candidates across all seeds
-    scored: list[tuple[float, int, ViewportCandidate]] = []
-
-    for seed_idx, candidates in state.seed_candidates.items():
-        if seed_idx >= len(initial_states):
-            continue
-        initial_state = initial_states[seed_idx]
-        queried_vps = [q.viewport for q in state.queries_for_seed(seed_idx)]
-        entropy_map: NDArray[np.float64] | None = None
-        if seed_predictions is not None:
-            prediction = seed_predictions.get(seed_idx)
-            if prediction is not None:
-                entropy_map = compute_entropy_map(prediction)
-
-        for candidate in candidates:
-            s = score_candidate(
-                candidate,
-                seed_idx,
-                posterior,
-                initial_state,
-                queried_vps,
-                entropy_map,
-            )
-            if s >= 0:  # not rejected
-                scored.append((s, seed_idx, candidate))
-
-    # Sort by score descending, pick top batch
-    scored.sort(key=lambda t: t[0], reverse=True)
-    return [(seed_idx, vp) for _, seed_idx, vp in scored[:actual_batch]]
+    scored = _collect_scored_candidates(
+        state,
+        posterior,
+        initial_states,
+        seed_predictions=seed_predictions,
+        allow_high_overlap=False,
+        observation_ledger=observation_ledger,
+    )
+    return _select_scored_batch(
+        scored,
+        state,
+        actual_batch,
+        apply_seed_balance=True,
+        avoid_batch_redundancy=True,
+    )
 
 
 def check_contradiction_triggers(
     state: AllocationState,
     posterior: PosteriorState,
+    initial_states: list[InitialState] | None = None,
+    seed_predictions: dict[int, NDArray[np.float64]] | None = None,
+    observation_ledger: ObservationLedger | None = None,
 ) -> bool:
     """Check if any contradiction trigger fires, releasing reserve queries.
 
     Triggers:
       - ESS < 6
+      - Best contradiction-resolution candidate has >20% argmax disagreement
       - Any seed has < MIN_QUERIES_PER_SEED after adaptive phase
     """
     # ESS trigger
     if posterior.ess < ESS_CONTRADICTION_THRESHOLD:
         return True
+
+    # Disagreement trigger
+    if initial_states is not None:
+        candidate_plan = _select_top_contradiction_candidate(
+            state,
+            posterior,
+            initial_states,
+            seed_predictions=seed_predictions,
+            observation_ledger=observation_ledger,
+        )
+        if candidate_plan is not None:
+            seed_idx, candidate = candidate_plan
+            if seed_idx < len(initial_states) and check_argmax_disagreement(
+                candidate,
+                posterior,
+                initial_states[seed_idx],
+            ):
+                return True
 
     # Under-queried seed trigger (only after adaptive done)
     if state.adaptive_done:
@@ -411,6 +645,8 @@ def plan_reserve_queries(
     initial_states: list[InitialState],
     seed_predictions: dict[int, NDArray[np.float64]] | None = None,
     n_queries: int | None = None,
+    observation_ledger: ObservationLedger | None = None,
+    contradiction_triggered: bool | None = None,
 ) -> list[tuple[int, ViewportCandidate]]:
     """Plan reserve query usage.
 
@@ -424,17 +660,35 @@ def plan_reserve_queries(
     if remaining <= 0:
         return []
 
-    contradiction = check_contradiction_triggers(state, posterior)
+    contradiction = contradiction_triggered
+    if contradiction is None:
+        contradiction = check_contradiction_triggers(
+            state,
+            posterior,
+            initial_states,
+            seed_predictions=seed_predictions,
+            observation_ledger=observation_ledger,
+        )
 
     if contradiction:
         # Allow high-overlap queries for contradiction resolution
         return _select_contradiction_queries(
-            state, posterior, initial_states, seed_predictions, remaining
+            state,
+            posterior,
+            initial_states,
+            seed_predictions,
+            remaining,
+            observation_ledger=observation_ledger,
         )
     else:
         # Release as normal adaptive batches
         return select_adaptive_batch(
-            state, posterior, initial_states, seed_predictions, batch_size=remaining
+            state,
+            posterior,
+            initial_states,
+            seed_predictions,
+            batch_size=remaining,
+            observation_ledger=observation_ledger,
         )
 
 
@@ -444,48 +698,24 @@ def _select_contradiction_queries(
     initial_states: list[InitialState],
     seed_predictions: dict[int, NDArray[np.float64]] | None,
     n_queries: int,
+    observation_ledger: ObservationLedger | None = None,
 ) -> list[tuple[int, ViewportCandidate]]:
     """Select queries for contradiction resolution with relaxed overlap rules."""
-    scored: list[tuple[float, int, ViewportCandidate]] = []
-
-    for seed_idx, candidates in state.seed_candidates.items():
-        if seed_idx >= len(initial_states):
-            continue
-        initial_state = initial_states[seed_idx]
-        queried_vps = [q.viewport for q in state.queries_for_seed(seed_idx)]
-        entropy_map: NDArray[np.float64] | None = None
-        if seed_predictions is not None:
-            prediction = seed_predictions.get(seed_idx)
-            if prediction is not None:
-                entropy_map = compute_entropy_map(prediction)
-
-        for candidate in candidates:
-            s = score_candidate(
-                candidate,
-                seed_idx,
-                posterior,
-                initial_state,
-                queried_vps,
-                entropy_map,
-                allow_high_overlap=True,  # relaxed for contradiction
-            )
-            if s >= 0:
-                scored.append((s, seed_idx, candidate))
-
-    scored.sort(key=lambda t: t[0], reverse=True)
-
-    # Prioritize under-queried seeds
-    under_queried: list[tuple[float, int, ViewportCandidate]] = []
-    normal: list[tuple[float, int, ViewportCandidate]] = []
-    for item in scored:
-        seed_idx = item[1]
-        if len(state.queries_for_seed(seed_idx)) < MIN_QUERIES_PER_SEED:
-            under_queried.append(item)
-        else:
-            normal.append(item)
-
-    result_pool = under_queried + normal
-    return [(seed_idx, vp) for _, seed_idx, vp in result_pool[:n_queries]]
+    scored = _collect_scored_candidates(
+        state,
+        posterior,
+        initial_states,
+        seed_predictions=seed_predictions,
+        allow_high_overlap=True,
+        observation_ledger=observation_ledger,
+    )
+    return _select_scored_batch(
+        scored,
+        state,
+        n_queries,
+        apply_seed_balance=True,
+        avoid_batch_redundancy=True,
+    )
 
 
 def record_query(

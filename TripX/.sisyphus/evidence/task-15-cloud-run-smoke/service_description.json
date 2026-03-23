@@ -1,0 +1,123 @@
+{
+  "apiVersion": "serving.knative.dev/v1",
+  "kind": "Service",
+  "metadata": {
+    "annotations": {
+      "run.googleapis.com/build-enable-automatic-updates": "false",
+      "run.googleapis.com/build-id": "ea33de46-2c39-42b7-816a-8fd83f4dbee8",
+      "run.googleapis.com/build-image-uri": "europe-north1-docker.pkg.dev/ainm26osl-707/cloud-run-source-deploy/tripletex",
+      "run.googleapis.com/build-name": "projects/124894558027/locations/europe-north1/builds/ea33de46-2c39-42b7-816a-8fd83f4dbee8",
+      "run.googleapis.com/build-source-location": "gs://run-sources-ainm26osl-707-europe-north1/services/tripletex/1774088766.377382-db08346b71db4395a432c35ae004f475.zip#1774088790505808",
+      "run.googleapis.com/client-name": "gcloud",
+      "run.googleapis.com/client-version": "548.0.0",
+      "run.googleapis.com/ingress": "all",
+      "run.googleapis.com/ingress-status": "all",
+      "run.googleapis.com/maxScale": "100",
+      "run.googleapis.com/operation-id": "283c2c2d-bf6b-4380-a271-995cc2be3191",
+      "run.googleapis.com/urls": "[\"https://tripletex-124894558027.europe-north1.run.app\",\"https://tripletex-nnrm5kr5hq-lz.a.run.app\"]",
+      "serving.knative.dev/creator": "devstar7073@gcplab.me",
+      "serving.knative.dev/lastModifier": "devstar7073@gcplab.me"
+    },
+    "creationTimestamp": "2026-03-21T10:06:40.399234Z",
+    "generation": 11,
+    "labels": {
+      "cloud.googleapis.com/location": "europe-north1"
+    },
+    "name": "tripletex",
+    "namespace": "124894558027",
+    "resourceVersion": "AAZNi/tvcp8",
+    "selfLink": "/apis/serving.knative.dev/v1/namespaces/124894558027/services/tripletex",
+    "uid": "3118c1f4-dd02-4cd2-9c5e-cc0e6b84d1e3"
+  },
+  "spec": {
+    "template": {
+      "metadata": {
+        "annotations": {
+          "autoscaling.knative.dev/maxScale": "100",
+          "run.googleapis.com/client-name": "gcloud",
+          "run.googleapis.com/client-version": "548.0.0",
+          "run.googleapis.com/startup-cpu-boost": "true"
+        },
+        "labels": {
+          "client.knative.dev/nonce": "ycybpgbgyp",
+          "run.googleapis.com/startupProbeType": "Default"
+        }
+      },
+      "spec": {
+        "containerConcurrency": 80,
+        "containers": [
+          {
+            "env": [
+              {
+                "name": "GEMINI_API_KEY",
+                "value": "AIzaSyDXWbMGEpkYrJUpf-qArxglOZrN56GTnr8"
+              }
+            ],
+            "image": "gcr.io/ainm26osl-707/tripletex",
+            "ports": [
+              {
+                "containerPort": 8080,
+                "name": "http1"
+              }
+            ],
+            "resources": {
+              "limits": {
+                "cpu": "1000m",
+                "memory": "512Mi"
+              }
+            },
+            "startupProbe": {
+              "failureThreshold": 1,
+              "periodSeconds": 240,
+              "tcpSocket": {
+                "port": 8080
+              },
+              "timeoutSeconds": 240
+            }
+          }
+        ],
+        "serviceAccountName": "124894558027-compute@developer.gserviceaccount.com",
+        "timeoutSeconds": 300
+      }
+    },
+    "traffic": [
+      {
+        "latestRevision": true,
+        "percent": 100
+      }
+    ]
+  },
+  "status": {
+    "address": {
+      "url": "https://tripletex-nnrm5kr5hq-lz.a.run.app"
+    },
+    "conditions": [
+      {
+        "lastTransitionTime": "2026-03-21T17:17:54.441887Z",
+        "status": "True",
+        "type": "Ready"
+      },
+      {
+        "lastTransitionTime": "2026-03-21T17:17:46.595074Z",
+        "status": "True",
+        "type": "ConfigurationsReady"
+      },
+      {
+        "lastTransitionTime": "2026-03-21T17:17:54.410162Z",
+        "status": "True",
+        "type": "RoutesReady"
+      }
+    ],
+    "latestCreatedRevisionName": "tripletex-00011-sh9",
+    "latestReadyRevisionName": "tripletex-00011-sh9",
+    "observedGeneration": 11,
+    "traffic": [
+      {
+        "latestRevision": true,
+        "percent": 100,
+        "revisionName": "tripletex-00011-sh9"
+      }
+    ],
+    "url": "https://tripletex-nnrm5kr5hq-lz.a.run.app"
+  }
+}

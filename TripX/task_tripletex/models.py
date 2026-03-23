@@ -29,14 +29,59 @@ class SolveRequest:
 
 
 @dataclass(frozen=True)
+class RequestBudget:
+    endpoint_timeout_seconds: int
+    reserved_headroom_seconds: int
+    execution_budget_seconds: int
+    max_model_turns: int
+    max_tool_calls: int
+
+    def as_log_detail(self) -> dict[str, int]:
+        return {
+            "endpoint_timeout_seconds": self.endpoint_timeout_seconds,
+            "reserved_headroom_seconds": self.reserved_headroom_seconds,
+            "execution_budget_seconds": self.execution_budget_seconds,
+            "max_model_turns": self.max_model_turns,
+            "max_tool_calls": self.max_tool_calls,
+        }
+
+
+@dataclass(frozen=True)
+class RequestContext:
+    current_date_iso: str
+    budget: RequestBudget
+    guardrails: tuple[str, ...]
+    execution_mode: Literal["synchronous"] = "synchronous"
+    solve_response_contract: Literal['{"status":"completed"}'] = (
+        '{"status":"completed"}'
+    )
+
+    def as_log_detail(self) -> dict[str, object]:
+        return {
+            "current_date_iso": self.current_date_iso,
+            "budget": self.budget.as_log_detail(),
+            "guardrails": list(self.guardrails),
+            "execution_mode": self.execution_mode,
+            "solve_response_contract": self.solve_response_contract,
+        }
+
+
+@dataclass(frozen=True)
 class SolveResponse:
     status: Literal["completed"]
+
+
+@dataclass(frozen=True)
+class SolveExecutionOutcome:
+    status: Literal["completed", "incomplete"]
+    reason: str
 
 
 class OperationResult(TypedDict):
     method: str
     path: str
     status_code: int
+    response_body: object | None
 
 
 @dataclass(frozen=True)

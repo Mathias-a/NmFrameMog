@@ -1,0 +1,63 @@
+{
+  "case_id": "create_travel_expense_basic",
+  "description": "Baseline packaged fixture for a travel expense flow. It uses employee-linked selectors and the documented travel-expense title field so later runtime tightening can preserve the same verification anchors.",
+  "tier": 2,
+  "prompt": "Opprett en reiseregning med tittel TRAVEL-EXPENSE-BASIC-001 for ansatte Kari Reisende med e-post kari.travel.basic@example.org.",
+  "files": [],
+  "expected_min_proxy_calls": 2,
+  "verification": {
+    "reads": [
+      {
+        "name": "travel_expenses",
+        "path": "/travelExpense",
+        "query": {
+          "fields": "id,title,employee(id,email,firstName,lastName)",
+          "count": 50
+        },
+        "mode": "list_values"
+      }
+    ],
+    "checks": [
+      {
+        "name": "Travel expense found with employee link",
+        "points": 2,
+        "read_name": "travel_expenses",
+        "kind": "entity_exists",
+        "selector": {
+          "title": "TRAVEL-EXPENSE-BASIC-001",
+          "employee.email": "kari.travel.basic@example.org"
+        }
+      },
+      {
+        "name": "Travel expense title matches",
+        "points": 1,
+        "read_name": "travel_expenses",
+        "kind": "field_equals",
+        "selector": {
+          "title": "TRAVEL-EXPENSE-BASIC-001",
+          "employee.email": "kari.travel.basic@example.org"
+        },
+        "field_path": "title",
+        "expected": "TRAVEL-EXPENSE-BASIC-001"
+      },
+      {
+        "name": "Travel expense employee email matches",
+        "points": 1,
+        "read_name": "travel_expenses",
+        "kind": "field_equals",
+        "selector": {
+          "title": "TRAVEL-EXPENSE-BASIC-001"
+        },
+        "field_path": "employee.email",
+        "expected": "kari.travel.basic@example.org"
+      }
+    ]
+  },
+  "efficiency": {
+    "best_write_calls": 2,
+    "max_write_calls": 4,
+    "max_4xx_errors": 1,
+    "write_weight": 0.7,
+    "error_weight": 0.3
+  }
+}

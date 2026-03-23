@@ -1,0 +1,83 @@
+{
+    "status": "ok",
+    "trace": {
+        "started_at": 1774113510.9461563,
+        "finished_at": 1774113510.9552212,
+        "elapsed_seconds": 0.01,
+        "prompt": "Avstem bankfilen BANK-RECONCILIATION-FILE-001 og registrer relevante transaksjoner.",
+        "request_context": {
+            "current_date_iso": "2026-03-21",
+            "budget": {
+                "endpoint_timeout_seconds": 300,
+                "reserved_headroom_seconds": 30,
+                "execution_budget_seconds": 270,
+                "max_model_turns": 24,
+                "max_tool_calls": 48
+            },
+            "guardrails": [
+                "inject_current_iso_date_when_prompt_omits_date",
+                "preserve_explicit_user_dates",
+                "keep_solve_synchronous",
+                "enforce_request_budget_caps",
+                "minimize_redundant_api_calls"
+            ],
+            "execution_mode": "synchronous",
+            "solve_response_contract": "{\"status\":\"completed\"}"
+        },
+        "status": "error",
+        "error": "Unsupported file MIME type for bank_reconciliation_file_placeholder.csv: 'text/csv'. Supported types: application/pdf, image/jpeg, image/png, image/webp.",
+        "entries": [
+            {
+                "ts": 1774113510.9462025,
+                "event": "request_context_initialized",
+                "detail": {
+                    "current_date_iso": "2026-03-21",
+                    "budget": {
+                        "endpoint_timeout_seconds": 300,
+                        "reserved_headroom_seconds": 30,
+                        "execution_budget_seconds": 270,
+                        "max_model_turns": 24,
+                        "max_tool_calls": 48
+                    },
+                    "guardrails": [
+                        "inject_current_iso_date_when_prompt_omits_date",
+                        "preserve_explicit_user_dates",
+                        "keep_solve_synchronous",
+                        "enforce_request_budget_caps",
+                        "minimize_redundant_api_calls"
+                    ],
+                    "execution_mode": "synchronous",
+                    "solve_response_contract": "{\"status\":\"completed\"}"
+                }
+            },
+            {
+                "ts": 1774113510.9551165,
+                "event": "request_context_decision",
+                "detail": {
+                    "decision": "inject_current_date_when_needed",
+                    "current_date_iso": "2026-03-21",
+                    "preserve_explicit_user_dates": true,
+                    "execution_mode": "synchronous",
+                    "prompt_length": 83,
+                    "file_count": 1
+                }
+            },
+            {
+                "ts": 1774113510.9551394,
+                "event": "file_attachment_rejected",
+                "detail": {
+                    "filename": "bank_reconciliation_file_placeholder.csv",
+                    "mime_type": "text/csv",
+                    "reason": "unsupported_mime_type",
+                    "supported_mime_types": [
+                        "application/pdf",
+                        "image/jpeg",
+                        "image/png",
+                        "image/webp"
+                    ]
+                }
+            }
+        ],
+        "entry_count": 3
+    }
+}

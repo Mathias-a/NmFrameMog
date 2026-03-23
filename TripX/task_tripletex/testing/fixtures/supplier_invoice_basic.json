@@ -1,0 +1,69 @@
+{
+  "case_id": "supplier_invoice_basic",
+  "description": "Packaged supplier invoice fixture with an embedded placeholder PDF and stable invoice markers for future multimodal regression coverage.",
+  "tier": 2,
+  "prompt": "Registrer leverandørfakturaen SUPPLIER-INVOICE-BASIC-001 fra Leverandor PDF AS basert på vedlagt PDF.",
+  "files": [
+    {
+      "filename": "supplier_invoice_basic_placeholder.pdf",
+      "content_base64": "JVBERi0xLjQKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgPj4KZW5kb2JqCjIgMCBvYmoKPDwgL1R5cGUgL1BhZ2VzIC9LaWRzIFszIDAgUl0gL0NvdW50IDEgPj4KZW5kb2JqCjMgMCBvYmoKPDwgL1R5cGUgL1BhZ2UgL1BhcmVudCAyIDAgUiAvTWVkaWFCb3ggWzAgMCA2MTIgNzkyXQogICAvQ29udGVudHMgNCAwIFIgL1Jlc291cmNlcyA8PCAvRm9udCA8PCAvRjEgNSAwIFIgPj4gPj4gPj4KZW5kb2JqCjQgMCBvYmoKPDwgL0xlbmd0aCA0MzcgPj4Kc3RyZWFtCkJUCi9GMSAxNiBUZgo1MCA3MDAgVGQKKExFVkVSQU5ET1JGQUtUVVJBKSBUagowIC0zMCBUZAovRjEgMTIgVGYKKExldmVyYW5kb3I6IExldmVyYW5kb3IgUERGIEFTKSBUagowIC0yMCBUZAooT3JnYW5pc2Fzam9uc251bW1lcjogOTk5ODg4Nzc3KSBUagowIC0yMCBUZAooRmFrdHVyYW51bW1lcjogU1VQUExJRVItSU5WT0lDRS1CQVNJQy0wMDEpIFRqCjAgLTIwIFRkCihGYWt0dXJhZGF0bzogMjAyNi0wMy0xNSkgVGoKMCAtMjAgVGQKKEZvcmZhbGxzZGF0bzogMjAyNi0wNC0xNSkgVGoKMCAtMjAgVGQKKEJlbG9wIGVrcy4gbXZhOiA2ODAwLjAwIE5PSykgVGoKMCAtMjAgVGQKKE1WQSAyNSU6IDE3MDAuMDAgTk9LKSBUagowIC0yMCBUZAooVG90YWxiZWxvcDogODUwMC4wMCBOT0spIFRqCjAgLTIwIFRkCihLb250b251bW1lcjogNDAwMCBWYXJla2pvcCkgVGoKRVQKZW5kc3RyZWFtCmVuZG9iago1IDAgb2JqCjw8IC9UeXBlIC9Gb250IC9TdWJ0eXBlIC9UeXBlMSAvQmFzZUZvbnQgL0hlbHZldGljYSA+PgplbmRvYmoKeHJlZgowIDYKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDA5IDAwMDAwIG4gCjAwMDAwMDAwNTggMDAwMDAgbiAKMDAwMDAwMDExNSAwMDAwMCBuIAowMDAwMDAwMjQ0IDAwMDAwIG4gCjAwMDAwMDA3MzEgMDAwMDAgbiAKdHJhaWxlcgo8PCAvU2l6ZSA2IC9Sb290IDEgMCBSID4+CnN0YXJ0eHJlZgo4MDEKJSVFT0YK",
+      "mime_type": "application/pdf"
+    }
+  ],
+  "expected_min_proxy_calls": 1,
+  "verification": {
+    "reads": [
+      {
+        "name": "supplier_invoices",
+        "path": "/supplierInvoice",
+        "query": {
+          "invoiceDateFrom": "2024-01-01",
+          "invoiceDateTo": "2026-12-31",
+          "fields": "id,invoiceNumber,supplier(name)",
+          "count": 50
+        },
+        "mode": "list_values"
+      }
+    ],
+    "checks": [
+      {
+        "name": "Supplier invoice found",
+        "points": 2,
+        "read_name": "supplier_invoices",
+        "kind": "entity_exists",
+        "selector": {
+          "invoiceNumber": "SUPPLIER-INVOICE-BASIC-001"
+        }
+      },
+      {
+        "name": "Supplier invoice number matches",
+        "points": 1,
+        "read_name": "supplier_invoices",
+        "kind": "field_equals",
+        "selector": {
+          "invoiceNumber": "SUPPLIER-INVOICE-BASIC-001"
+        },
+        "field_path": "invoiceNumber",
+        "expected": "SUPPLIER-INVOICE-BASIC-001"
+      },
+      {
+        "name": "Supplier invoice supplier matches",
+        "points": 1,
+        "read_name": "supplier_invoices",
+        "kind": "field_equals",
+        "selector": {
+          "invoiceNumber": "SUPPLIER-INVOICE-BASIC-001"
+        },
+        "field_path": "supplier.name",
+        "expected": "Leverandor PDF AS"
+      }
+    ]
+  },
+  "efficiency": {
+    "best_write_calls": 1,
+    "max_write_calls": 4,
+    "max_4xx_errors": 1,
+    "write_weight": 0.7,
+    "error_weight": 0.3
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "case_id": "create_employee_admin",
+  "description": "Starter fixture based on the documented create-employee scoring example. Uses a unique email to avoid collision with prior test runs.",
+  "tier": 1,
+  "prompt": "Opprett en ansatt med navn Ola Nordmann, ola.admin.test@example.org. Han skal være kontoadministrator.",
+  "files": [],
+  "expected_min_proxy_calls": 1,
+  "verification": {
+    "reads": [
+      {
+        "name": "employees",
+        "path": "/employee",
+        "query": {
+          "firstName": "Ola",
+          "lastName": "Nordmann",
+          "fields": "id,firstName,lastName,email",
+          "count": 50
+        },
+        "mode": "list_values"
+      }
+    ],
+    "checks": [
+      {
+        "name": "Employee found",
+        "points": 2,
+        "read_name": "employees",
+        "kind": "entity_exists",
+        "selector": {
+          "firstName": "Ola",
+          "lastName": "Nordmann",
+          "email": "ola.admin.test@example.org"
+        }
+      },
+      {
+        "name": "Correct first name",
+        "points": 1,
+        "read_name": "employees",
+        "kind": "field_equals",
+        "selector": {
+          "email": "ola.admin.test@example.org"
+        },
+        "field_path": "firstName",
+        "expected": "Ola"
+      },
+      {
+        "name": "Correct last name",
+        "points": 1,
+        "read_name": "employees",
+        "kind": "field_equals",
+        "selector": {
+          "email": "ola.admin.test@example.org"
+        },
+        "field_path": "lastName",
+        "expected": "Nordmann"
+      },
+      {
+        "name": "Correct email",
+        "points": 1,
+        "read_name": "employees",
+        "kind": "field_equals",
+        "selector": {
+          "email": "ola.admin.test@example.org"
+        },
+        "field_path": "email",
+        "expected": "ola.admin.test@example.org"
+      }
+    ]
+  },
+  "efficiency": {
+    "best_write_calls": 1,
+    "max_write_calls": 3,
+    "max_4xx_errors": 2,
+    "write_weight": 0.7,
+    "error_weight": 0.3
+  }
+}

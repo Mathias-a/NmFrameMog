@@ -1,0 +1,124 @@
+{
+  "artifacts": {
+    "images": [
+      "gcr.io/ainm26osl-707/tripletex"
+    ]
+  },
+  "createTime": "2026-03-21T17:16:56.702596292Z",
+  "finishTime": "2026-03-21T17:17:32.921784Z",
+  "id": "78aaeda5-b1c2-4462-954d-45efe0f96bd9",
+  "images": [
+    "gcr.io/ainm26osl-707/tripletex"
+  ],
+  "logUrl": "https://console.cloud.google.com/cloud-build/builds/78aaeda5-b1c2-4462-954d-45efe0f96bd9?project=124894558027",
+  "logsBucket": "gs://124894558027.cloudbuild-logs.googleusercontent.com",
+  "name": "projects/124894558027/locations/global/builds/78aaeda5-b1c2-4462-954d-45efe0f96bd9",
+  "options": {
+    "logging": "LEGACY",
+    "pool": {}
+  },
+  "projectId": "ainm26osl-707",
+  "queueTtl": "3600s",
+  "results": {
+    "buildStepImages": [
+      "sha256:81d384e2acf5bb0ccb79b6774a92b8b3241cb41f80418ae2a434826bc78f7360"
+    ],
+    "buildStepOutputs": [
+      ""
+    ],
+    "images": [
+      {
+        "artifactRegistryPackage": "projects/ainm26osl-707/locations/us/repositories/gcr.io/packages/tripletex/versions/sha256:9026ae9c2d9e6098087f41bab49b92138151f2d63f339d9b93945d58c343a0de",
+        "digest": "sha256:9026ae9c2d9e6098087f41bab49b92138151f2d63f339d9b93945d58c343a0de",
+        "name": "gcr.io/ainm26osl-707/tripletex",
+        "pushTiming": {
+          "endTime": "2026-03-21T17:17:32.297223512Z",
+          "startTime": "2026-03-21T17:17:22.396124573Z"
+        }
+      },
+      {
+        "artifactRegistryPackage": "projects/ainm26osl-707/locations/us/repositories/gcr.io/packages/tripletex/versions/sha256:9026ae9c2d9e6098087f41bab49b92138151f2d63f339d9b93945d58c343a0de",
+        "digest": "sha256:9026ae9c2d9e6098087f41bab49b92138151f2d63f339d9b93945d58c343a0de",
+        "name": "gcr.io/ainm26osl-707/tripletex:latest",
+        "pushTiming": {
+          "endTime": "2026-03-21T17:17:32.297223512Z",
+          "startTime": "2026-03-21T17:17:22.396124573Z"
+        }
+      }
+    ]
+  },
+  "serviceAccount": "projects/ainm26osl-707/serviceAccounts/124894558027-compute@developer.gserviceaccount.com",
+  "source": {
+    "storageSource": {
+      "bucket": "ainm26osl-707_cloudbuild",
+      "generation": "1774113415766480",
+      "object": "source/1774113409.143623-4a6540a0c492431faaa0513a85543caa.tgz"
+    }
+  },
+  "sourceProvenance": {
+    "fileHashes": {
+      "gs://ainm26osl-707_cloudbuild/source/1774113409.143623-4a6540a0c492431faaa0513a85543caa.tgz#1774113415766480": {
+        "fileHash": [
+          {
+            "type": "MD5",
+            "value": "6Ol6In5u_aCHwl9n1C8yKA=="
+          },
+          {
+            "type": "SHA256",
+            "value": "cv3xlkmyvg6M1W_hXe4mxmpKwugzgv_Ev_sUPkUWLlU="
+          }
+        ]
+      }
+    },
+    "resolvedStorageSource": {
+      "bucket": "ainm26osl-707_cloudbuild",
+      "generation": "1774113415766480",
+      "object": "source/1774113409.143623-4a6540a0c492431faaa0513a85543caa.tgz"
+    }
+  },
+  "startTime": "2026-03-21T17:16:57.574554496Z",
+  "status": "SUCCESS",
+  "steps": [
+    {
+      "args": [
+        "docker",
+        "build",
+        "--network",
+        "cloudbuild",
+        "--no-cache",
+        "-t",
+        "gcr.io/ainm26osl-707/tripletex",
+        "."
+      ],
+      "name": "gcr.io/cloud-builders/gcb-internal",
+      "pullTiming": {
+        "endTime": "2026-03-21T17:17:05.701830009Z",
+        "startTime": "2026-03-21T17:17:05.700588157Z"
+      },
+      "status": "SUCCESS",
+      "timing": {
+        "endTime": "2026-03-21T17:17:22.369486571Z",
+        "startTime": "2026-03-21T17:17:05.700588157Z"
+      }
+    }
+  ],
+  "timeout": "3600s",
+  "timing": {
+    "BUILD": {
+      "endTime": "2026-03-21T17:17:22.396025786Z",
+      "startTime": "2026-03-21T17:17:05.197084266Z"
+    },
+    "FETCHSOURCE": {
+      "endTime": "2026-03-21T17:17:05.197033629Z",
+      "startTime": "2026-03-21T17:17:01.940253428Z"
+    },
+    "PUSH": {
+      "endTime": "2026-03-21T17:17:32.297892628Z",
+      "startTime": "2026-03-21T17:17:22.396083073Z"
+    },
+    "STORAGE_SOURCE": {
+      "endTime": "2026-03-21T17:17:05.197033629Z",
+      "startTime": "2026-03-21T17:17:01.940253428Z"
+    }
+  }
+}

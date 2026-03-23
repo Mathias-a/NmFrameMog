@@ -1,0 +1,81 @@
+{
+  "case": "bank_reconciliation_file",
+  "attempt": 1,
+  "started_at_epoch": 1774113123.676646,
+  "elapsed_seconds_local": 6.66,
+  "returncode": 0,
+  "timed_out": false,
+  "stdout": "{\n  \"case\": {\n    \"case_id\": \"bank_reconciliation_file\",\n    \"description\": \"Packaged bank reconciliation placeholder with an embedded CSV-like file payload and deterministic reconciliation anchors for future runtime activation.\",\n    \"tier\": 3\n  },\n  \"endpoint_run\": {\n    \"proxy_base_url\": \"http://127.0.0.1:40619/v2\",\n    \"elapsed_seconds\": 0.012933268000779208,\n    \"contract\": {\n      \"response_status_code\": 422,\n      \"response_content_type\": null,\n      \"response_json\": {\n        \"detail\": \"Unsupported file MIME type for bank_reconciliation_file_placeholder.csv: 'text/csv'. Supported types: application/pdf, image/jpeg, image/png, image/webp.\"\n      },\n      \"response_text\": \"{\\\"detail\\\":\\\"Unsupported file MIME type for bank_reconciliation_file_placeholder.csv: 'text/csv'. Supported types: application/pdf, image/jpeg, image/png, image/webp.\\\"}\",\n      \"exact_success_response\": false,\n      \"errors\": [\n        \"Solve URL is not HTTPS.\",\n        \"Solve endpoint returned HTTP 422.\",\n        \"Solve endpoint did not return application/json.\",\n        \"Solve endpoint response body was not exactly {'status': 'completed'}.\"\n      ]\n    }\n  },\n  \"proxy_metrics\": {\n    \"total_calls\": 0,\n    \"write_calls\": 0,\n    \"client_error_calls\": 0,\n    \"invalid_auth_paths\": [],\n    \"invalid_forward_paths\": [],\n    \"calls\": []\n  },\n  \"verification\": {\n    \"points_earned\": 0.0,\n    \"max_points\": 3.0,\n    \"correctness\": 0.0,\n    \"snapshots\": {\n      \"vouchers\": [\n        {\n          \"id\": 608833207,\n          \"description\": \"Test row\"\n        },\n        {\n          \"id\": 608834126,\n          \"description\": \"Husleie mars\"\n        },\n        {\n          \"id\": 608834647,\n          \"description\": \"Balanced voucher entry\"\n        }\n      ]\n    }\n  },\n  \"score\": {\n    \"base_score\": 0.0,\n    \"efficiency_bonus\": 0.0,\n    \"total_score\": 0.0,\n    \"write_efficiency\": 0.0,\n    \"error_efficiency\": 0.0,\n    \"combined_efficiency\": 0.0,\n    \"contract_valid\": false,\n    \"proxy_valid\": false,\n    \"disqualification_reasons\": [\n      \"Solve URL is not HTTPS.\",\n      \"Solve response was not HTTP 200 with {\\\"status\\\": \\\"completed\\\"} (got HTTP 422).\",\n      \"Solution did not route traffic through the recording proxy.\"\n    ]\n  }\n}\n",
+  "stderr": "",
+  "parsed": {
+    "case": {
+      "case_id": "bank_reconciliation_file",
+      "description": "Packaged bank reconciliation placeholder with an embedded CSV-like file payload and deterministic reconciliation anchors for future runtime activation.",
+      "tier": 3
+    },
+    "endpoint_run": {
+      "proxy_base_url": "http://127.0.0.1:40619/v2",
+      "elapsed_seconds": 0.012933268000779208,
+      "contract": {
+        "response_status_code": 422,
+        "response_content_type": null,
+        "response_json": {
+          "detail": "Unsupported file MIME type for bank_reconciliation_file_placeholder.csv: 'text/csv'. Supported types: application/pdf, image/jpeg, image/png, image/webp."
+        },
+        "response_text": "{\"detail\":\"Unsupported file MIME type for bank_reconciliation_file_placeholder.csv: 'text/csv'. Supported types: application/pdf, image/jpeg, image/png, image/webp.\"}",
+        "exact_success_response": false,
+        "errors": [
+          "Solve URL is not HTTPS.",
+          "Solve endpoint returned HTTP 422.",
+          "Solve endpoint did not return application/json.",
+          "Solve endpoint response body was not exactly {'status': 'completed'}."
+        ]
+      }
+    },
+    "proxy_metrics": {
+      "total_calls": 0,
+      "write_calls": 0,
+      "client_error_calls": 0,
+      "invalid_auth_paths": [],
+      "invalid_forward_paths": [],
+      "calls": []
+    },
+    "verification": {
+      "points_earned": 0.0,
+      "max_points": 3.0,
+      "correctness": 0.0,
+      "snapshots": {
+        "vouchers": [
+          {
+            "id": 608833207,
+            "description": "Test row"
+          },
+          {
+            "id": 608834126,
+            "description": "Husleie mars"
+          },
+          {
+            "id": 608834647,
+            "description": "Balanced voucher entry"
+          }
+        ]
+      }
+    },
+    "score": {
+      "base_score": 0.0,
+      "efficiency_bonus": 0.0,
+      "total_score": 0.0,
+      "write_efficiency": 0.0,
+      "error_efficiency": 0.0,
+      "combined_efficiency": 0.0,
+      "contract_valid": false,
+      "proxy_valid": false,
+      "disqualification_reasons": [
+        "Solve URL is not HTTPS.",
+        "Solve response was not HTTP 200 with {\"status\": \"completed\"} (got HTTP 422).",
+        "Solution did not route traffic through the recording proxy."
+      ]
+    }
+  },
+  "parse_error": null
+}

@@ -1,0 +1,15 @@
+# Issues
+- Loader-focused tests still import `task_tripletex`, and `task_tripletex/__init__.py` pulls in `service.py`, so local verification needs `google-genai` available even when only fixture-loader code is exercised.
+- Placeholder fixture names can drift from documented Tripletex fields: `create_project_basic` needed `number` instead of `projectNumber`, and travel expense verification needed `title` instead of `description` to stay aligned with `agent.py` guidance and helper-backed reads.
+- `tests/task_tripletex_testing/test_verifier.py` had an outdated employee expectation (`ola@example.org`, 5/10 score) that no longer matched the packaged fixture's unique email; targeted fixture work may surface unrelated stale assertions in the existing verifier tests.
+- Placeholder fixture names can drift from documented Tripletex fields:  needed  instead of , and travel expense verification needed  instead of  to stay aligned with  guidance and helper-backed reads.
+
+- Workspace Pyright in this repo does not resolve installed third-party modules like `google.genai` and `fastapi`, so changed files that import them may need narrow `pyright: ignore[reportMissingImports]` annotations even when runtime and pytest are healthy.
+
+- Task 6 acceptance blocker came from `tests/task_tripletex_testing/helpers.py`: the integration-only fake `/solve` handler still posted the old employee email `ola@example.org`, while `task_tripletex/testing/fixtures/create_employee_admin.json` now verifies `ola.admin.test@example.org`; this stale helper payload drove `verification.correctness` to 0.0 until the mock was aligned with the fixture.
+
+- Task 14 VM proxy wave (2026-03-21): `create_customer` returned `{"status":"completed"}` with a single `POST /customer`, but the verified sandbox snapshots only showed same-name customers with blank email/phone fields, so the current solve/runtime path is not reliably setting the fixture's required customer contact data.
+- Task 14 VM proxy wave (2026-03-21): several packaged cases are currently blocked by verifier read failures on the VM path rather than by scored solve output — repeated reruns hit `GET /project -> 400`, `GET /ledger/voucher -> 400`, `GET /travelExpense -> 400`, `GET /order -> 400`, and `GET /supplierInvoice -> 422`, which points to packaged verification query/field issues that need tightening before the next regression wave.
+- Task 14 VM proxy wave (2026-03-21): `bank_reconciliation_file` deterministically fails in runtime before any proxy call because attachment policy rejects the packaged `text/csv` file with `/solve` HTTP 422; this case will stay red until CSV or equivalent bank-file handling is intentionally supported.
+
+- Task 15 Cloud Run smoke gate (2026-03-21): the same `bank_reconciliation_file` packaged payload fails against the live Cloud Run service with HTTP 422 before model execution, and `/logs` records `request_context_decision` followed by `file_attachment_rejected` for `text/csv`; reviewer evidence is in `.sisyphus/evidence/task-15-cloud-run-smoke/`.

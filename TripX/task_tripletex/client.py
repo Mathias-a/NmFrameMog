@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from base64 import b64encode
 from dataclasses import dataclass
+from typing import cast
 
 import httpx
 
@@ -22,12 +23,14 @@ class ExecutedOperation:
     method: str
     path: str
     status_code: int
+    response_body: object | None = None
 
     def to_result(self) -> OperationResult:
         return {
             "method": self.method,
             "path": self.path,
             "status_code": self.status_code,
+            "response_body": self.response_body,
         }
 
 
@@ -91,16 +94,24 @@ class TripletexClient:
             params=_prepare_query_params(operation.query),
             json=operation.body,
         )
+
+        response_body: object | None = None
+        try:
+            response_body = cast(object, response.json())
+        except ValueError:
+            response_body = response.text if response.text else None
+
         if response.status_code >= 400 and not operation.allow_failure:
             raise TripletexExecutionError(
-                "Tripletex operation failed: "
-                f"{operation.method} {operation.path} returned {response.status_code}"
+                f"Tripletex operation failed: {operation.method} {operation.path} "
+                f"returned {response.status_code}. Response: {response_body}"
             )
 
         return ExecutedOperation(
             method=operation.method,
             path=operation.path,
             status_code=response.status_code,
+            response_body=response_body,
         )
 
     async def execute_plan(self, plan: ExecutionPlan) -> list[ExecutedOperation]:

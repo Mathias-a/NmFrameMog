@@ -10,6 +10,8 @@ For each observed viewport, computes particle likelihood using inner MC:
 
 from __future__ import annotations
 
+from typing import cast
+
 import numpy as np
 from numpy.typing import NDArray
 
@@ -34,7 +36,9 @@ def _simulate_viewport_classes(
     sim_params = particle.to_simulation_params()
     simulator = Simulator(params=sim_params)
 
-    counts = np.zeros((viewport_h, viewport_w, NUM_CLASSES), dtype=np.float64)
+    counts = cast(
+        NDArray[np.float64], np.zeros((viewport_h, viewport_w, NUM_CLASSES), dtype=np.float64)
+    )
 
     for i in range(n_inner_runs):
         state = simulator.run(initial_state=initial_state, sim_seed=base_seed + i)
@@ -43,13 +47,19 @@ def _simulate_viewport_classes(
             for x in range(vp.width):
                 code = vp.get(y, x)
                 cls_idx = TERRAIN_TO_CLASS.get(code, 0)
-                counts[y, x, cls_idx] += 1.0
+                counts[y, x, cls_idx] = float(cast(np.float64, counts[y, x, cls_idx])) + 1.0
 
     # Normalize to probabilities with floor
     counts /= max(n_inner_runs, 1)
-    counts = np.maximum(counts, 1e-6)
-    sums = np.sum(counts, axis=2, keepdims=True)
-    counts /= sums
+    for y in range(viewport_h):
+        for x in range(viewport_w):
+            cell_sum = 0.0
+            for cls_idx in range(NUM_CLASSES):
+                floored = max(float(cast(np.float64, counts[y, x, cls_idx])), 1e-6)
+                counts[y, x, cls_idx] = floored
+                cell_sum += floored
+            for cls_idx in range(NUM_CLASSES):
+                counts[y, x, cls_idx] = float(cast(np.float64, counts[y, x, cls_idx])) / cell_sum
 
     return counts
 
@@ -115,11 +125,13 @@ def compute_grid_loglik(
 ) -> float:
     """Compute log-likelihood of observed grid given predicted class probabilities."""
     loglik = 0.0
+    max_y = int(predicted_probs.shape[0])
+    max_x = int(predicted_probs.shape[1])
     for y, row in enumerate(observed_response.grid):
         for x, code in enumerate(row):
-            if y < predicted_probs.shape[0] and x < predicted_probs.shape[1]:
+            if y < max_y and x < max_x:
                 cls_idx = TERRAIN_TO_CLASS.get(code, 0)
-                prob = max(float(predicted_probs[y, x, cls_idx]), 1e-6)
+                prob = max(float(cast(np.float64, predicted_probs[y, x, cls_idx])), 1e-6)
                 loglik += np.log(prob)
     return float(loglik)
 
@@ -132,38 +144,50 @@ def compute_stats_loglik(
     if not simulated_features_list or observed_features.alive_count == 0:
         return 0.0  # No info to compare
 
-    # Compute mean and variance of simulated stats
-    stat_names = [
-        ("population_mean", "population_var"),
-        ("food_mean", "food_var"),
-        ("wealth_mean", "wealth_var"),
-        ("defense_mean", "defense_var"),
-        ("prosperity_proxy_mean", "prosperity_proxy_var"),
+    def _mean(values: list[float]) -> float:
+        return sum(values) / len(values) if values else 0.0
+
+    def _variance(values: list[float], mean_value: float | None = None) -> float:
+        if len(values) <= 1:
+            return 0.0
+        mean = _mean(values) if mean_value is None else mean_value
+        return sum((value - mean) ** 2 for value in values) / len(values)
+
+    stat_pairs = [
+        (
+            observed_features.population_mean,
+            [f.population_mean for f in simulated_features_list],
+        ),
+        (observed_features.food_mean, [f.food_mean for f in simulated_features_list]),
+        (observed_features.wealth_mean, [f.wealth_mean for f in simulated_features_list]),
+        (observed_features.defense_mean, [f.defense_mean for f in simulated_features_list]),
+        (
+            observed_features.prosperity_proxy_mean,
+            [f.prosperity_proxy_mean for f in simulated_features_list],
+        ),
     ]
 
     loglik = 0.0
-    for mean_attr, var_attr in stat_names:
-        obs_val = getattr(observed_features, mean_attr)
-        sim_vals = [getattr(f, mean_attr) for f in simulated_features_list]
-        sim_mean = float(np.mean(sim_vals))
-        sim_var = float(np.var(sim_vals)) + 0.01  # prevent zero variance
+    for obs_val, sim_vals in stat_pairs:
+        sim_mean = _mean(sim_vals)
+        sim_var = _variance(sim_vals, sim_mean) + 0.01
 
         # Gaussian log-likelihood
         diff = obs_val - sim_mean
         loglik -= 0.5 * (diff**2) / sim_var
 
     # Also penalize alive count difference
-    obs_alive = observed_features.alive_count
-    sim_alive_vals = [f.alive_count for f in simulated_features_list]
-    sim_alive_mean = float(np.mean(sim_alive_vals))
-    sim_alive_var = float(np.var(sim_alive_vals)) + 0.5
+    obs_alive = float(observed_features.alive_count)
+    sim_alive_vals = [float(f.alive_count) for f in simulated_features_list]
+    sim_alive_mean = _mean(sim_alive_vals)
+    sim_alive_var = _variance(sim_alive_vals, sim_alive_mean) + 0.5
     loglik -= 0.5 * ((obs_alive - sim_alive_mean) ** 2) / sim_alive_var
 
     # Port count
-    obs_ports = observed_features.port_count
-    sim_port_vals = [f.port_count for f in simulated_features_list]
-    sim_port_mean = float(np.mean(sim_port_vals))
-    sim_port_var = float(np.var(sim_port_vals)) + 0.5
+    obs_ports = float(observed_features.port_count)
+    sim_port_vals = [float(f.port_count) for f in simulated_features_list]
+    sim_port_mean = _mean(sim_port_vals)
+    sim_port_var = _variance(sim_port_vals, sim_port_mean) + 0.5
     loglik -= 0.5 * ((obs_ports - sim_port_mean) ** 2) / sim_port_var
 
     return float(loglik)
@@ -173,6 +197,7 @@ def compute_particle_loglik(
     particle: Particle,
     observed_response: SimulateResponse,
     initial_state: InitialState,
+    observed_features: ObservationFeatures | None = None,
     n_inner_runs: int = 6,
     base_seed: int = 0,
 ) -> float:
@@ -206,7 +231,9 @@ def compute_particle_loglik(
         n_inner_runs,
         base_seed,
     )
-    obs_features = extract_features(observed_response)
+    obs_features = (
+        observed_features if observed_features is not None else extract_features(observed_response)
+    )
     stats_ll = compute_stats_loglik(obs_features, sim_features)
 
     return 0.75 * grid_ll + 0.25 * stats_ll

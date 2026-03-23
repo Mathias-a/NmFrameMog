@@ -1,0 +1,74 @@
+{
+  "case_id": "create_product",
+  "description": "Tier 1 product-creation fixture with deterministic unique identifiers and field-by-field verification for the scored product entity.",
+  "tier": 1,
+  "prompt": "Opprett et produkt med navn Reisetid Konsulentpakke Create Product, nummer PROD-CREATE-PRODUCT-001 og pris ekskludert mva 1500 kroner.",
+  "files": [],
+  "expected_min_proxy_calls": 1,
+  "verification": {
+    "reads": [
+      {
+        "name": "products",
+        "path": "/product",
+        "query": {
+          "name": "Reisetid Konsulentpakke Create Product",
+          "fields": "id,name,number,priceExcludingVatCurrency",
+          "count": 50
+        },
+        "mode": "list_values"
+      }
+    ],
+    "checks": [
+      {
+        "name": "Product found",
+        "points": 2,
+        "read_name": "products",
+        "kind": "entity_exists",
+        "selector": {
+          "name": "Reisetid Konsulentpakke Create Product",
+          "number": "PROD-CREATE-PRODUCT-001"
+        }
+      },
+      {
+        "name": "Product name matches",
+        "points": 1,
+        "read_name": "products",
+        "kind": "field_equals",
+        "selector": {
+          "number": "PROD-CREATE-PRODUCT-001"
+        },
+        "field_path": "name",
+        "expected": "Reisetid Konsulentpakke Create Product"
+      },
+      {
+        "name": "Product number matches",
+        "points": 1,
+        "read_name": "products",
+        "kind": "field_equals",
+        "selector": {
+          "name": "Reisetid Konsulentpakke Create Product"
+        },
+        "field_path": "number",
+        "expected": "PROD-CREATE-PRODUCT-001"
+      },
+      {
+        "name": "Product price matches",
+        "points": 1,
+        "read_name": "products",
+        "kind": "field_equals",
+        "selector": {
+          "number": "PROD-CREATE-PRODUCT-001"
+        },
+        "field_path": "priceExcludingVatCurrency",
+        "expected": 1500.0
+      }
+    ]
+  },
+  "efficiency": {
+    "best_write_calls": 1,
+    "max_write_calls": 1,
+    "max_4xx_errors": 0,
+    "write_weight": 0.7,
+    "error_weight": 0.3
+  }
+}

@@ -1,0 +1,375 @@
+{
+  "case": "create_customer",
+  "attempt": 1,
+  "started_at_epoch": 1774112685.311896,
+  "elapsed_seconds_local": 17.827,
+  "returncode": 0,
+  "timed_out": false,
+  "stdout": "{\n  \"case\": {\n    \"case_id\": \"create_customer\",\n    \"description\": \"Tier 1 customer-creation fixture with deterministic unique identifiers and field-by-field verification for the scored customer entity.\",\n    \"tier\": 1\n  },\n  \"endpoint_run\": {\n    \"proxy_base_url\": \"http://127.0.0.1:34081/v2\",\n    \"elapsed_seconds\": 11.094427305004501,\n    \"contract\": {\n      \"response_status_code\": 200,\n      \"response_content_type\": null,\n      \"response_json\": {\n        \"status\": \"completed\"\n      },\n      \"response_text\": \"{\\\"status\\\":\\\"completed\\\"}\",\n      \"exact_success_response\": true,\n      \"errors\": [\n        \"Solve URL is not HTTPS.\",\n        \"Solve endpoint did not return application/json.\"\n      ]\n    }\n  },\n  \"proxy_metrics\": {\n    \"total_calls\": 1,\n    \"write_calls\": 1,\n    \"client_error_calls\": 0,\n    \"invalid_auth_paths\": [],\n    \"invalid_forward_paths\": [],\n    \"calls\": [\n      {\n        \"method\": \"POST\",\n        \"path\": \"/v2/customer\",\n        \"forwarded_url\": \"https://kkpqfuj-amager.tripletex.dev/v2/customer\",\n        \"response_status_code\": 201,\n        \"write_call\": true,\n        \"client_error\": false,\n        \"used_expected_basic_auth\": true\n      }\n    ]\n  },\n  \"verification\": {\n    \"points_earned\": 0.0,\n    \"max_points\": 5.0,\n    \"correctness\": 0.0,\n    \"snapshots\": {\n      \"customers\": [\n        {\n          \"id\": 108170749,\n          \"name\": \"SandboxTest AS\",\n          \"email\": \"oppdatert@kunde.no\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108171479,\n          \"name\": \"Pytest TestCorp AS\",\n          \"email\": \"\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108171623,\n          \"name\": \"Pytest TestCorp AS\",\n          \"email\": \"\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108175475,\n          \"name\": \"BenchTest AS\",\n          \"email\": \"bench@test.no\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108175698,\n          \"name\": \"Nordisk AS\",\n          \"email\": \"ny@nordisk.no\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108175713,\n          \"name\": \"Nordic Corp\",\n          \"email\": \"info@nordic.com\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108175731,\n          \"name\": \"Nordisch GmbH\",\n          \"email\": \"info@nordisch.de\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108175751,\n          \"name\": \"Nórdico SL\",\n          \"email\": \"info@nordico.es\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108175769,\n          \"name\": \"Nordique SARL\",\n          \"email\": \"contact@nordique.fr\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108175792,\n          \"name\": \"Nórdico Ltda\",\n          \"email\": \"contato@nordico.com.br\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108175810,\n          \"name\": \"Vestlandsk AS\",\n          \"email\": \"post@vestlandsk.no\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108176896,\n          \"name\": \"TunnelTest AS\",\n          \"email\": \"\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108179104,\n          \"name\": \"Nordisk AS\",\n          \"email\": \"post@nordisk.no\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108179157,\n          \"name\": \"Nordic Corp\",\n          \"email\": \"info@nordic.com\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108179188,\n          \"name\": \"Nordisch GmbH\",\n          \"email\": \"info@nordisch.de\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108179202,\n          \"name\": \"Nórdico SL\",\n          \"email\": \"info@nordico.es\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108179352,\n          \"name\": \"Nordique SARL\",\n          \"email\": \"contact@nordique.fr\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108179380,\n          \"name\": \"Nórdico Ltda\",\n          \"email\": \"contato@nordico.com.br\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108179400,\n          \"name\": \"Vestlandsk AS\",\n          \"email\": \"post@vestlandsk.no\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108179598,\n          \"name\": \"Vestlandsk AS\",\n          \"email\": \"\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108179647,\n          \"name\": \"Vestlandsk AS\",\n          \"email\": \"\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108181477,\n          \"name\": \"Nordisk AS\",\n          \"email\": \"post@nordisk.no\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108181509,\n          \"name\": \"Nordic Corp\",\n          \"email\": \"info@nordic.com\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108181533,\n          \"name\": \"Nordisch GmbH\",\n          \"email\": \"info@nordisch.de\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108181553,\n          \"name\": \"Nórdico SL\",\n          \"email\": \"info@nordico.es\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108181589,\n          \"name\": \"Nordique SARL\",\n          \"email\": \"contact@nordique.fr\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108181612,\n          \"name\": \"Nórdico Ltda\",\n          \"email\": \"contato@nordico.com.br\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108181637,\n          \"name\": \"Vestlandsk AS\",\n          \"email\": \"post@vestlandsk.no\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108181953,\n          \"name\": \"Vestlandsk AS\",\n          \"email\": \"\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108183332,\n          \"name\": \"HelseTest AS\",\n          \"email\": \"\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108246971,\n          \"name\": \"TunnelTest2 AS\",\n          \"email\": \"test2@tunnel.no\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108247148,\n          \"name\": \"CompTest AS\",\n          \"email\": \"comp@test.no\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108247236,\n          \"name\": \"Finans6427 AS\",\n          \"email\": \"finans6427@test.no\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108247484,\n          \"name\": \"TestKunde18541 AS\",\n          \"email\": \"kunde18541@test.no\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108247546,\n          \"name\": \"TestKunde39518 AS\",\n          \"email\": \"kunde39518@test.no\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108247649,\n          \"name\": \"InvoiceTestCo\",\n          \"email\": \"\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108247692,\n          \"name\": \"TestKunde27118 AS\",\n          \"email\": \"kunde27118@test.no\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108247788,\n          \"name\": \"TestKunde27118 AS\",\n          \"email\": \"\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108247881,\n          \"name\": \"TestKunde89532 AS\",\n          \"email\": \"kunde89532@test.no\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108247913,\n          \"name\": \"Customer for Contact89532\",\n          \"email\": \"\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108247955,\n          \"name\": \"TestKunde89532 AS\",\n          \"email\": \"\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108247966,\n          \"name\": \"TestKunde89532 AS\",\n          \"email\": \"\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108248271,\n          \"name\": \"TestKunde30181 AS\",\n          \"email\": \"kunde30181@test.no\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108248769,\n          \"name\": \"FinalCheck AS\",\n          \"email\": \"final@check.no\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108249207,\n          \"name\": \"QuickTest AS\",\n          \"email\": \"\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108249757,\n          \"name\": \"StableTest AS\",\n          \"email\": \"stable@test.no\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108249810,\n          \"name\": \"Test AS\",\n          \"email\": \"\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108250002,\n          \"name\": \"Test AS\",\n          \"email\": \"\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108250500,\n          \"name\": \"V17209 AS\",\n          \"email\": \"updated17209@test.no\",\n          \"phoneNumber\": \"\"\n        },\n        {\n          \"id\": 108250534,\n          \"name\": \"Test AS\",\n          \"email\": \"\",\n          \"phoneNumber\": \"\"\n        }\n      ]\n    }\n  },\n  \"score\": {\n    \"base_score\": 0.0,\n    \"efficiency_bonus\": 0.0,\n    \"total_score\": 0.0,\n    \"write_efficiency\": 0.0,\n    \"error_efficiency\": 0.0,\n    \"combined_efficiency\": 0.0,\n    \"contract_valid\": false,\n    \"proxy_valid\": true,\n    \"disqualification_reasons\": [\n      \"Solve URL is not HTTPS.\"\n    ]\n  }\n}\n",
+  "stderr": "",
+  "parsed": {
+    "case": {
+      "case_id": "create_customer",
+      "description": "Tier 1 customer-creation fixture with deterministic unique identifiers and field-by-field verification for the scored customer entity.",
+      "tier": 1
+    },
+    "endpoint_run": {
+      "proxy_base_url": "http://127.0.0.1:34081/v2",
+      "elapsed_seconds": 11.094427305004501,
+      "contract": {
+        "response_status_code": 200,
+        "response_content_type": null,
+        "response_json": {
+          "status": "completed"
+        },
+        "response_text": "{\"status\":\"completed\"}",
+        "exact_success_response": true,
+        "errors": [
+          "Solve URL is not HTTPS.",
+          "Solve endpoint did not return application/json."
+        ]
+      }
+    },
+    "proxy_metrics": {
+      "total_calls": 1,
+      "write_calls": 1,
+      "client_error_calls": 0,
+      "invalid_auth_paths": [],
+      "invalid_forward_paths": [],
+      "calls": [
+        {
+          "method": "POST",
+          "path": "/v2/customer",
+          "forwarded_url": "https://kkpqfuj-amager.tripletex.dev/v2/customer",
+          "response_status_code": 201,
+          "write_call": true,
+          "client_error": false,
+          "used_expected_basic_auth": true
+        }
+      ]
+    },
+    "verification": {
+      "points_earned": 0.0,
+      "max_points": 5.0,
+      "correctness": 0.0,
+      "snapshots": {
+        "customers": [
+          {
+            "id": 108170749,
+            "name": "SandboxTest AS",
+            "email": "oppdatert@kunde.no",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108171479,
+            "name": "Pytest TestCorp AS",
+            "email": "",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108171623,
+            "name": "Pytest TestCorp AS",
+            "email": "",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108175475,
+            "name": "BenchTest AS",
+            "email": "bench@test.no",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108175698,
+            "name": "Nordisk AS",
+            "email": "ny@nordisk.no",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108175713,
+            "name": "Nordic Corp",
+            "email": "info@nordic.com",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108175731,
+            "name": "Nordisch GmbH",
+            "email": "info@nordisch.de",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108175751,
+            "name": "Nórdico SL",
+            "email": "info@nordico.es",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108175769,
+            "name": "Nordique SARL",
+            "email": "contact@nordique.fr",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108175792,
+            "name": "Nórdico Ltda",
+            "email": "contato@nordico.com.br",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108175810,
+            "name": "Vestlandsk AS",
+            "email": "post@vestlandsk.no",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108176896,
+            "name": "TunnelTest AS",
+            "email": "",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108179104,
+            "name": "Nordisk AS",
+            "email": "post@nordisk.no",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108179157,
+            "name": "Nordic Corp",
+            "email": "info@nordic.com",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108179188,
+            "name": "Nordisch GmbH",
+            "email": "info@nordisch.de",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108179202,
+            "name": "Nórdico SL",
+            "email": "info@nordico.es",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108179352,
+            "name": "Nordique SARL",
+            "email": "contact@nordique.fr",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108179380,
+            "name": "Nórdico Ltda",
+            "email": "contato@nordico.com.br",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108179400,
+            "name": "Vestlandsk AS",
+            "email": "post@vestlandsk.no",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108179598,
+            "name": "Vestlandsk AS",
+            "email": "",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108179647,
+            "name": "Vestlandsk AS",
+            "email": "",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108181477,
+            "name": "Nordisk AS",
+            "email": "post@nordisk.no",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108181509,
+            "name": "Nordic Corp",
+            "email": "info@nordic.com",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108181533,
+            "name": "Nordisch GmbH",
+            "email": "info@nordisch.de",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108181553,
+            "name": "Nórdico SL",
+            "email": "info@nordico.es",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108181589,
+            "name": "Nordique SARL",
+            "email": "contact@nordique.fr",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108181612,
+            "name": "Nórdico Ltda",
+            "email": "contato@nordico.com.br",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108181637,
+            "name": "Vestlandsk AS",
+            "email": "post@vestlandsk.no",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108181953,
+            "name": "Vestlandsk AS",
+            "email": "",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108183332,
+            "name": "HelseTest AS",
+            "email": "",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108246971,
+            "name": "TunnelTest2 AS",
+            "email": "test2@tunnel.no",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108247148,
+            "name": "CompTest AS",
+            "email": "comp@test.no",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108247236,
+            "name": "Finans6427 AS",
+            "email": "finans6427@test.no",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108247484,
+            "name": "TestKunde18541 AS",
+            "email": "kunde18541@test.no",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108247546,
+            "name": "TestKunde39518 AS",
+            "email": "kunde39518@test.no",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108247649,
+            "name": "InvoiceTestCo",
+            "email": "",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108247692,
+            "name": "TestKunde27118 AS",
+            "email": "kunde27118@test.no",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108247788,
+            "name": "TestKunde27118 AS",
+            "email": "",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108247881,
+            "name": "TestKunde89532 AS",
+            "email": "kunde89532@test.no",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108247913,
+            "name": "Customer for Contact89532",
+            "email": "",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108247955,
+            "name": "TestKunde89532 AS",
+            "email": "",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108247966,
+            "name": "TestKunde89532 AS",
+            "email": "",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108248271,
+            "name": "TestKunde30181 AS",
+            "email": "kunde30181@test.no",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108248769,
+            "name": "FinalCheck AS",
+            "email": "final@check.no",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108249207,
+            "name": "QuickTest AS",
+            "email": "",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108249757,
+            "name": "StableTest AS",
+            "email": "stable@test.no",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108249810,
+            "name": "Test AS",
+            "email": "",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108250002,
+            "name": "Test AS",
+            "email": "",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108250500,
+            "name": "V17209 AS",
+            "email": "updated17209@test.no",
+            "phoneNumber": ""
+          },
+          {
+            "id": 108250534,
+            "name": "Test AS",
+            "email": "",
+            "phoneNumber": ""
+          }
+        ]
+      }
+    },
+    "score": {
+      "base_score": 0.0,
+      "efficiency_bonus": 0.0,
+      "total_score": 0.0,
+      "write_efficiency": 0.0,
+      "error_efficiency": 0.0,
+      "combined_efficiency": 0.0,
+      "contract_valid": false,
+      "proxy_valid": true,
+      "disqualification_reasons": [
+        "Solve URL is not HTTPS."
+      ]
+    }
+  },
+  "parse_error": null
+}

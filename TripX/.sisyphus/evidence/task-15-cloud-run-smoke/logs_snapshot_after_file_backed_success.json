@@ -1,0 +1,148 @@
+{
+  "status": "ok",
+  "trace": {
+    "started_at": 1774114277.3087907,
+    "finished_at": 1774114283.2893896,
+    "elapsed_seconds": 5.98,
+    "prompt": "Les den vedlagte PDF-filen og bekreft mottak uten \u00e5 gj\u00f8re Tripletex-endringer. Hvis ingen handling er n\u00f8dvendig, fullf\u00f8r umiddelbart.",
+    "request_context": {
+      "current_date_iso": "2026-03-21",
+      "budget": {
+        "endpoint_timeout_seconds": 300,
+        "reserved_headroom_seconds": 30,
+        "execution_budget_seconds": 270,
+        "max_model_turns": 24,
+        "max_tool_calls": 48
+      },
+      "guardrails": [
+        "inject_current_iso_date_when_prompt_omits_date",
+        "preserve_explicit_user_dates",
+        "keep_solve_synchronous",
+        "enforce_request_budget_caps",
+        "minimize_redundant_api_calls"
+      ],
+      "execution_mode": "synchronous",
+      "solve_response_contract": "{\"status\":\"completed\"}"
+    },
+    "status": "completed",
+    "error": null,
+    "entries": [
+      {
+        "ts": 1774114277.3088193,
+        "event": "request_context_initialized",
+        "detail": {
+          "current_date_iso": "2026-03-21",
+          "budget": {
+            "endpoint_timeout_seconds": 300,
+            "reserved_headroom_seconds": 30,
+            "execution_budget_seconds": 270,
+            "max_model_turns": 24,
+            "max_tool_calls": 48
+          },
+          "guardrails": [
+            "inject_current_iso_date_when_prompt_omits_date",
+            "preserve_explicit_user_dates",
+            "keep_solve_synchronous",
+            "enforce_request_budget_caps",
+            "minimize_redundant_api_calls"
+          ],
+          "execution_mode": "synchronous",
+          "solve_response_contract": "{\"status\":\"completed\"}"
+        }
+      },
+      {
+        "ts": 1774114277.320427,
+        "event": "request_context_decision",
+        "detail": {
+          "decision": "inject_current_date_when_needed",
+          "current_date_iso": "2026-03-21",
+          "preserve_explicit_user_dates": true,
+          "execution_mode": "synchronous",
+          "prompt_length": 133,
+          "file_count": 1
+        }
+      },
+      {
+        "ts": 1774114277.3204615,
+        "event": "file_attachment_prepared",
+        "detail": {
+          "filename": "smoke_attachment.pdf",
+          "mime_type": "application/pdf",
+          "size_bytes": 600,
+          "max_inline_file_bytes": 20971520,
+          "decision": "accepted_for_inline_model_input"
+        }
+      },
+      {
+        "ts": 1774114277.3417966,
+        "event": "model_context_injected",
+        "detail": {
+          "current_date_iso": "2026-03-21",
+          "budget": {
+            "endpoint_timeout_seconds": 300,
+            "reserved_headroom_seconds": 30,
+            "execution_budget_seconds": 270,
+            "max_model_turns": 24,
+            "max_tool_calls": 48
+          },
+          "guardrails": [
+            "inject_current_iso_date_when_prompt_omits_date",
+            "preserve_explicit_user_dates",
+            "keep_solve_synchronous",
+            "enforce_request_budget_caps",
+            "minimize_redundant_api_calls"
+          ],
+          "execution_mode": "synchronous",
+          "solve_response_contract": "{\"status\":\"completed\"}"
+        }
+      },
+      {
+        "ts": 1774114277.341817,
+        "event": "model_runtime_configured",
+        "detail": {
+          "model": "gemini-3.1-pro-preview",
+          "temperature": 0.0,
+          "top_p": 1.0,
+          "candidate_count": 1,
+          "seed": 0,
+          "thinking_level": "HIGH",
+          "include_thoughts": true,
+          "endpoint_timeout_seconds": 300,
+          "reserved_headroom_seconds": 30,
+          "execution_budget_seconds": 270,
+          "max_model_turns": 24,
+          "max_tool_calls": 48
+        }
+      },
+      {
+        "ts": 1774114277.3418403,
+        "event": "llm_call",
+        "detail": {
+          "message": "initial_prompt",
+          "prompt_length": 133,
+          "remaining_budget_seconds": 269.98
+        }
+      },
+      {
+        "ts": 1774114283.288317,
+        "event": "llm_response",
+        "detail": {
+          "text": "Jeg bekrefter herved mottak av den vedlagte PDF-filen som inneholder teksten \"TripX smoke attachment PD\". \n\nSom bedt om har jeg ikke gjort noen endringer i Tripletex.\n\nTASK COMPLETED",
+          "function_call_count": 0,
+          "remaining_budget_seconds": 264.03
+        }
+      },
+      {
+        "ts": 1774114283.288352,
+        "event": "task_completed",
+        "detail": {
+          "step": 0,
+          "tool_calls_completed": 0,
+          "budget_state": "completed_with_budget_remaining",
+          "remaining_budget_seconds": 264.03
+        }
+      }
+    ],
+    "entry_count": 8
+  }
+}

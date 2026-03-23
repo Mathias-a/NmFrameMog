@@ -1,0 +1,79 @@
+{
+  "case_id": "create_journal_entry_basic",
+  "description": "Baseline packaged fixture for a manual journal entry. It checks a deterministic voucher date plus balanced debit/credit posting values instead of treating voucher existence alone as success.",
+  "tier": 2,
+  "prompt": "Opprett et manuelt bilag datert 2026-03-21 med beskrivelse JOURNAL-BASIC-001. Før 1500 kroner i debet på konto 1920 og 1500 kroner i kredit på konto 3000.",
+  "files": [],
+  "expected_min_proxy_calls": 2,
+  "verification": {
+    "reads": [
+      {
+        "name": "vouchers",
+        "path": "/ledger/voucher",
+        "query": {
+          "description": "JOURNAL-BASIC-001",
+          "dateFrom": "2026-03-01",
+          "dateTo": "2026-03-31",
+          "fields": "id,description,date,postings(amountGross,amountGrossCurrency,account(number))",
+          "count": 50
+        },
+        "mode": "list_values"
+      }
+    ],
+    "checks": [
+      {
+        "name": "Voucher found on expected date",
+        "points": 2,
+        "read_name": "vouchers",
+        "kind": "entity_exists",
+        "selector": {
+          "description": "JOURNAL-BASIC-001",
+          "date": "2026-03-21"
+        }
+      },
+      {
+        "name": "Voucher description matches",
+        "points": 1,
+        "read_name": "vouchers",
+        "kind": "field_equals",
+        "selector": {
+          "description": "JOURNAL-BASIC-001",
+          "date": "2026-03-21"
+        },
+        "field_path": "description",
+        "expected": "JOURNAL-BASIC-001"
+      },
+      {
+        "name": "Debit posting amount matches",
+        "points": 1,
+        "read_name": "vouchers",
+        "kind": "field_equals",
+        "selector": {
+          "description": "JOURNAL-BASIC-001",
+          "date": "2026-03-21"
+        },
+        "field_path": "postings.0.amountGrossCurrency",
+        "expected": 1500
+      },
+      {
+        "name": "Credit posting amount matches",
+        "points": 1,
+        "read_name": "vouchers",
+        "kind": "field_equals",
+        "selector": {
+          "description": "JOURNAL-BASIC-001",
+          "date": "2026-03-21"
+        },
+        "field_path": "postings.1.amountGrossCurrency",
+        "expected": -1500
+      }
+    ]
+  },
+  "efficiency": {
+    "best_write_calls": 1,
+    "max_write_calls": 4,
+    "max_4xx_errors": 1,
+    "write_weight": 0.7,
+    "error_weight": 0.3
+  }
+}

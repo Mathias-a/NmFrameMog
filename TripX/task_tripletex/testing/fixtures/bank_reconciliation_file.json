@@ -1,0 +1,59 @@
+{
+  "case_id": "bank_reconciliation_file",
+  "description": "Packaged bank reconciliation placeholder with an embedded CSV-like file payload and deterministic reconciliation anchors for future runtime activation.",
+  "tier": 3,
+  "prompt": "Avstem bankfilen BANK-RECONCILIATION-FILE-001 og registrer relevante transaksjoner.",
+  "files": [
+    {
+      "filename": "bank_reconciliation_file_placeholder.csv",
+      "content_base64": "QkFOSy1SRUNPTkNJTElBVElPTi1GSUxFLTAwMQpEQVRFfERFU0NSSVBUSU9OfEFNT1VOVAoyMDI0LTAxLTE1fEJBTkstUkVDT05DSUxJQVRJT04tRklMRS0wMDEgaW5jb21pbmcgcGF5bWVudHwxMjUwLjAwCjIwMjQtMDEtMTZ8QkFOSy1SRUNPTkNJTElBVElPTi1GSUxFLTAwMSBiYW5rIGZlZXwtNDUuMDAK",
+      "mime_type": "text/csv"
+    }
+  ],
+  "expected_min_proxy_calls": 1,
+  "verification": {
+    "reads": [
+      {
+        "name": "vouchers",
+        "path": "/ledger/voucher",
+        "query": {
+          "description": "BANK-RECONCILIATION-FILE-001",
+          "dateFrom": "2024-01-01",
+          "dateTo": "2026-12-31",
+          "fields": "id,description",
+          "count": 50
+        },
+        "mode": "list_values"
+      }
+    ],
+    "checks": [
+      {
+        "name": "Reconciliation voucher found",
+        "points": 2,
+        "read_name": "vouchers",
+        "kind": "entity_exists",
+        "selector": {
+          "description": "BANK-RECONCILIATION-FILE-001"
+        }
+      },
+      {
+        "name": "Reconciliation description matches",
+        "points": 1,
+        "read_name": "vouchers",
+        "kind": "field_equals",
+        "selector": {
+          "description": "BANK-RECONCILIATION-FILE-001"
+        },
+        "field_path": "description",
+        "expected": "BANK-RECONCILIATION-FILE-001"
+      }
+    ]
+  },
+  "efficiency": {
+    "best_write_calls": 1,
+    "max_write_calls": 5,
+    "max_4xx_errors": 1,
+    "write_weight": 0.7,
+    "error_weight": 0.3
+  }
+}

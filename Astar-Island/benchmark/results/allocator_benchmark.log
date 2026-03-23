@@ -1,0 +1,18 @@
+/Users/mathias/ai-fun/NmFrameMog/worktree-10/Astar-Island/benchmark/src/astar_twin/solver/eval/run_benchmark_suite.py:246: UserWarning: BenchmarkAdapter: fixture '71451d74-be9f-471f-aacd-a41f3b68a9cd' has params_source=DEFAULT_PRIOR. Simulator results reflect benchmark prior parameters, not real competition values. Use this adapter for ground-truth generation only, not calibration.
+  adapter = BenchmarkAdapter(fixture, n_mc_runs=5, sim_seed_offset=run_idx * 100)
+/Users/mathias/ai-fun/NmFrameMog/worktree-10/Astar-Island/benchmark/src/astar_twin/solver/eval/run_benchmark_suite.py:246: UserWarning: BenchmarkAdapter: fixture '76909e29-f664-4b2f-b16b-61b7507277e9' has params_source=DEFAULT_PRIOR. Simulator results reflect benchmark prior parameters, not real competition values. Use this adapter for ground-truth generation only, not calibration.
+  adapter = BenchmarkAdapter(fixture, n_mc_runs=5, sim_seed_offset=run_idx * 100)
+/Users/mathias/ai-fun/NmFrameMog/worktree-10/Astar-Island/benchmark/src/astar_twin/solver/eval/run_benchmark_suite.py:246: UserWarning: BenchmarkAdapter: fixture 'f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb' has params_source=DEFAULT_PRIOR. Simulator results reflect benchmark prior parameters, not real competition values. Use this adapter for ground-truth generation only, not calibration.
+  adapter = BenchmarkAdapter(fixture, n_mc_runs=5, sim_seed_offset=run_idx * 100)
+/Users/mathias/ai-fun/NmFrameMog/worktree-10/Astar-Island/benchmark/.venv/lib/python3.13/site-packages/numpy/_core/_methods.py:188: RuntimeWarning: invalid value encountered in subtract
+  x = um.subtract(arr, arrmean, out=...)
+/Users/mathias/ai-fun/NmFrameMog/worktree-10/Astar-Island/benchmark/src/astar_twin/solver/eval/run_benchmark_suite.py:246: UserWarning: BenchmarkAdapter: fixture '8e839974-b13b-407b-a5e7-fc749d877195' has params_source=DEFAULT_PRIOR. Simulator results reflect benchmark prior parameters, not real competition values. Use this adapter for ground-truth generation only, not calibration.
+  adapter = BenchmarkAdapter(fixture, n_mc_runs=5, sim_seed_offset=run_idx * 100)
+/Users/mathias/ai-fun/NmFrameMog/worktree-10/Astar-Island/benchmark/.venv/lib/python3.13/site-packages/numpy/_core/_methods.py:190: RuntimeWarning: overflow encountered in square
+  x = um.square(x, out=x)
+/Users/mathias/ai-fun/NmFrameMog/worktree-10/Astar-Island/benchmark/src/astar_twin/solver/eval/run_benchmark_suite.py:246: UserWarning: BenchmarkAdapter: fixture 'fd3c92ff-3178-4dc9-8d9b-acf389b3982b' has params_source=DEFAULT_PRIOR. Simulator results reflect benchmark prior parameters, not real competition values. Use this adapter for ground-truth generation only, not calibration.
+  adapter = BenchmarkAdapter(fixture, n_mc_runs=5, sim_seed_offset=run_idx * 100)
+/Users/mathias/ai-fun/NmFrameMog/worktree-10/Astar-Island/benchmark/src/astar_twin/solver/eval/run_benchmark_suite.py:246: UserWarning: BenchmarkAdapter: fixture 'ae78003a-4efe-425a-881a-d16a39bca0ad' has params_source=DEFAULT_PRIOR. Simulator results reflect benchmark prior parameters, not real competition values. Use this adapter for ground-truth generation only, not calibration.
+  adapter = BenchmarkAdapter(fixture, n_mc_runs=5, sim_seed_offset=run_idx * 100)
+/Users/mathias/ai-fun/NmFrameMog/worktree-10/Astar-Island/benchmark/src/astar_twin/solver/eval/run_benchmark_suite.py:246: UserWarning: BenchmarkAdapter: fixture '36e581f1-73f8-453f-ab98-cbe3052b701b' has params_source=DEFAULT_PRIOR. Simulator results reflect benchmark prior parameters, not real competition values. Use this adapter for ground-truth generation only, not calibration.
+  adapter = BenchmarkAdapter(fixture, n_mc_runs=5, sim_seed_offset=run_idx * 100)

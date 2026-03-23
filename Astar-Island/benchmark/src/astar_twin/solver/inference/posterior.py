@@ -9,14 +9,15 @@ Maintains a particle set with:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
+from math import exp
 
-import numpy as np
 from numpy.random import default_rng
 
 from astar_twin.contracts.api_models import InitialState, SimulateResponse
 from astar_twin.solver.inference.likelihood import compute_particle_loglik
 from astar_twin.solver.inference.particles import Particle, initialize_particles
+from astar_twin.solver.observe.features import ObservationFeatures
 
 
 @dataclass
@@ -34,11 +35,8 @@ class PosteriorState:
         if not self.particles:
             return 0.0
 
-        log_weights = np.array([p.log_weight for p in self.particles])
-        max_w = np.max(log_weights)
-        weights = np.exp(log_weights - max_w)
-        weights /= np.sum(weights)
-        return float(1.0 / np.sum(weights**2))
+        weights = self.normalized_weights()
+        return 1.0 / sum(weight * weight for weight in weights)
 
     @property
     def top_particle_mass(self) -> float:
@@ -46,22 +44,20 @@ class PosteriorState:
         if not self.particles:
             return 0.0
 
-        log_weights = np.array([p.log_weight for p in self.particles])
-        max_w = np.max(log_weights)
-        weights = np.exp(log_weights - max_w)
-        weights /= np.sum(weights)
-        return float(np.max(weights))
+        return max(self.normalized_weights())
 
     def normalized_weights(self) -> list[float]:
         """Return normalized weights for all particles."""
         if not self.particles:
             return []
 
-        log_weights = np.array([p.log_weight for p in self.particles])
-        max_w = np.max(log_weights)
-        weights = np.exp(log_weights - max_w)
-        weights /= np.sum(weights)
-        return weights.tolist()
+        log_weights = [particle.log_weight for particle in self.particles]
+        max_w = max(log_weights)
+        unnormalized = [exp(log_weight - max_w) for log_weight in log_weights]
+        total = sum(unnormalized)
+        if total <= 0.0:
+            return [1.0 / len(unnormalized)] * len(unnormalized)
+        return [weight / total for weight in unnormalized]
 
     def top_k_indices(self, k: int) -> list[int]:
         """Return indices of top-k particles by weight."""
@@ -79,10 +75,15 @@ def create_posterior(n_particles: int = 24, seed: int = 0) -> PosteriorState:
     return PosteriorState(particles=particles)
 
 
+def _clone_particle(source: Particle) -> Particle:
+    return replace(source, log_weight=0.0)
+
+
 def update_posterior(
     state: PosteriorState,
     observed_response: SimulateResponse,
     initial_state: InitialState,
+    observed_features: ObservationFeatures | None = None,
     n_inner_runs: int = 6,
     base_seed: int = 0,
 ) -> PosteriorState:
@@ -92,6 +93,7 @@ def update_posterior(
             particle,
             observed_response,
             initial_state,
+            observed_features=observed_features,
             n_inner_runs=n_inner_runs,
             base_seed=base_seed,
         )
@@ -119,14 +121,19 @@ def prune_and_resample_bootstrap(
     top_particles = [state.particles[i] for i in top_indices]
 
     # Normalize weights among survivors
-    log_weights = np.array([p.log_weight for p in top_particles])
-    max_w = np.max(log_weights)
-    weights = np.exp(log_weights - max_w)
-    weights /= np.sum(weights)
+    log_weights = [particle.log_weight for particle in top_particles]
+    max_w = max(log_weights)
+    weights = [exp(log_weight - max_w) for log_weight in log_weights]
+    total_weight = sum(weights)
+    normalized_weights = [weight / total_weight for weight in weights]
 
     # Systematic resample to target_n
     new_particles: list[Particle] = []
-    cumsum = np.cumsum(weights)
+    cumsum: list[float] = []
+    running_total = 0.0
+    for weight in normalized_weights:
+        running_total += weight
+        cumsum.append(running_total)
     u = rng.random() / target_n
 
     idx = 0
@@ -136,12 +143,7 @@ def prune_and_resample_bootstrap(
             idx += 1
         # Clone the selected particle with reset weight
         source = top_particles[idx]
-        new_particles.append(
-            Particle(
-                params=dict(source.params),
-                log_weight=0.0,
-            )
-        )
+        new_particles.append(_clone_particle(source))
 
     state.particles = new_particles
     state.phase = "adaptive"
@@ -159,11 +161,15 @@ def resample_if_needed(
 
     rng = default_rng(seed)
     n = len(state.particles)
-    weights = np.array(state.normalized_weights())
+    weights = state.normalized_weights()
 
     # Systematic resample
     new_particles: list[Particle] = []
-    cumsum = np.cumsum(weights)
+    cumsum: list[float] = []
+    running_total = 0.0
+    for weight in weights:
+        running_total += weight
+        cumsum.append(running_total)
     u = rng.random() / n
 
     idx = 0
@@ -172,12 +178,7 @@ def resample_if_needed(
         while idx < len(cumsum) - 1 and cumsum[idx] < threshold:
             idx += 1
         source = state.particles[idx]
-        new_particles.append(
-            Particle(
-                params=dict(source.params),
-                log_weight=0.0,
-            )
-        )
+        new_particles.append(_clone_particle(source))
 
     state.particles = new_particles
     return state
