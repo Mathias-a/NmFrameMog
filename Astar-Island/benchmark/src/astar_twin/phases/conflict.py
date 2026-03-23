@@ -91,8 +91,8 @@ def apply_conflict(
         p_success = _sigmoid((attack - guard) / p.raid_success_scale)
 
         if rng.random() < p_success:
-            loot_food = p.raid_loot_frac * target.food
-            loot_wealth = p.raid_loot_frac * target.wealth
+            loot_food = p.raid_loot_frac * max(0.0, target.food)
+            loot_wealth = p.raid_loot_frac * max(0.0, target.wealth)
             raider.food += loot_food
             raider.wealth += loot_wealth
             target.food -= loot_food

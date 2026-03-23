@@ -3,12 +3,14 @@ import numpy as np
 from numpy.typing import NDArray
 from astar_twin.data.models import InitialState
 
-class UniformStrategy:
+class WrongStrategy:
     @property
     def name(self) -> str:
-        return "uniform"
+        return "wrong"
 
     def predict(self, initial_state: InitialState, budget: int, base_seed: int) -> NDArray[np.float64]:
         H = len(initial_state.grid)
         W = len(initial_state.grid[0])
-        return np.ones((H, W, 6), dtype=np.float64) / 6.0
+        pred = np.zeros((H, W, 6), dtype=np.float64)
+        pred[:, :, 5] = 1.0
+        return pred

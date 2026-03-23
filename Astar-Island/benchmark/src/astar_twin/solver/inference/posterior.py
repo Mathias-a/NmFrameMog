@@ -34,10 +34,7 @@ class PosteriorState:
         if not self.particles:
             return 0.0
 
-        log_weights = np.array([p.log_weight for p in self.particles])
-        max_w = np.max(log_weights)
-        weights = np.exp(log_weights - max_w)
-        weights /= np.sum(weights)
+        weights = np.array(self.normalized_weights())
         return float(1.0 / np.sum(weights**2))
 
     @property
@@ -46,10 +43,7 @@ class PosteriorState:
         if not self.particles:
             return 0.0
 
-        log_weights = np.array([p.log_weight for p in self.particles])
-        max_w = np.max(log_weights)
-        weights = np.exp(log_weights - max_w)
-        weights /= np.sum(weights)
+        weights = self.normalized_weights()
         return float(np.max(weights))
 
     def normalized_weights(self) -> list[float]:
@@ -59,8 +53,17 @@ class PosteriorState:
 
         log_weights = np.array([p.log_weight for p in self.particles])
         max_w = np.max(log_weights)
+
+        if np.isneginf(max_w) or np.isnan(max_w):
+            return [1.0 / len(self.particles)] * len(self.particles)
+
         weights = np.exp(log_weights - max_w)
-        weights /= np.sum(weights)
+        sum_weights = np.sum(weights)
+
+        if sum_weights == 0 or np.isnan(sum_weights):
+            return [1.0 / len(self.particles)] * len(self.particles)
+
+        weights /= sum_weights
         return weights.tolist()
 
     def top_k_indices(self, k: int) -> list[int]:
@@ -121,8 +124,16 @@ def prune_and_resample_bootstrap(
     # Normalize weights among survivors
     log_weights = np.array([p.log_weight for p in top_particles])
     max_w = np.max(log_weights)
-    weights = np.exp(log_weights - max_w)
-    weights /= np.sum(weights)
+
+    if np.isneginf(max_w) or np.isnan(max_w):
+        weights = np.ones(len(top_particles)) / len(top_particles)
+    else:
+        weights = np.exp(log_weights - max_w)
+        sum_weights = np.sum(weights)
+        if sum_weights == 0 or np.isnan(sum_weights):
+            weights = np.ones(len(top_particles)) / len(top_particles)
+        else:
+            weights /= sum_weights
 
     # Systematic resample to target_n
     new_particles: list[Particle] = []
@@ -193,6 +204,7 @@ def temper_if_collapsed(
         return state
 
     for p in state.particles:
-        p.log_weight *= temperature
+        if np.isfinite(p.log_weight):
+            p.log_weight *= temperature
 
     return state

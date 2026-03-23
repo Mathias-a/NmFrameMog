@@ -133,53 +133,50 @@ def apply_growth(state: RoundState, p: SimulationParams, rng: Generator) -> Roun
             if rng.random() < p_longship:
                 s.has_longship = True
 
-        if len(new_settlements) < p.expansion_max_children_per_year:
-            p_expand = p.expansion_rate * _sigmoid(
-                (prosperity - p.prosperity_threshold_expand) / p.prosperity_logit_scale
-            )
-            if rng.random() < p_expand:
-                candidates = _find_expansion_candidates(
-                    grid, settlements + new_settlements, s, p, rng
+        p_expand = p.expansion_rate * _sigmoid(
+            (prosperity - p.prosperity_threshold_expand) / p.prosperity_logit_scale
+        )
+        if rng.random() < p_expand:
+            candidates = _find_expansion_candidates(grid, settlements + new_settlements, s, p, rng)
+            if candidates:
+                scores = np.array(
+                    [
+                        -p.expansion_site_distance_decay * _chebyshev(s.y, s.x, cy, cx)
+                        + p.expansion_site_coastal_bonus * float(grid.is_coastal(cy, cx))
+                        - p.expansion_site_forest_penalty
+                        * float(grid.get(cy, cx) == TerrainCode.FOREST)
+                        + p.expansion_site_distance_decay
+                        * float(_adjacent_forest_count(grid, cy, cx, p.adjacency_mode))
+                        * 0.35
+                        for cy, cx in candidates
+                    ],
+                    dtype=np.float64,
                 )
-                if candidates:
-                    scores = np.array(
-                        [
-                            -p.expansion_site_distance_decay * _chebyshev(s.y, s.x, cy, cx)
-                            + p.expansion_site_coastal_bonus * float(grid.is_coastal(cy, cx))
-                            - p.expansion_site_forest_penalty
-                            * float(grid.get(cy, cx) == TerrainCode.FOREST)
-                            + p.expansion_site_distance_decay
-                            * float(_adjacent_forest_count(grid, cy, cx, p.adjacency_mode))
-                            * 0.35
-                            for cy, cx in candidates
-                        ],
-                        dtype=np.float64,
-                    )
-                    scores = scores - scores.max()
-                    weights = np.exp(scores / p.expansion_site_temperature)
-                    weights /= weights.sum()
-                    chosen_idx = int(rng.choice(len(candidates), p=weights))
-                    cy, cx = candidates[chosen_idx]
+                scores = scores - scores.max()
+                weights = np.exp(scores / p.expansion_site_temperature)
+                weights /= weights.sum()
+                chosen_idx = int(rng.choice(len(candidates), p=weights))
+                cy, cx = candidates[chosen_idx]
 
-                    child = Settlement(
-                        x=cx,
-                        y=cy,
-                        owner_id=s.owner_id,
-                        alive=True,
-                        has_port=grid.is_coastal(cy, cx) and s.has_port,
-                        population=s.population * p.expansion_population_transfer_fraction,
-                        food=s.food * p.expansion_food_transfer_fraction,
-                        wealth=s.wealth * p.expansion_wealth_transfer_fraction,
-                        defense=s.defense * p.expansion_population_transfer_fraction,
-                        tech=s.tech,
-                    )
-                    s.population *= 1.0 - p.expansion_population_transfer_fraction
-                    s.food *= 1.0 - p.expansion_food_transfer_fraction
-                    s.wealth *= 1.0 - p.expansion_wealth_transfer_fraction
+                child = Settlement(
+                    x=cx,
+                    y=cy,
+                    owner_id=s.owner_id,
+                    alive=True,
+                    has_port=grid.is_coastal(cy, cx) and s.has_port,
+                    population=s.population * p.expansion_population_transfer_fraction,
+                    food=s.food * p.expansion_food_transfer_fraction,
+                    wealth=s.wealth * p.expansion_wealth_transfer_fraction,
+                    defense=s.defense * p.expansion_population_transfer_fraction,
+                    tech=s.tech,
+                )
+                s.population *= 1.0 - p.expansion_population_transfer_fraction
+                s.food *= 1.0 - p.expansion_food_transfer_fraction
+                s.wealth *= 1.0 - p.expansion_wealth_transfer_fraction
 
-                    grid.set(cy, cx, TerrainCode.PORT if child.has_port else TerrainCode.SETTLEMENT)
-                    new_settlements.append(child)
-                    next_owner_id += 1
+                grid.set(cy, cx, TerrainCode.PORT if child.has_port else TerrainCode.SETTLEMENT)
+                new_settlements.append(child)
+                next_owner_id += 1
 
     result = state.copy()
     result.grid = grid
