@@ -1,0 +1,40 @@
+# astar_island_dt_mc/solver/config.py
+
+import numpy as np
+
+# Map dimensions
+MAP_WIDTH = 40
+MAP_HEIGHT = 40
+YEARS_TO_SIMULATE = 50
+QUERIES_BUDGET = 50
+
+# Particle Filter Hyperparameters
+NUM_PARTICLES = 10000
+ESS_THRESHOLD = NUM_PARTICLES / 2.0
+RESAMPLE_JITTER_STD = 0.05
+
+# Terrain Class Indices
+CLASS_EMPTY = 0
+CLASS_SETTLEMENT = 1
+CLASS_PORT = 2
+CLASS_RUIN = 3
+CLASS_FOREST = 4
+CLASS_MOUNTAIN = 5
+
+# Ground Truth Internal Codes (for initialization mapping)
+CODE_OCEAN = 10
+CODE_PLAINS = 11
+
+# Mechanics Hyperparameters
+GROWTH_RATE = 1.15
+WINTER_SEVERITY_MEAN = 0.4
+WINTER_SEVERITY_STD = 0.2
+MIN_POPULATION_THRESHOLD = 0.1
+MAX_DEFENSE_BONUS = 2.0
+
+# Likelihood Penalties
+PENALTY_TERRAIN_MISMATCH = -1e6
+SIGMA_POPULATION = 1.5
+SIGMA_FOOD = 0.8
+SIGMA_WEALTH = 1.2
+SIGMA_DEFENSE = 0.5

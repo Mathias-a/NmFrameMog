@@ -13,11 +13,127 @@ from __future__ import annotations
 import numpy as np
 from numpy.typing import NDArray
 
-from astar_twin.contracts.api_models import InitialState, SimulateResponse
+from astar_twin.contracts.api_models import (
+    InitialState,
+    SimSettlement,
+    SimulateResponse,
+    ViewportBounds,
+)
 from astar_twin.contracts.types import NUM_CLASSES, TERRAIN_TO_CLASS
 from astar_twin.engine import Simulator
 from astar_twin.solver.inference.particles import Particle
 from astar_twin.solver.observe.features import ObservationFeatures, extract_features
+from astar_twin.state.round_state import RoundState
+
+
+def _build_simulated_response(
+    *,
+    state: RoundState,
+    viewport_x: int,
+    viewport_y: int,
+    viewport_w: int,
+    viewport_h: int,
+    map_width: int,
+    map_height: int,
+) -> SimulateResponse:
+    viewport = state.grid.viewport(viewport_x, viewport_y, viewport_w, viewport_h)
+    settlements_in_viewport: list[SimSettlement] = []
+    for settlement in state.settlements:
+        if (
+            viewport_x <= settlement.x < viewport_x + viewport_w
+            and viewport_y <= settlement.y < viewport_y + viewport_h
+        ):
+            settlements_in_viewport.append(
+                SimSettlement(
+                    x=settlement.x,
+                    y=settlement.y,
+                    population=settlement.population,
+                    food=settlement.food,
+                    wealth=settlement.wealth,
+                    defense=settlement.defense,
+                    has_port=settlement.has_port,
+                    alive=settlement.alive,
+                    owner_id=settlement.owner_id,
+                )
+            )
+
+    return SimulateResponse(
+        grid=viewport.to_list(),
+        settlements=settlements_in_viewport,
+        viewport=ViewportBounds(x=viewport_x, y=viewport_y, w=viewport_w, h=viewport_h),
+        width=map_width,
+        height=map_height,
+        queries_used=0,
+        queries_max=50,
+    )
+
+
+def _simulate_viewport_and_features(
+    particle: Particle,
+    initial_state: InitialState,
+    viewport_x: int,
+    viewport_y: int,
+    viewport_w: int,
+    viewport_h: int,
+    n_inner_runs: int,
+    base_seed: int,
+) -> tuple[NDArray[np.float64], list[ObservationFeatures]]:
+    """Run shared rollouts for terrain and settlement evidence.
+
+    This keeps the terrain likelihood and settlement-stat likelihood aligned by
+    deriving both from the same stochastic trajectories.
+    """
+    simulator = Simulator(params=particle.to_simulation_params())
+    counts = np.zeros((viewport_h, viewport_w, NUM_CLASSES), dtype=np.float64)
+    features_list: list[ObservationFeatures] = []
+    map_height = len(initial_state.grid)
+    map_width = len(initial_state.grid[0])
+    successful_runs = 0
+
+    for i in range(n_inner_runs):
+        try:
+            state = simulator.run(initial_state=initial_state, sim_seed=base_seed + i)
+        except (FloatingPointError, ValueError):
+            continue
+
+        response = _build_simulated_response(
+            state=state,
+            viewport_x=viewport_x,
+            viewport_y=viewport_y,
+            viewport_w=viewport_w,
+            viewport_h=viewport_h,
+            map_width=map_width,
+            map_height=map_height,
+        )
+        features_list.append(extract_features(response))
+        for y, row in enumerate(response.grid):
+            for x, code in enumerate(row):
+                class_index = TERRAIN_TO_CLASS.get(code, 0)
+                counts[y, x, class_index] += 1.0
+        successful_runs += 1
+
+    if successful_runs == 0:
+        fallback_state = simulator.run(initial_state=initial_state, sim_seed=base_seed + 99999)
+        response = _build_simulated_response(
+            state=fallback_state,
+            viewport_x=viewport_x,
+            viewport_y=viewport_y,
+            viewport_w=viewport_w,
+            viewport_h=viewport_h,
+            map_width=map_width,
+            map_height=map_height,
+        )
+        features_list.append(extract_features(response))
+        for y, row in enumerate(response.grid):
+            for x, code in enumerate(row):
+                class_index = TERRAIN_TO_CLASS.get(code, 0)
+                counts[y, x, class_index] += 1.0
+        successful_runs = 1
+
+    counts /= float(successful_runs)
+    counts = np.maximum(counts, 1e-6)
+    counts /= np.sum(counts, axis=2, keepdims=True)
+    return counts, features_list
 
 
 def _simulate_viewport_classes(
@@ -31,27 +147,17 @@ def _simulate_viewport_classes(
     base_seed: int,
 ) -> NDArray[np.float64]:
     """Run inner MC simulations for one particle and return class probabilities in viewport."""
-    sim_params = particle.to_simulation_params()
-    simulator = Simulator(params=sim_params)
-
-    counts = np.zeros((viewport_h, viewport_w, NUM_CLASSES), dtype=np.float64)
-
-    for i in range(n_inner_runs):
-        state = simulator.run(initial_state=initial_state, sim_seed=base_seed + i)
-        vp = state.grid.viewport(viewport_x, viewport_y, viewport_w, viewport_h)
-        for y in range(vp.height):
-            for x in range(vp.width):
-                code = vp.get(y, x)
-                cls_idx = TERRAIN_TO_CLASS.get(code, 0)
-                counts[y, x, cls_idx] += 1.0
-
-    # Normalize to probabilities with floor
-    counts /= max(n_inner_runs, 1)
-    counts = np.maximum(counts, 1e-6)
-    sums = np.sum(counts, axis=2, keepdims=True)
-    counts /= sums
-
-    return counts
+    predicted_probs, _ = _simulate_viewport_and_features(
+        particle,
+        initial_state,
+        viewport_x,
+        viewport_y,
+        viewport_w,
+        viewport_h,
+        n_inner_runs,
+        base_seed,
+    )
+    return predicted_probs
 
 
 def _simulate_settlement_stats(
@@ -65,47 +171,16 @@ def _simulate_settlement_stats(
     base_seed: int,
 ) -> list[ObservationFeatures]:
     """Run inner MC and collect per-run settlement feature vectors."""
-    sim_params = particle.to_simulation_params()
-    simulator = Simulator(params=sim_params)
-    features_list: list[ObservationFeatures] = []
-
-    for i in range(n_inner_runs):
-        state = simulator.run(initial_state=initial_state, sim_seed=base_seed + i)
-        # Build a mock SimulateResponse for feature extraction
-        vp = state.grid.viewport(viewport_x, viewport_y, viewport_w, viewport_h)
-        from astar_twin.contracts.api_models import SimSettlement, ViewportBounds
-
-        settlements_in_vp = []
-        for s in state.settlements:
-            if (
-                viewport_x <= s.x < viewport_x + viewport_w
-                and viewport_y <= s.y < viewport_y + viewport_h
-            ):
-                settlements_in_vp.append(
-                    SimSettlement(
-                        x=s.x,
-                        y=s.y,
-                        population=s.population,
-                        food=s.food,
-                        wealth=s.wealth,
-                        defense=s.defense,
-                        has_port=s.has_port,
-                        alive=s.alive,
-                        owner_id=s.owner_id,
-                    )
-                )
-
-        mock_resp = SimulateResponse(
-            grid=vp.to_list(),
-            settlements=settlements_in_vp,
-            viewport=ViewportBounds(x=viewport_x, y=viewport_y, w=viewport_w, h=viewport_h),
-            width=40,
-            height=40,
-            queries_used=0,
-            queries_max=50,
-        )
-        features_list.append(extract_features(mock_resp))
-
+    _, features_list = _simulate_viewport_and_features(
+        particle,
+        initial_state,
+        viewport_x,
+        viewport_y,
+        viewport_w,
+        viewport_h,
+        n_inner_runs,
+        base_seed,
+    )
     return features_list
 
 
@@ -142,7 +217,7 @@ def compute_stats_loglik(
     ]
 
     loglik = 0.0
-    for mean_attr, var_attr in stat_names:
+    for mean_attr, _var_attr in stat_names:
         obs_val = getattr(observed_features, mean_attr)
         sim_vals = [getattr(f, mean_attr) for f in simulated_features_list]
         sim_mean = float(np.mean(sim_vals))
@@ -183,7 +258,7 @@ def compute_particle_loglik(
     vp = observed_response.viewport
 
     # Inner MC for grid probabilities
-    predicted_probs = _simulate_viewport_classes(
+    predicted_probs, sim_features = _simulate_viewport_and_features(
         particle,
         initial_state,
         vp.x,
@@ -195,17 +270,7 @@ def compute_particle_loglik(
     )
     grid_ll = compute_grid_loglik(observed_response, predicted_probs)
 
-    # Inner MC for settlement stats
-    sim_features = _simulate_settlement_stats(
-        particle,
-        initial_state,
-        vp.x,
-        vp.y,
-        vp.w,
-        vp.h,
-        n_inner_runs,
-        base_seed,
-    )
+    # Shared inner MC for settlement stats
     obs_features = extract_features(observed_response)
     stats_ll = compute_stats_loglik(obs_features, sim_features)
 

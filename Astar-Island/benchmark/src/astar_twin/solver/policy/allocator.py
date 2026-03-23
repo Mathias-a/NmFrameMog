@@ -229,6 +229,9 @@ def score_candidate(
     return float(score)
 
 
+_ARGMAX_CACHE: dict[tuple[int, int], tuple[NDArray[np.int64], NDArray[np.int64]]] = {}
+
+
 def compute_posterior_disagreement(
     candidate: ViewportCandidate,
     posterior: PosteriorState,
@@ -243,33 +246,41 @@ def compute_posterior_disagreement(
     if len(posterior.particles) < 2:
         return 0.0
 
-    from astar_twin.engine import Simulator
-    from astar_twin.mc.aggregate import aggregate_runs
-    from astar_twin.mc.runner import MCRunner
-
     top_indices = posterior.top_k_indices(2)
     if len(top_indices) < 2:
         return 0.0
 
-    map_height = len(initial_state.grid)
-    map_width = len(initial_state.grid[0])
-    viewport_argmaxes: list[NDArray[np.int64]] = []
+    cache_key = (id(posterior), id(initial_state))
+    if cache_key not in _ARGMAX_CACHE:
+        from astar_twin.engine import Simulator
+        from astar_twin.mc.aggregate import aggregate_runs
+        from astar_twin.mc.runner import MCRunner
 
-    seed_offsets = [99000, 99100]
-    for idx, particle_idx in enumerate(top_indices):
-        base_seed = seed_offsets[idx]
-        particle = posterior.particles[particle_idx]
-        simulator = Simulator(params=particle.to_simulation_params())
-        runner = MCRunner(simulator)
-        runs = runner.run_batch(initial_state, n_runs=2, base_seed=base_seed)
-        tensor = aggregate_runs(runs, map_height, map_width)
-        window = tensor[
-            candidate.y : candidate.y + candidate.h,
-            candidate.x : candidate.x + candidate.w,
-        ]
-        viewport_argmaxes.append(np.argmax(window, axis=2))
+        map_height = len(initial_state.grid)
+        map_width = len(initial_state.grid[0])
+        full_argmaxes: list[NDArray[np.int64]] = []
 
-    argmax_1, argmax_2 = viewport_argmaxes
+        seed_offsets = [99000, 99100]
+        for idx, particle_idx in enumerate(top_indices):
+            base_seed = seed_offsets[idx]
+            particle = posterior.particles[particle_idx]
+            simulator = Simulator(params=particle.to_simulation_params())
+            runner = MCRunner(simulator)
+            runs = runner.run_batch(initial_state, n_runs=2, base_seed=base_seed)
+            tensor = aggregate_runs(runs, map_height, map_width)
+            full_argmaxes.append(np.argmax(tensor, axis=2))
+        _ARGMAX_CACHE[cache_key] = (full_argmaxes[0], full_argmaxes[1])
+
+    full_arg_1, full_arg_2 = _ARGMAX_CACHE[cache_key]
+    argmax_1 = full_arg_1[
+        candidate.y : candidate.y + candidate.h,
+        candidate.x : candidate.x + candidate.w,
+    ]
+    argmax_2 = full_arg_2[
+        candidate.y : candidate.y + candidate.h,
+        candidate.x : candidate.x + candidate.w,
+    ]
+
     total_cells = int(argmax_1.size)
     if total_cells == 0:
         return 0.0

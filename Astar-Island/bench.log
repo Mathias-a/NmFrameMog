@@ -1,0 +1,35 @@
+Starting Mock API Server...
+Refreshing dataset against mock API to get a frozen round state...
+Installed 13 packages in 70ms
+<frozen runpy>:128: RuntimeWarning: 'idk_2.astar_island_dr_plan_1.cli' found in sys.modules after import of package 'idk_2.astar_island_dr_plan_1', but prior to execution of 'idk_2.astar_island_dr_plan_1.cli'; this may result in unpredictable behaviour
+
+======================================
+Benchmarking idk_1
+======================================
+
+real	0m0.757s
+user	0m0.219s
+sys	0m0.080s
+
+======================================
+Benchmarking idk_2
+======================================
+<frozen runpy>:128: RuntimeWarning: 'idk_2.astar_island_dr_plan_1.cli' found in sys.modules after import of package 'idk_2.astar_island_dr_plan_1', but prior to execution of 'idk_2.astar_island_dr_plan_1.cli'; this may result in unpredictable behaviour
+
+real	0m0.311s
+user	0m0.082s
+sys	0m0.040s
+
+======================================
+Benchmarking idk_3
+======================================
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mathias/ai-fun/NmFrameMog/worktree-5/Astar-Island/idk_3/astar_island_dt_mc/solver/solve_round.py", line 100, in <module>
+    solve(args.round_detail_file, args.cache_dir)
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mathias/ai-fun/NmFrameMog/worktree-5/Astar-Island/idk_3/astar_island_dt_mc/solver/solve_round.py", line 18, in solve
+    with open(round_detail_file, 'r') as f:
+         ~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '.artifacts/astar-island/datasets/mock_v1/rounds/mock-round-0000-1111-2222-333333333333.json'

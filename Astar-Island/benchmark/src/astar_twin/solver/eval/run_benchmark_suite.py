@@ -15,6 +15,7 @@ import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
@@ -28,6 +29,7 @@ from astar_twin.solver.baselines import (
     fixed_coverage_baseline,
     uniform_baseline,
 )
+from astar_twin.solver.high_value_bidirectional import solve_high_value_bidirectional
 from astar_twin.solver.pipeline import solve
 from astar_twin.solver.predict.hedge import apply_hedge, should_hedge
 
@@ -65,12 +67,14 @@ class SuiteResult:
     hedged_mean: float | None
     # Timing
     total_runtime_seconds: float
+    variant_name: str = "particle"
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, object]:
         """Convert to JSON-serializable dict."""
         d = {
             "repeats": self.repeats,
             "candidate": {
+                "variant_name": self.variant_name,
                 "mean": self.candidate_mean,
                 "min": self.candidate_min,
                 "max": self.candidate_max,
@@ -107,7 +111,7 @@ def resilient_run_batch(
     initial_state: object,
     n_runs: int,
     base_seed: int,
-) -> list:
+) -> list[Any]:
     """Run MC batch, skipping individual runs that hit simulator NaN bugs.
 
     This helper is shared by run_benchmark_suite and run_replay_validation.
@@ -188,6 +192,7 @@ def run_suite(
     gt_mc_runs: int = 200,
     gt_base_seed: int = 0,
     gt_prior_spread: float = 1.0,
+    variant: str = "particle",
 ) -> SuiteResult:
     """Run the full benchmark suite.
 
@@ -204,6 +209,7 @@ def run_suite(
         gt_prior_spread: Spread for DEFAULT_PRIOR sampling when deriving
             uncached ground truths. Ignored when cached ground truths already
             exist.
+        variant: Solver variant to benchmark.
 
     Returns:
         SuiteResult with all metrics.
@@ -236,6 +242,8 @@ def run_suite(
     ]
     fc_mean = float(np.mean(fc_per_seed))
 
+    solve_fn = solve if variant == "particle" else solve_high_value_bidirectional
+
     # Run solver N times
     candidate_runs: list[RunResult] = []
     all_scores: list[float] = []
@@ -245,7 +253,7 @@ def run_suite(
     for run_idx in range(repeats):
         adapter = BenchmarkAdapter(fixture, n_mc_runs=5, sim_seed_offset=run_idx * 100)
         t_run_start = time.monotonic()
-        result = solve(
+        result = solve_fn(
             adapter,
             fixture.id,
             n_particles=n_particles,
@@ -258,7 +266,8 @@ def run_suite(
         # Score against ground truth — never use adapter.get_analysis() here
         # to keep solver blind to its own scoring during the run.
         per_seed_scores = [
-            float(compute_score(gt, t)) for gt, t in zip(ground_truths, result.tensors, strict=True)
+            float(compute_score(gt, t))
+            for gt, t in zip(ground_truths, result.tensors, strict=True)
         ]
         mean_score = float(np.mean(per_seed_scores))
 
@@ -313,6 +322,7 @@ def run_suite(
         hedge_activations=hedge_activations,
         hedged_mean=hedged_mean,
         total_runtime_seconds=total_runtime,
+        variant_name=variant,
     )
 
 
@@ -330,6 +340,12 @@ def main() -> None:
     parser.add_argument("--particles", type=int, default=24)
     parser.add_argument("--inner-runs", type=int, default=6)
     parser.add_argument("--sims-per-seed", type=int, default=64)
+    parser.add_argument(
+        "--variant",
+        choices=("particle", "high_value_bidirectional"),
+        default="particle",
+        help="Solver variant to benchmark.",
+    )
     parser.add_argument(
         "--gt-mc-runs",
         type=int,
@@ -358,6 +374,7 @@ def main() -> None:
         n_inner_runs=args.inner_runs,
         sims_per_seed=args.sims_per_seed,
         gt_mc_runs=args.gt_mc_runs,
+        variant=args.variant,
         gt_prior_spread=args.gt_prior_spread,
     )
 
@@ -365,7 +382,10 @@ def main() -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(result.to_dict(), indent=2))
     print(f"Suite complete: {result.repeats} runs")
-    print(f"  Candidate: mean={result.candidate_mean:.2f}, std={result.candidate_std:.2f}")
+    print(
+        f"  Candidate ({result.variant_name}): mean={result.candidate_mean:.2f}, "
+        f"std={result.candidate_std:.2f}"
+    )
     print(f"  Uniform:   mean={result.uniform_mean:.2f}")
     print(f"  FixedCov:  mean={result.fixed_coverage_mean:.2f}")
     print(f"  Hedge:     activations={result.hedge_activations}")

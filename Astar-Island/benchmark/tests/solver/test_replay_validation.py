@@ -20,8 +20,8 @@ FIXTURE_PATH = (
 )
 
 
-def test_replay_produces_at_least_3_variants() -> None:
-    """Replay validation produces uniform, fixed_coverage, and particle_no_hedge."""
+def test_replay_produces_at_least_4_variants() -> None:
+    """Replay validation produces baseline, particle, and high-value variants."""
     result = run_replay_validation(
         FIXTURE_PATH,
         n_particles=4,
@@ -33,7 +33,8 @@ def test_replay_produces_at_least_3_variants() -> None:
     assert "uniform" in variant_names
     assert "fixed_coverage" in variant_names
     assert "particle_no_hedge" in variant_names
-    assert len(result.variants) >= 3
+    assert "high_value_bidirectional" in variant_names
+    assert len(result.variants) >= 4
 
 
 def test_replay_winner_is_highest_mean() -> None:

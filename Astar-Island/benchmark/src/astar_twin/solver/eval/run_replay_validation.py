@@ -15,6 +15,7 @@ import json
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 
@@ -23,6 +24,7 @@ from astar_twin.scoring import compute_score
 from astar_twin.solver.adapters.benchmark import BenchmarkAdapter
 from astar_twin.solver.baselines import fixed_coverage_baseline, uniform_baseline
 from astar_twin.solver.eval.run_benchmark_suite import load_or_compute_ground_truths
+from astar_twin.solver.high_value_bidirectional import solve_high_value_bidirectional
 from astar_twin.solver.pipeline import solve
 from astar_twin.solver.predict.hedge import apply_hedge, should_hedge
 
@@ -46,7 +48,7 @@ class ReplayResult:
     hedge_activated: bool
     calibration_disagreements: list[float]
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "variants": [
                 {
@@ -151,7 +153,8 @@ def run_replay_validation(
         base_seed=42,
     )
     particle_scores = [
-        float(compute_score(gt, t)) for gt, t in zip(ground_truths, result.tensors, strict=True)
+        float(compute_score(gt, t))
+        for gt, t in zip(ground_truths, result.tensors, strict=True)
     ]
     particle_mean = float(np.mean(particle_scores))
     variants.append(
@@ -159,6 +162,28 @@ def run_replay_validation(
             name="particle_no_hedge",
             per_seed_scores=particle_scores,
             mean_score=particle_mean,
+        )
+    )
+
+    high_value_adapter = BenchmarkAdapter(fixture, n_mc_runs=5, sim_seed_offset=500)
+    high_value_result = solve_high_value_bidirectional(
+        high_value_adapter,
+        fixture.id,
+        n_particles=n_particles,
+        n_inner_runs=n_inner_runs,
+        sims_per_seed=sims_per_seed,
+        base_seed=4242,
+    )
+    high_value_scores = [
+        float(compute_score(gt, t))
+        for gt, t in zip(ground_truths, high_value_result.tensors, strict=True)
+    ]
+    high_value_mean = float(np.mean(high_value_scores))
+    variants.append(
+        VariantResult(
+            name="high_value_bidirectional",
+            per_seed_scores=high_value_scores,
+            mean_score=high_value_mean,
         )
     )
 

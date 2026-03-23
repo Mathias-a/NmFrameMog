@@ -13,17 +13,16 @@ import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import numpy as np
 import pytest
 
-from astar_twin.solver.eval.run_benchmark_suite import SuiteResult, RunResult
+from astar_twin.data.models import RoundFixture
+from astar_twin.solver.eval.run_benchmark_suite import RunResult, SuiteResult
 from astar_twin.solver.eval.run_multi_fixture_suite import (
     FixtureResult,
     MultiFixtureSuiteResult,
     _is_real_round,
     run_multi_fixture_suite,
 )
-from astar_twin.data.models import RoundFixture
 
 # Path used by existing suite tests — 10x10 synthetic fixture, no simulation_params needed
 TEST_ROUND_PATH = (
@@ -73,7 +72,7 @@ def _make_fixture_result(round_number: int, mean: float, weight: float) -> Fixtu
     )
 
 
-def test_weighted_mean_calculation():
+def test_weighted_mean_calculation() -> None:
     """Weighted mean respects round_weight values."""
     fr1 = _make_fixture_result(1, mean=20.0, weight=1.0)
     fr2 = _make_fixture_result(2, mean=40.0, weight=3.0)
@@ -90,7 +89,7 @@ def test_weighted_mean_calculation():
     assert abs(result.overall_unweighted_mean - 30.0) < 1e-9
 
 
-def test_serialisation_round_trip():
+def test_serialisation_round_trip() -> None:
     """MultiFixtureSuiteResult serialises and is valid JSON."""
     fr = _make_fixture_result(5, mean=42.0, weight=2.0)
     result = MultiFixtureSuiteResult(
@@ -111,7 +110,7 @@ def test_serialisation_round_trip():
     assert reloaded["fixtures"][0]["round_number"] == 5
 
 
-def test_is_real_round_filters_test_fixtures():
+def test_is_real_round_filters_test_fixtures() -> None:
     """_is_real_round rejects test- prefixed fixtures."""
     test_fixture = MagicMock(spec=RoundFixture)
     test_fixture.id = "test-round-001"
@@ -121,7 +120,7 @@ def test_is_real_round_filters_test_fixtures():
     assert _is_real_round(real_fixture) is True
 
 
-def test_print_summary_does_not_crash():
+def test_print_summary_does_not_crash() -> None:
     """print_summary runs without error for a single-fixture result."""
     fr = _make_fixture_result(1, mean=30.0, weight=1.0)
     result = MultiFixtureSuiteResult(
@@ -141,10 +140,8 @@ def test_print_summary_does_not_crash():
 # ---------------------------------------------------------------------------
 
 
-def test_run_multi_fixture_suite_with_mocked_run_suite(tmp_path: Path):
+def test_run_multi_fixture_suite_with_mocked_run_suite(tmp_path: Path) -> None:
     """run_multi_fixture_suite aggregates results from mocked per-fixture runs."""
-    import shutil
-
     # Create a synthetic data_dir with one real-looking fixture
     rounds_dir = tmp_path / "rounds"
     real_id = "aaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
@@ -186,7 +183,7 @@ def test_run_multi_fixture_suite_with_mocked_run_suite(tmp_path: Path):
     assert result.fixture_results[0].round_id == real_id
 
 
-def test_run_multi_fixture_suite_raises_when_no_real_rounds(tmp_path: Path):
+def test_run_multi_fixture_suite_raises_when_no_real_rounds(tmp_path: Path) -> None:
     """run_multi_fixture_suite raises ValueError when only test- fixtures exist."""
     rounds_dir = tmp_path / "rounds"
     test_dir = rounds_dir / "test-only-fixture"
@@ -200,3 +197,36 @@ def test_run_multi_fixture_suite_raises_when_no_real_rounds(tmp_path: Path):
 
     with pytest.raises(ValueError, match="No real-round fixtures"):
         run_multi_fixture_suite(data_dir=tmp_path, repeats=1)
+
+
+def test_run_multi_fixture_suite_forwards_variant_and_prior_spread(tmp_path: Path) -> None:
+    rounds_dir = tmp_path / "rounds"
+    real_id = "ffffaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+    fixture_dir = rounds_dir / real_id
+    fixture_dir.mkdir(parents=True)
+
+    import json as _json
+
+    original = _json.loads(TEST_ROUND_PATH.read_text())
+    original["id"] = real_id
+    (fixture_dir / "round_detail.json").write_text(_json.dumps(original))
+
+    mock_suite = _make_suite_result(mean=55.0)
+    with patch(
+        "astar_twin.solver.eval.run_multi_fixture_suite.run_suite",
+        return_value=mock_suite,
+    ) as mock_run:
+        run_multi_fixture_suite(
+            data_dir=tmp_path,
+            repeats=1,
+            n_particles=4,
+            n_inner_runs=2,
+            sims_per_seed=4,
+            fc_mc_runs=10,
+            variant="high_value_bidirectional",
+            gt_prior_spread=0.5,
+        )
+
+    _, kwargs = mock_run.call_args
+    assert kwargs["variant"] == "high_value_bidirectional"
+    assert kwargs["gt_prior_spread"] == 0.5

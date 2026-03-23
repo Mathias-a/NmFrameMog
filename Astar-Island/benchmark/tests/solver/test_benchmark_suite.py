@@ -220,3 +220,18 @@ def test_load_or_compute_ground_truths_ignores_prior_spread_for_calibrated_fixtu
     gt_wide = load_or_compute_ground_truths(fixture, n_mc_runs=5, base_seed=22, prior_spread=1.0)
 
     assert all(np.array_equal(a, b) for a, b in zip(gt_zero, gt_wide, strict=False))
+
+
+def test_suite_accepts_high_value_variant() -> None:
+    """Suite can benchmark the high-value bidirectional solver variant."""
+    result = run_suite(
+        FIXTURE_PATH,
+        repeats=1,
+        n_particles=4,
+        n_inner_runs=2,
+        sims_per_seed=4,
+        fc_mc_runs=10,
+        variant="high_value_bidirectional",
+    )
+    assert result.variant_name == "high_value_bidirectional"
+    assert result.candidate_mean > 0

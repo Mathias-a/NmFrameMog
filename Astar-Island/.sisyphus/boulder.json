@@ -1,6 +1,6 @@
 {
-  "active_plan": "/Users/mathias/ai-fun/NmFrameMog/worktree-2/Astar-Island/.sisyphus/plans/optimal-astar-island-solver.md",
-  "started_at": "2026-03-21T16:50:43.340Z",
+  "active_plan": "/Users/mathias/ai-fun/NmFrameMog/worktree-5/Astar-Island/.sisyphus/plans/astar-island-agentic-orchestration.md",
+  "started_at": "2026-03-20T16:55:11.873Z",
   "session_ids": [
     "ses_2eed1e14dffe7SIx5TknHC1sJx",
     "ses_2eeaf32eeffe4J2xtwPkGwmDnX",
@@ -24,7 +24,29 @@
     "ses_2ee5cc682ffe1iw28WKK0qJLeL",
     "ses_2ee5c690affei1B7cHPhWD4JoX",
     "ses_2ee4ed61fffes9kyV3UXZtvCck",
-    "ses_2ee471131ffeXilithsuEW1mc8"
+    "ses_2ee471131ffeXilithsuEW1mc8",
+    "ses_2f3df9dbbffehJgi7xwNTDSW0I",
+    "ses_2f3d37a14ffebzUvPAdXAGneOR",
+    "ses_2f3d37a11ffeZRzvsMD4ytHd6c",
+    "ses_2f3d37a13ffeCASi2y2nXoZBdX",
+    "ses_2f3d06f90fferwJOFynnjMAhA9",
+    "ses_2f3c41ffeffeeWcWIzq7b81qtw",
+    "ses_2f3b9d2edffenEWBab9mNlG4zL",
+    "ses_2f3b219efffeYlZOQBnhly2L9v",
+    "ses_2f3b219b5ffe4BMTBJfyaY3z74",
+    "ses_2f3a8fbb8ffehLAuVaT8I94ltZ",
+    "ses_2f3a005d0ffevWyPoX953MFW5W",
+    "ses_2f3973c85ffezVBLORbK2FMdhS",
+    "ses_2f393a64effe9EZb2s6mAqnChA",
+    "ses_2f3903ba8ffehvLR83kmnLKuPN",
+    "ses_2f383af8cffeFXC6TejpZXF274",
+    "ses_2f37afa06ffeCQH6aBxSiYQa1E",
+    "ses_2f3723f3bffew14pckr1o41ZZT",
+    "ses_2f3723f36ffeqIpoCYErUvOb2O",
+    "ses_2f3723f3dffejvTiGBBAAM6FfP",
+    "ses_2f372409affen6Tvqv1WK2VSUQ",
+    "ses_2eee53440ffeXkThnDUb1vH1F9"
   ],
-  "plan_name": "optimal-astar-island-solver"
+  "plan_name": "astar-island-agentic-orchestration",
+  "agent": "atlas"
 }

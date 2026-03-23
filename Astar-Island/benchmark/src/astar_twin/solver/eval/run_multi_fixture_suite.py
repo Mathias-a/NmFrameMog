@@ -18,7 +18,7 @@ from __future__ import annotations
 import json
 import sys
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
@@ -75,7 +75,8 @@ class MultiFixtureSuiteResult:
 
     def print_summary(self) -> None:
         print(
-            f"Multi-fixture suite: {self.rounds_evaluated} rounds, {self.repeats_per_round} repeats each"
+            "Multi-fixture suite: "
+            f"{self.rounds_evaluated} rounds, {self.repeats_per_round} repeats each"
         )
         print(f"  Weighted mean:   {self.overall_weighted_mean:.2f}")
         print(f"  Unweighted mean: {self.overall_unweighted_mean:.2f}")
@@ -103,6 +104,9 @@ def run_multi_fixture_suite(
     n_inner_runs: int = 6,
     sims_per_seed: int = 64,
     fc_mc_runs: int = 200,
+    variant: str = "particle",
+    gt_prior_spread: float = 1.0,
+    gt_mc_runs: int = 200,
 ) -> MultiFixtureSuiteResult:
     """Evaluate the solver across all known real rounds.
 
@@ -113,6 +117,9 @@ def run_multi_fixture_suite(
         n_inner_runs: Inner MC runs per likelihood update.
         sims_per_seed: Final MC runs for prediction.
         fc_mc_runs: MC runs for the fixed-coverage baseline.
+        variant: Solver variant to benchmark.
+        gt_prior_spread: Spread for DEFAULT_PRIOR sampling when deriving
+            uncached ground truths.
 
     Returns:
         MultiFixtureSuiteResult with per-fixture and aggregated statistics.
@@ -136,6 +143,9 @@ def run_multi_fixture_suite(
             n_inner_runs=n_inner_runs,
             sims_per_seed=sims_per_seed,
             fc_mc_runs=fc_mc_runs,
+            variant=variant,
+            gt_prior_spread=gt_prior_spread,
+            gt_mc_runs=gt_mc_runs,
         )
         fixture_results.append(
             FixtureResult(
@@ -151,7 +161,10 @@ def run_multi_fixture_suite(
     total_weight = sum(weights)
 
     weighted_mean = (
-        float(sum(m * w for m, w in zip(candidate_means, weights)) / total_weight)
+        float(
+            sum(candidate_means[idx] * weights[idx] for idx in range(len(candidate_means)))
+            / total_weight
+        )
         if total_weight > 0
         else 0.0
     )
@@ -188,6 +201,19 @@ def main() -> None:
     parser.add_argument("--inner-runs", type=int, default=6)
     parser.add_argument("--sims-per-seed", type=int, default=64)
     parser.add_argument("--fc-mc-runs", type=int, default=200)
+    parser.add_argument("--gt-mc-runs", type=int, default=200)
+    parser.add_argument(
+        "--variant",
+        choices=("particle", "high_value_bidirectional"),
+        default="particle",
+        help="Solver variant to benchmark across all fixtures.",
+    )
+    parser.add_argument(
+        "--gt-prior-spread",
+        type=float,
+        default=1.0,
+        help="Spread for DEFAULT_PRIOR sampling when deriving uncached ground truths.",
+    )
     args = parser.parse_args()
 
     data_dir = Path(args.data_dir)
@@ -202,6 +228,9 @@ def main() -> None:
         n_inner_runs=args.inner_runs,
         sims_per_seed=args.sims_per_seed,
         fc_mc_runs=args.fc_mc_runs,
+        variant=args.variant,
+        gt_prior_spread=args.gt_prior_spread,
+        gt_mc_runs=args.gt_mc_runs,
     )
 
     output_path = Path(args.output)
