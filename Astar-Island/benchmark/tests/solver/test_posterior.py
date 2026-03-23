@@ -64,7 +64,6 @@ def test_update_changes_weights() -> None:
     state = update_posterior(state, obs, initial, n_inner_runs=2, base_seed=100)
 
     # After update, weights should have changed (not all zero unless very unlikely)
-    weights = [p.log_weight for p in state.particles]
     assert state.n_updates == 1
     assert len(state.ess_history) == 1
 
@@ -121,7 +120,7 @@ def test_no_resampling_when_ess_sufficient() -> None:
     original_weights = [p.log_weight for p in state.particles]
     state = resample_if_needed(state, ess_threshold=6.0, seed=42)
     # Weights unchanged
-    for p, orig in zip(state.particles, original_weights):
+    for p, orig in zip(state.particles, original_weights, strict=True):
         assert p.log_weight == orig
 
 
@@ -134,8 +133,8 @@ def test_temper_when_collapsed() -> None:
     assert state.top_particle_mass > 0.85
 
     state = temper_if_collapsed(state, mass_threshold=0.85, temperature=0.5)
-    # Weights should be halved
-    assert state.particles[0].log_weight == 50.0
+    # Progressive tempering: top_mass ≈ 1.0 → aggressive factor 0.3
+    assert state.particles[0].log_weight == 30.0
 
 
 def test_no_temper_when_not_collapsed() -> None:
@@ -145,7 +144,7 @@ def test_no_temper_when_not_collapsed() -> None:
 
     orig_weights = [p.log_weight for p in state.particles]
     state = temper_if_collapsed(state, mass_threshold=0.85, temperature=0.5)
-    for p, orig in zip(state.particles, orig_weights):
+    for p, orig in zip(state.particles, orig_weights, strict=True):
         assert p.log_weight == orig
 
 

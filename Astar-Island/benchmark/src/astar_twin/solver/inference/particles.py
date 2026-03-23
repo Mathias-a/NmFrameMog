@@ -7,7 +7,6 @@ All other params are frozen at SimulationParams() defaults.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
 
 import numpy as np
 from numpy.random import Generator, default_rng
@@ -59,6 +58,9 @@ _ADJACENCY_CHOICES = list(AdjacencyMode)
 _DISTANCE_CHOICES = list(DistanceMetric)
 _UPDATE_ORDER_CHOICES = list(UpdateOrderMode)
 
+EnumParamValue = AdjacencyMode | DistanceMetric | UpdateOrderMode
+ParamValue = EnumParamValue | float | int
+
 # Continuous parameter ranges (name -> (min, max, default))
 _CONTINUOUS_RANGES: dict[str, tuple[float, float, float]] = {
     "prosperity_threshold_port": (0.5, 3.0, _DEFAULTS.prosperity_threshold_port),
@@ -93,7 +95,7 @@ _CONTINUOUS_RANGES: dict[str, tuple[float, float, float]] = {
 class Particle:
     """One hypothesis about the hidden simulation parameters."""
 
-    params: dict[str, Any]
+    params: dict[str, ParamValue]
     log_weight: float = 0.0
 
     def to_simulation_params(self) -> SimulationParams:
@@ -102,7 +104,7 @@ class Particle:
         Non-inferred params are frozen at defaults.
         """
         defaults = SimulationParams()
-        kwargs: dict[str, Any] = {}
+        kwargs: dict[str, any] = {}  # type: ignore
         for f in defaults.__dataclass_fields__:
             if f in self.params:
                 kwargs[f] = self.params[f]
@@ -115,7 +117,7 @@ class Particle:
         return float(np.exp(self.log_weight - log_normalizer))
 
 
-def _sample_enum_param(name: str, rng: Generator) -> Any:
+def _sample_enum_param(name: str, rng: Generator) -> EnumParamValue:
     """Sample a random value for an enum parameter."""
     if name == "adjacency_mode":
         return rng.choice(_ADJACENCY_CHOICES)
@@ -143,6 +145,56 @@ _INTEGER_PARAMS: dict[str, float] = {
 }
 
 
+def initialize_expert_particles() -> list[Particle]:
+    """Initialize a small set of settlement-dynamics expert particles.
+
+    These represent distinct parameter regimes:
+    1. Baseline (defaults)
+    2. Expansion Pressure (high expansion, low collapse)
+    3. Collapse Hazard (high winter/raid stress, high collapse)
+    4. Coastal Prosperity (low port threshold, high trade)
+    5. Ruin Persistence (high reclaim rate, low reclaim threshold)
+    """
+    particles: list[Particle] = []
+
+    # 1. Baseline
+    default_params: dict[str, ParamValue] = {}
+    for name in INFERRED_PARAMS:
+        default_params[name] = getattr(_DEFAULTS, name)
+    particles.append(Particle(params=default_params.copy(), log_weight=0.0))
+
+    # 2. Expansion Pressure
+    exp_params = default_params.copy()
+    exp_params["expansion_rate"] = 0.40
+    exp_params["expansion_radius"] = 4
+    exp_params["collapse_threshold"] = 0.5
+    particles.append(Particle(params=exp_params, log_weight=0.0))
+
+    # 3. Collapse Hazard
+    col_params = default_params.copy()
+    col_params["winter_severity_mean"] = 0.7
+    col_params["raid_base_prob"] = 0.15
+    col_params["collapse_threshold"] = 2.0
+    col_params["collapse_winter_severity_weight"] = 1.5
+    particles.append(Particle(params=col_params, log_weight=0.0))
+
+    # 4. Coastal Prosperity
+    coast_params = default_params.copy()
+    coast_params["prosperity_threshold_port"] = 0.8
+    coast_params["trade_range"] = 10
+    coast_params["trade_value_scale"] = 0.4
+    particles.append(Particle(params=coast_params, log_weight=0.0))
+
+    # 5. Ruin Persistence
+    ruin_params = default_params.copy()
+    ruin_params["reclaim_rate"] = 0.30
+    ruin_params["reclaim_threshold"] = 0.8
+    ruin_params["ruin_forest_rate"] = 0.05
+    particles.append(Particle(params=ruin_params, log_weight=0.0))
+
+    return particles
+
+
 def initialize_particles(
     n_particles: int = 24,
     seed: int = 0,
@@ -160,14 +212,14 @@ def initialize_particles(
     particles: list[Particle] = []
 
     # First particle: exact defaults (anchor)
-    default_params: dict[str, Any] = {}
+    default_params: dict[str, ParamValue] = {}
     for name in INFERRED_PARAMS:
         default_params[name] = getattr(_DEFAULTS, name)
     particles.append(Particle(params=default_params.copy(), log_weight=0.0))
 
     # Remaining particles: perturbations
     for _ in range(n_particles - 1):
-        params: dict[str, Any] = {}
+        params: dict[str, ParamValue] = {}
         for name in INFERRED_PARAMS:
             if name in ("adjacency_mode", "distance_metric", "update_order_mode"):
                 if rng.random() < 0.7:
@@ -183,6 +235,54 @@ def initialize_particles(
         particles.append(Particle(params=params, log_weight=0.0))
 
     return particles
+
+
+def perturb_particle(
+    particle: Particle,
+    rng: Generator,
+    spread: float = 0.10,
+) -> Particle:
+    """Create a mutated copy of a particle for MCMC rejuvenation.
+
+    After resampling, particles are clones of high-weight survivors.
+    This function applies small random perturbations to break degeneracy
+    while keeping the particle near its parent's region of parameter space.
+
+    Args:
+        particle: Source particle to perturb.
+        rng: Numpy random generator (for determinism).
+        spread: Perturbation scale as fraction of parameter range.
+                 Smaller values = tighter mutations (default 0.10 = 10%).
+
+    Returns:
+        New Particle with perturbed continuous params, occasionally
+        re-rolled enum params, and log_weight reset to 0.0.
+    """
+    new_params: dict[str, ParamValue] = {}
+
+    for name in INFERRED_PARAMS:
+        value = particle.params[name]
+
+        if name in ("adjacency_mode", "distance_metric", "update_order_mode"):
+            # Small chance (5%) of re-rolling enum params
+            if rng.random() < 0.05:
+                new_params[name] = _sample_enum_param(name, rng)
+            else:
+                new_params[name] = value
+        elif name in _CONTINUOUS_RANGES:
+            lo, hi, _default = _CONTINUOUS_RANGES[name]
+            sigma = (hi - lo) * spread
+            new_value = rng.normal(float(value), sigma)
+
+            # Integer params: round after perturbation
+            if name in _INTEGER_PARAMS:
+                new_value = round(new_value)
+
+            new_params[name] = type(value)(np.clip(new_value, lo, hi))
+        else:
+            new_params[name] = value
+
+    return Particle(params=new_params, log_weight=0.0)
 
 
 def validate_particle(particle: Particle) -> list[str]:

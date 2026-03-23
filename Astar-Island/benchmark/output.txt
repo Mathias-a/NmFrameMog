@@ -1,0 +1,29 @@
+Fetching rounds...
+No active rounds found. Looking for most recently completed or scoring round...
+
+Target Round: 22 (ID: a8be24e1-bd48-49bb-aa46-c5593da79f6f, Status: completed)
+Map Size: 40x40
+
+Fetching round details (initial states)...
+
+Fetching analysis for completed/scoring round...
+  Seed 0: Prediction fetched
+  Seed 0: Ground truth fetched
+  Seed 0: Score = 64.6937
+  Seed 1: Prediction fetched
+  Seed 1: Ground truth fetched
+  Seed 1: Score = 77.6390
+  Seed 2: Prediction fetched
+  Seed 2: Ground truth fetched
+  Seed 2: Score = 76.5403
+  Seed 3: Prediction fetched
+  Seed 3: Ground truth fetched
+  Seed 3: Score = 75.9167
+  Seed 4: Prediction fetched
+  Seed 4: Ground truth fetched
+  Seed 4: Score = 75.7775
+
+Evaluating submitted predictions against local 'calibrated_solver' strategy...
+/Users/mathias/ai-fun/NmFrameMog/worktree-6/Astar-Island/benchmark/scripts/check_active_round.py:170: UserWarning: BenchmarkAdapter: fixture 'a8be24e1-bd48-49bb-aa46-c5593da79f6f' has params_source=DEFAULT_PRIOR. Simulator results reflect default prior parameters, not real competition values. Use this adapter for ground-truth generation only, not calibration.
+  adapter = BenchmarkAdapter(fixture, require_calibrated_params=False)
+  Running calibrated_solver locally (this will take a moment)...

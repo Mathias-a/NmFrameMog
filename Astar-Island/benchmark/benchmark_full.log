@@ -1,0 +1,27 @@
+=== STANDARD MODE (8p/3ir/24sps) ===
+
+Loading fixture: f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb
+  Map: 40x40, Seeds: 5, Params: default_prior
+Loading ground truths...
+  Ready (0.0s)
+
+--- Strategy Baselines ---
+  uniform             : mean=  1.87  [2.0, 1.9, 1.8, 1.9, 1.8]  0.0s
+  initial_prior       : mean=  4.88  [5.1, 4.2, 5.0, 5.1, 5.0]  0.0s
+  filter_baseline     : mean= 20.60  [20.5, 21.2, 21.1, 19.8, 20.4]  0.01s
+  mc_oracle           : mean= 46.67  [43.5, 49.2, 47.3, 47.6, 45.7]  56.34s
+
+--- Calibrated Solver (8p/3ir/24sps) ---
+  Solver done: mean=45.46, queries=50, ess=1.0, time=1637.3s
+
+========================================================================
+Strategy                  Mean Score    Runtime
+------------------------------------------------------------------------
+  uniform                       1.87       0.0s
+  initial_prior                 4.88       0.0s
+  filter_baseline              20.60       0.0s
+  mc_oracle                    46.67      56.3s
+  calibrated_solver            45.46    1637.3s
+========================================================================
+
+Solver per-seed: [38.5, 48.7, 53.3, 43.7, 43.1]

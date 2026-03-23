@@ -1,0 +1,2 @@
+/Users/mathias/ai-fun/NmFrameMog/worktree-6/Astar-Island/benchmark/scripts/check_active_round.py:170: UserWarning: BenchmarkAdapter: fixture 'a8be24e1-bd48-49bb-aa46-c5593da79f6f' has params_source=DEFAULT_PRIOR. Simulator results reflect default prior parameters, not real competition values. Use this adapter for ground-truth generation only, not calibration.
+  adapter = BenchmarkAdapter(fixture, require_calibrated_params=False)

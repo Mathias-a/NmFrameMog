@@ -35,8 +35,13 @@ from numpy.typing import NDArray
 
 from astar_twin.contracts.api_models import InitialState
 from astar_twin.contracts.types import MAX_QUERIES, MAX_SEEDS, NUM_CLASSES
+from astar_twin.solver.inference.particles import Particle
 from astar_twin.solver.inference.posterior import PosteriorState
 from astar_twin.solver.policy.hotspots import ViewportCandidate, generate_hotspots
+from astar_twin.solver.policy.legality import (
+    apply_legality_filter,
+    apply_legality_filter_to_viewport,
+)
 
 # Budget constants
 BOOTSTRAP_QUERIES = 10
@@ -47,9 +52,6 @@ ADAPTIVE_BATCH_SIZE = 5
 ADAPTIVE_BATCHES = ADAPTIVE_QUERIES // ADAPTIVE_BATCH_SIZE  # 6
 
 # Scoring weights
-W_ENTROPY = 0.45
-W_DISAGREEMENT = 0.35
-W_STAT_GAIN = 0.20
 W_OVERLAP_PENALTY = 0.25
 
 # Thresholds
@@ -57,6 +59,19 @@ MAX_OVERLAP_FRACTION = 0.60
 CONTRADICTION_CELL_THRESHOLD = 0.20
 ESS_CONTRADICTION_THRESHOLD = 6.0
 MIN_QUERIES_PER_SEED = 8
+HEURISTIC_SHORTLIST_FACTOR = 3
+APPROX_EIG_TOP_PARTICLES = 3
+APPROX_EIG_PSEUDO_OBSERVATIONS = 2
+RERANK_EIG_WEIGHT = 0.35
+RERANK_HEURISTIC_WEIGHT = 1.0 - RERANK_EIG_WEIGHT
+
+
+@dataclass(frozen=True)
+class CandidateScore:
+    heuristic_score: float
+    final_score: float
+    seed_index: int
+    candidate: ViewportCandidate
 
 
 @dataclass
@@ -169,12 +184,49 @@ def _pick_by_category_priority(
     return None
 
 
+def get_adaptive_weights(queries_used: int) -> tuple[float, float, float]:
+    """Compute soft expert weights for adaptive scoring based on query progress.
+
+    Early adaptive phase (first ~8-12 queries): favors discriminative features (stat gain, entropy).
+    Late adaptive phase: shifts to spatial disagreement.
+
+    Returns:
+        (w_entropy, w_disagreement, w_stat_gain)
+    """
+    # Transition happens around queries_used = 18 to 22
+    # (which is 8 to 12 queries into the adaptive phase, assuming 10 bootstrap queries)
+    transition_start = 18
+    transition_end = 22
+
+    # Early weights (discriminative)
+    early_entropy = 0.50
+    early_stat_gain = 0.40
+    early_disagreement = 0.10
+
+    # Late weights (disagreement)
+    late_entropy = 0.20
+    late_stat_gain = 0.10
+    late_disagreement = 0.70
+
+    if queries_used <= transition_start:
+        return early_entropy, early_disagreement, early_stat_gain
+    elif queries_used >= transition_end:
+        return late_entropy, late_disagreement, late_stat_gain
+    else:
+        progress = (queries_used - transition_start) / (transition_end - transition_start)
+        w_entropy = early_entropy + progress * (late_entropy - early_entropy)
+        w_stat_gain = early_stat_gain + progress * (late_stat_gain - early_stat_gain)
+        w_disagreement = early_disagreement + progress * (late_disagreement - early_disagreement)
+        return w_entropy, w_disagreement, w_stat_gain
+
+
 def score_candidate(
     candidate: ViewportCandidate,
     seed_index: int,
     posterior: PosteriorState,
     initial_state: InitialState,
     queried_viewports: list[ViewportCandidate],
+    queries_used: int,
     entropy_map: NDArray[np.float64] | None = None,
     allow_high_overlap: bool = False,
 ) -> float:
@@ -220,10 +272,12 @@ def score_candidate(
     # --- Expected stat gain (proxy) ---
     stat_gain = _estimate_stat_gain(candidate, initial_state)
 
+    w_entropy, w_disagreement, w_stat_gain = get_adaptive_weights(queries_used)
+
     score = (
-        W_ENTROPY * entropy_score
-        + W_DISAGREEMENT * disagreement
-        + W_STAT_GAIN * stat_gain
+        w_entropy * entropy_score
+        + w_disagreement * disagreement
+        + w_stat_gain * stat_gain
         - W_OVERLAP_PENALTY * overlap_penalty
     )
     return float(score)
@@ -243,30 +297,22 @@ def compute_posterior_disagreement(
     if len(posterior.particles) < 2:
         return 0.0
 
-    from astar_twin.engine import Simulator
-    from astar_twin.mc.aggregate import aggregate_runs
-    from astar_twin.mc.runner import MCRunner
-
     top_indices = posterior.top_k_indices(2)
     if len(top_indices) < 2:
         return 0.0
 
-    map_height = len(initial_state.grid)
-    map_width = len(initial_state.grid[0])
     viewport_argmaxes: list[NDArray[np.int64]] = []
 
     seed_offsets = [99000, 99100]
     for idx, particle_idx in enumerate(top_indices):
-        base_seed = seed_offsets[idx]
         particle = posterior.particles[particle_idx]
-        simulator = Simulator(params=particle.to_simulation_params())
-        runner = MCRunner(simulator)
-        runs = runner.run_batch(initial_state, n_runs=2, base_seed=base_seed)
-        tensor = aggregate_runs(runs, map_height, map_width)
-        window = tensor[
-            candidate.y : candidate.y + candidate.h,
-            candidate.x : candidate.x + candidate.w,
-        ]
+        window = _simulate_particle_viewport_probs(
+            particle,
+            candidate,
+            initial_state,
+            base_seed=seed_offsets[idx],
+            n_runs=2,
+        )
         viewport_argmaxes.append(np.argmax(window, axis=2))
 
     argmax_1, argmax_2 = viewport_argmaxes
@@ -276,6 +322,49 @@ def compute_posterior_disagreement(
 
     disagreement = np.sum(argmax_1 != argmax_2) / total_cells
     return float(np.clip(disagreement, 0.0, 1.0))
+
+
+def approximate_expected_information_gain(
+    candidate: ViewportCandidate,
+    posterior: PosteriorState,
+    initial_state: InitialState,
+    seed_index: int,
+) -> float:
+    top_k = min(APPROX_EIG_TOP_PARTICLES, len(posterior.particles))
+    top_indices = posterior.top_k_indices(top_k)
+    if len(top_indices) < 2:
+        return 0.0
+
+    log_weights = np.array(
+        [posterior.particles[idx].log_weight for idx in top_indices], dtype=np.float64
+    )
+    max_log_weight = float(np.max(log_weights))
+    weights = np.exp(log_weights - max_log_weight)
+    weights /= np.sum(weights)
+
+    viewport_probs: list[NDArray[np.float64]] = []
+    seed_root = 120_000 + seed_index * 10_000 + candidate.x * 101 + candidate.y * 307
+    seed_root += candidate.w * 401 + candidate.h * 503
+
+    for rank, particle_idx in enumerate(top_indices):
+        viewport_probs.append(
+            _simulate_particle_viewport_probs(
+                posterior.particles[particle_idx],
+                candidate,
+                initial_state,
+                base_seed=seed_root + rank * 1_000,
+                n_runs=APPROX_EIG_PSEUDO_OBSERVATIONS,
+            )
+        )
+
+    mixture = np.zeros_like(viewport_probs[0])
+    expected_entropy = np.zeros(viewport_probs[0].shape[:2], dtype=np.float64)
+    for weight, probs in zip(weights, viewport_probs, strict=True):
+        mixture += weight * probs
+        expected_entropy += weight * _entropy_per_cell(probs)
+
+    eig = np.mean(_entropy_per_cell(mixture) - expected_entropy) / np.log(NUM_CLASSES)
+    return float(np.clip(eig, 0.0, 1.0))
 
 
 def _estimate_stat_gain(
@@ -317,6 +406,181 @@ def compute_entropy_map(
     return entropy
 
 
+def _entropy_per_cell(prob_tensor: NDArray[np.float64]) -> NDArray[np.float64]:
+    probs = np.clip(prob_tensor, 1e-10, 1.0)
+    probs /= np.sum(probs, axis=2, keepdims=True)
+    return -np.sum(probs * np.log(probs), axis=2)
+
+
+def _simulate_particle_viewport_probs(
+    particle: Particle,
+    candidate: ViewportCandidate,
+    initial_state: InitialState,
+    base_seed: int,
+    n_runs: int,
+) -> NDArray[np.float64]:
+    from astar_twin.engine import Simulator
+    from astar_twin.mc.aggregate import aggregate_runs
+    from astar_twin.mc.runner import MCRunner
+
+    map_height = len(initial_state.grid)
+    map_width = len(initial_state.grid[0])
+    simulator = Simulator(params=particle.to_simulation_params())
+    runner = MCRunner(simulator)
+    runs = runner.run_batch(initial_state, n_runs=n_runs, base_seed=base_seed)
+    tensor = aggregate_runs(runs, map_height, map_width)
+    window = tensor[
+        candidate.y : candidate.y + candidate.h,
+        candidate.x : candidate.x + candidate.w,
+    ]
+    return apply_legality_filter_to_viewport(window, initial_state, candidate.x, candidate.y)
+
+
+def _shortlist_size(total_candidates: int, batch_size: int) -> int:
+    target = max(batch_size, batch_size * HEURISTIC_SHORTLIST_FACTOR)
+    return min(total_candidates, target)
+
+
+def _copy_candidate_with_score(candidate: ViewportCandidate, score: float) -> ViewportCandidate:
+    return ViewportCandidate(
+        x=candidate.x,
+        y=candidate.y,
+        w=candidate.w,
+        h=candidate.h,
+        category=candidate.category,
+        score=score,
+    )
+
+
+def _sorted_candidate_scores(
+    scored: list[CandidateScore],
+) -> list[CandidateScore]:
+    return sorted(
+        scored,
+        key=lambda item: (
+            -item.final_score,
+            -item.heuristic_score,
+            item.seed_index,
+            item.candidate.y,
+            item.candidate.x,
+            item.candidate.h,
+            item.candidate.w,
+            item.candidate.category,
+        ),
+    )
+
+
+def _build_entropy_map(
+    seed_predictions: dict[int, NDArray[np.float64]] | None,
+    seed_index: int,
+    initial_state: InitialState,
+) -> NDArray[np.float64] | None:
+    if seed_predictions is None:
+        return None
+
+    prediction = seed_predictions.get(seed_index)
+    if prediction is None:
+        return None
+
+    legal_prediction = apply_legality_filter(prediction, initial_state)
+    return compute_entropy_map(legal_prediction)
+
+
+def _collect_heuristic_candidates(
+    state: AllocationState,
+    posterior: PosteriorState,
+    initial_states: list[InitialState],
+    seed_predictions: dict[int, NDArray[np.float64]] | None,
+    allow_high_overlap: bool,
+) -> list[CandidateScore]:
+    scored: list[CandidateScore] = []
+    queries_used = state.queries_used
+
+    for seed_idx, candidates in state.seed_candidates.items():
+        if seed_idx >= len(initial_states):
+            continue
+        initial_state = initial_states[seed_idx]
+        queried_vps = [q.viewport for q in state.queries_for_seed(seed_idx)]
+        entropy_map = _build_entropy_map(seed_predictions, seed_idx, initial_state)
+
+        for candidate in candidates:
+            heuristic_score = score_candidate(
+                candidate,
+                seed_idx,
+                posterior,
+                initial_state,
+                queried_vps,
+                queries_used,
+                entropy_map,
+                allow_high_overlap=allow_high_overlap,
+            )
+            if heuristic_score >= 0:
+                scored.append(
+                    CandidateScore(
+                        heuristic_score=heuristic_score,
+                        final_score=heuristic_score,
+                        seed_index=seed_idx,
+                        candidate=candidate,
+                    )
+                )
+
+    return _sorted_candidate_scores(scored)
+
+
+def _rerank_shortlist_with_eig(
+    shortlist: list[CandidateScore],
+    posterior: PosteriorState,
+    initial_states: list[InitialState],
+) -> list[CandidateScore]:
+    reranked: list[CandidateScore] = []
+    for item in shortlist:
+        eig_score = approximate_expected_information_gain(
+            item.candidate,
+            posterior,
+            initial_states[item.seed_index],
+            seed_index=item.seed_index,
+        )
+        final_score = RERANK_HEURISTIC_WEIGHT * item.heuristic_score + RERANK_EIG_WEIGHT * eig_score
+        reranked.append(
+            CandidateScore(
+                heuristic_score=item.heuristic_score,
+                final_score=final_score,
+                seed_index=item.seed_index,
+                candidate=item.candidate,
+            )
+        )
+
+    return _sorted_candidate_scores(reranked)
+
+
+def _select_ranked_batch(
+    state: AllocationState,
+    posterior: PosteriorState,
+    initial_states: list[InitialState],
+    seed_predictions: dict[int, NDArray[np.float64]] | None,
+    batch_size: int,
+    allow_high_overlap: bool,
+) -> list[tuple[int, ViewportCandidate]]:
+    scored = _collect_heuristic_candidates(
+        state,
+        posterior,
+        initial_states,
+        seed_predictions,
+        allow_high_overlap=allow_high_overlap,
+    )
+    if not scored:
+        return []
+
+    shortlist = scored[: _shortlist_size(len(scored), batch_size)]
+    reranked = _rerank_shortlist_with_eig(shortlist, posterior, initial_states)
+    result: list[tuple[int, ViewportCandidate]] = []
+    for item in reranked[:batch_size]:
+        result.append(
+            (item.seed_index, _copy_candidate_with_score(item.candidate, item.final_score))
+        )
+    return result
+
+
 def select_adaptive_batch(
     state: AllocationState,
     posterior: PosteriorState,
@@ -332,51 +596,39 @@ def select_adaptive_batch(
         return []
 
     actual_batch = min(batch_size, state.queries_remaining)
-
-    # Score all candidates across all seeds
-    scored: list[tuple[float, int, ViewportCandidate]] = []
-
-    for seed_idx, candidates in state.seed_candidates.items():
-        if seed_idx >= len(initial_states):
-            continue
-        initial_state = initial_states[seed_idx]
-        queried_vps = [q.viewport for q in state.queries_for_seed(seed_idx)]
-        entropy_map: NDArray[np.float64] | None = None
-        if seed_predictions is not None:
-            prediction = seed_predictions.get(seed_idx)
-            if prediction is not None:
-                entropy_map = compute_entropy_map(prediction)
-
-        for candidate in candidates:
-            s = score_candidate(
-                candidate,
-                seed_idx,
-                posterior,
-                initial_state,
-                queried_vps,
-                entropy_map,
-            )
-            if s >= 0:  # not rejected
-                scored.append((s, seed_idx, candidate))
-
-    # Sort by score descending, pick top batch
-    scored.sort(key=lambda t: t[0], reverse=True)
-    return [(seed_idx, vp) for _, seed_idx, vp in scored[:actual_batch]]
+    return _select_ranked_batch(
+        state,
+        posterior,
+        initial_states,
+        seed_predictions,
+        batch_size=actual_batch,
+        allow_high_overlap=False,
+    )
 
 
 def check_contradiction_triggers(
     state: AllocationState,
     posterior: PosteriorState,
+    initial_states: list[InitialState] | None = None,
 ) -> bool:
     """Check if any contradiction trigger fires, releasing reserve queries.
 
     Triggers:
       - ESS < 6
+      - Top candidate argmax disagreement > threshold in any seed
       - Any seed has < MIN_QUERIES_PER_SEED after adaptive phase
     """
     # ESS trigger
     if posterior.ess < ESS_CONTRADICTION_THRESHOLD:
         return True
+
+    if initial_states is not None:
+        for seed_idx, candidates in state.seed_candidates.items():
+            if seed_idx >= len(initial_states) or not candidates:
+                continue
+            best_candidate = candidates[0]
+            if check_argmax_disagreement(best_candidate, posterior, initial_states[seed_idx]):
+                return True
 
     # Under-queried seed trigger (only after adaptive done)
     if state.adaptive_done:
@@ -424,7 +676,7 @@ def plan_reserve_queries(
     if remaining <= 0:
         return []
 
-    contradiction = check_contradiction_triggers(state, posterior)
+    contradiction = check_contradiction_triggers(state, posterior, initial_states)
 
     if contradiction:
         # Allow high-overlap queries for contradiction resolution
@@ -445,47 +697,33 @@ def _select_contradiction_queries(
     seed_predictions: dict[int, NDArray[np.float64]] | None,
     n_queries: int,
 ) -> list[tuple[int, ViewportCandidate]]:
-    """Select queries for contradiction resolution with relaxed overlap rules."""
-    scored: list[tuple[float, int, ViewportCandidate]] = []
+    scored = _collect_heuristic_candidates(
+        state,
+        posterior,
+        initial_states,
+        seed_predictions,
+        allow_high_overlap=True,
+    )
+    if not scored:
+        return []
 
-    for seed_idx, candidates in state.seed_candidates.items():
-        if seed_idx >= len(initial_states):
-            continue
-        initial_state = initial_states[seed_idx]
-        queried_vps = [q.viewport for q in state.queries_for_seed(seed_idx)]
-        entropy_map: NDArray[np.float64] | None = None
-        if seed_predictions is not None:
-            prediction = seed_predictions.get(seed_idx)
-            if prediction is not None:
-                entropy_map = compute_entropy_map(prediction)
+    shortlist = scored[: _shortlist_size(len(scored), n_queries)]
+    reranked = _rerank_shortlist_with_eig(shortlist, posterior, initial_states)
 
-        for candidate in candidates:
-            s = score_candidate(
-                candidate,
-                seed_idx,
-                posterior,
-                initial_state,
-                queried_vps,
-                entropy_map,
-                allow_high_overlap=True,  # relaxed for contradiction
-            )
-            if s >= 0:
-                scored.append((s, seed_idx, candidate))
-
-    scored.sort(key=lambda t: t[0], reverse=True)
-
-    # Prioritize under-queried seeds
-    under_queried: list[tuple[float, int, ViewportCandidate]] = []
-    normal: list[tuple[float, int, ViewportCandidate]] = []
-    for item in scored:
-        seed_idx = item[1]
-        if len(state.queries_for_seed(seed_idx)) < MIN_QUERIES_PER_SEED:
+    under_queried: list[CandidateScore] = []
+    normal: list[CandidateScore] = []
+    for item in reranked:
+        if len(state.queries_for_seed(item.seed_index)) < MIN_QUERIES_PER_SEED:
             under_queried.append(item)
         else:
             normal.append(item)
 
-    result_pool = under_queried + normal
-    return [(seed_idx, vp) for _, seed_idx, vp in result_pool[:n_queries]]
+    result: list[tuple[int, ViewportCandidate]] = []
+    for item in (under_queried + normal)[:n_queries]:
+        result.append(
+            (item.seed_index, _copy_candidate_with_score(item.candidate, item.final_score))
+        )
+    return result
 
 
 def record_query(

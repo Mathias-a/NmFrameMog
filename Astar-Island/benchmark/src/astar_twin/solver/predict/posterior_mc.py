@@ -16,12 +16,11 @@ import numpy as np
 from numpy.typing import NDArray
 
 from astar_twin.contracts.api_models import InitialState
-from astar_twin.contracts.types import NUM_CLASSES
 from astar_twin.engine import Simulator
 from astar_twin.mc.aggregate import aggregate_runs
 from astar_twin.mc.runner import MCRunner
 from astar_twin.solver.inference.posterior import PosteriorState
-from astar_twin.solver.predict.finalize import finalize_tensor
+from astar_twin.solver.predict.mixture import apply_soft_mixture
 
 # Defaults
 DEFAULT_TOP_K = 6
@@ -159,9 +158,11 @@ def predict_seed(
     run_alloc = allocate_runs_to_particles(selected_weights, sims_per_seed)
 
     # Run MC for each particle
-    combined = np.zeros((map_height, map_width, NUM_CLASSES), dtype=np.float64)
+    expert_tensors = []
 
-    for i, (particle, n_runs, weight) in enumerate(zip(top_particles, run_alloc, selected_weights)):
+    for i, (particle, n_runs, _weight) in enumerate(
+        zip(top_particles, run_alloc, selected_weights, strict=False)
+    ):
         sim_params = particle.to_simulation_params()
         simulator = Simulator(params=sim_params)
         runner = MCRunner(simulator)
@@ -171,11 +172,16 @@ def predict_seed(
         runs = runner.run_batch(initial_state, n_runs, base_seed=particle_seed)
         particle_tensor = aggregate_runs(runs, map_height, map_width)
 
-        # Weight by posterior mass
-        combined += weight * particle_tensor
+        expert_tensors.append(particle_tensor)
 
     # Finalize
-    result = finalize_tensor(combined, map_height, map_width, initial_state)
+    result = apply_soft_mixture(
+        expert_tensors=expert_tensors,
+        expert_weights=selected_weights,
+        height=map_height,
+        width=map_width,
+        initial_state=initial_state,
+    )
 
     metrics = PredictionMetrics(
         seed_index=seed_index,

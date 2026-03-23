@@ -99,6 +99,7 @@ def solve(
     n_inner_runs: int = 6,
     sims_per_seed: int = DEFAULT_SIMS_PER_SEED,
     base_seed: int = 0,
+    use_experts: bool = True,
 ) -> SolveResult:
     """Run the full solver pipeline against the given round.
 
@@ -135,7 +136,7 @@ def solve(
     n_seeds = min(len(initial_states), MAX_SEEDS)
 
     # 2. Initialize posterior and allocation
-    posterior = create_posterior(n_particles=n_particles, seed=base_seed)
+    posterior = create_posterior(n_particles=n_particles, seed=base_seed, use_experts=use_experts)
     alloc = initialize_allocation(initial_states[:n_seeds], height, width)
 
     # 3. Bootstrap phase: 2 queries per seed
@@ -184,12 +185,15 @@ def solve(
 
     # 4. Post-bootstrap: prune and resample
     transition_phase(alloc)
-    posterior = prune_and_resample_bootstrap(
-        posterior,
-        top_k=8,
-        target_n=12,
-        seed=base_seed + 1000,
-    )
+    if not use_experts:
+        posterior = prune_and_resample_bootstrap(
+            posterior,
+            top_k=8,
+            target_n=12,
+            seed=base_seed + 1000,
+        )
+    else:
+        posterior.phase = "adaptive"
 
     bootstrap_tensors, _ = predict_all_seeds(
         posterior,
@@ -257,11 +261,12 @@ def solve(
             query_counter += 1
 
         # Resample if ESS collapsed
-        posterior = resample_if_needed(
-            posterior,
-            ess_threshold=6.0,
-            seed=base_seed + 2000 + batch_num,
-        )
+        if not use_experts:
+            posterior = resample_if_needed(
+                posterior,
+                ess_threshold=6.0,
+                seed=base_seed + 2000 + batch_num,
+            )
         # Temper if top particle dominates
         posterior = temper_if_collapsed(posterior)
 
@@ -277,7 +282,7 @@ def solve(
         seed_predictions = {i: tensor for i, tensor in enumerate(batch_tensors)}
 
     transition_phase(alloc)
-    contradiction = check_contradiction_triggers(alloc, posterior)
+    contradiction = check_contradiction_triggers(alloc, posterior, initial_states[:n_seeds])
 
     reserve_remaining = min(RESERVE_QUERIES, alloc.queries_remaining)
     if reserve_remaining > 0:
@@ -330,11 +335,12 @@ def solve(
             )
             query_counter += 1
 
-        posterior = resample_if_needed(
-            posterior,
-            ess_threshold=6.0,
-            seed=base_seed + 6000,
-        )
+        if not use_experts:
+            posterior = resample_if_needed(
+                posterior,
+                ess_threshold=6.0,
+                seed=base_seed + 6000,
+            )
         posterior = temper_if_collapsed(posterior)
 
         if batch_2_size > 0:
