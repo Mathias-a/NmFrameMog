@@ -1,0 +1,22 @@
+Round 1: done
+Round 2: done
+Round 3: done
+Round 4: done
+Round 5: done
+Round 6: done
+Round 7: done
+Round 8: done
+Round 9: done
+Round 10: done
+Round 11: done
+Round 12: done
+Round 13: done
+Round 14: done
+Round 15: done
+
+=== Strategy Benchmark Results ===
+          filter_baseline: mean=32.31 std=7.91
+      smc_particle_filter: mean=23.97 std=19.87
+                mc_oracle: mean=23.79 std=20.06
+            initial_prior: mean=20.01 std=12.05
+                  uniform: mean=4.98 std=2.08

@@ -1,0 +1,1438 @@
+{
+  "rounds_evaluated": 5,
+  "n_strategies": 1,
+  "prior_spread": 0.0,
+  "total_runtime_seconds": 307.27,
+  "strategy_summaries": {
+    "mc_oracle": {
+      "mean_score": 27.3232,
+      "std_score": 13.9524,
+      "worst_class": "Settlement",
+      "per_class_loss_fractions": {
+        "Empty": 0.027533,
+        "Settlement": 0.424458,
+        "Port": 0.030833,
+        "Ruin": 0.010173,
+        "Forest": -0.01659,
+        "Mountain": 0.0
+      }
+    }
+  },
+  "fixtures": [
+    {
+      "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+      "round_number": 1,
+      "params_source": "default_prior",
+      "runtime_seconds": 57.35,
+      "diagnostics": {
+        "fixture_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+        "strategies": [
+          {
+            "strategy_name": "mc_oracle",
+            "fixture_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+            "mean_score": 16.8268,
+            "worst_seed": 3,
+            "best_seed": 2,
+            "per_class": [
+              {
+                "class": "Empty",
+                "mean_gt_prob": 0.586471,
+                "mean_pred_prob": 0.691817,
+                "fraction_of_loss": -0.0594
+              },
+              {
+                "class": "Settlement",
+                "mean_gt_prob": 0.169353,
+                "mean_pred_prob": 0.010297,
+                "fraction_of_loss": 0.6096
+              },
+              {
+                "class": "Port",
+                "mean_gt_prob": 0.014693,
+                "mean_pred_prob": 0.010025,
+                "fraction_of_loss": 0.0575
+              },
+              {
+                "class": "Ruin",
+                "mean_gt_prob": 0.013177,
+                "mean_pred_prob": 0.010038,
+                "fraction_of_loss": 0.0115
+              },
+              {
+                "class": "Forest",
+                "mean_gt_prob": 0.216305,
+                "mean_pred_prob": 0.267824,
+                "fraction_of_loss": -0.0245
+              },
+              {
+                "class": "Mountain",
+                "mean_gt_prob": 0.0,
+                "mean_pred_prob": 0.01,
+                "fraction_of_loss": 0.0
+              }
+            ],
+            "seeds": [
+              {
+                "seed_index": 0,
+                "score": 16.9212,
+                "weighted_kl": 0.592201,
+                "n_dynamic_cells": 1293,
+                "mean_entropy": 0.602416,
+                "worst_class": "Settlement",
+                "top_5_worst_cells": [
+                  {
+                    "row": 15,
+                    "col": 21,
+                    "weighted_kl": 2.310581,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 3,
+                    "col": 35,
+                    "weighted_kl": 2.030433,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 37,
+                    "col": 14,
+                    "weighted_kl": 2.015757,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 12,
+                    "col": 23,
+                    "weighted_kl": 1.958817,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 26,
+                    "col": 8,
+                    "weighted_kl": 1.943325,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  }
+                ]
+              },
+              {
+                "seed_index": 1,
+                "score": 16.7329,
+                "weighted_kl": 0.595932,
+                "n_dynamic_cells": 1326,
+                "mean_entropy": 0.726537,
+                "worst_class": "Settlement",
+                "top_5_worst_cells": [
+                  {
+                    "row": 31,
+                    "col": 36,
+                    "weighted_kl": 2.387638,
+                    "gt_class": "Port",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 33,
+                    "col": 6,
+                    "weighted_kl": 2.251179,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 30,
+                    "col": 36,
+                    "weighted_kl": 2.17654,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 30,
+                    "col": 35,
+                    "weighted_kl": 2.158099,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 30,
+                    "col": 26,
+                    "weighted_kl": 2.110644,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  }
+                ]
+              },
+              {
+                "seed_index": 2,
+                "score": 18.8461,
+                "weighted_kl": 0.556288,
+                "n_dynamic_cells": 1331,
+                "mean_entropy": 0.64965,
+                "worst_class": "Settlement",
+                "top_5_worst_cells": [
+                  {
+                    "row": 3,
+                    "col": 32,
+                    "weighted_kl": 2.250834,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 27,
+                    "col": 35,
+                    "weighted_kl": 2.216529,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 11,
+                    "col": 25,
+                    "weighted_kl": 2.071897,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 10,
+                    "col": 37,
+                    "weighted_kl": 2.064387,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 19,
+                    "col": 19,
+                    "weighted_kl": 2.058658,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  }
+                ]
+              },
+              {
+                "seed_index": 3,
+                "score": 15.7633,
+                "weighted_kl": 0.615828,
+                "n_dynamic_cells": 1366,
+                "mean_entropy": 0.748359,
+                "worst_class": "Settlement",
+                "top_5_worst_cells": [
+                  {
+                    "row": 23,
+                    "col": 28,
+                    "weighted_kl": 2.264435,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 8,
+                    "col": 3,
+                    "weighted_kl": 2.251156,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 12,
+                    "col": 4,
+                    "weighted_kl": 2.197524,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 2,
+                    "col": 34,
+                    "weighted_kl": 2.140764,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 37,
+                    "col": 12,
+                    "weighted_kl": 2.115282,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  }
+                ]
+              },
+              {
+                "seed_index": 4,
+                "score": 15.8705,
+                "weighted_kl": 0.613569,
+                "n_dynamic_cells": 1274,
+                "mean_entropy": 0.629126,
+                "worst_class": "Settlement",
+                "top_5_worst_cells": [
+                  {
+                    "row": 19,
+                    "col": 36,
+                    "weighted_kl": 2.804365,
+                    "gt_class": "Port",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 19,
+                    "col": 35,
+                    "weighted_kl": 2.432936,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 21,
+                    "col": 37,
+                    "weighted_kl": 2.351056,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 22,
+                    "col": 35,
+                    "weighted_kl": 2.297369,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 20,
+                    "col": 35,
+                    "weighted_kl": 2.244127,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+      "round_number": 2,
+      "params_source": "default_prior",
+      "runtime_seconds": 63.82,
+      "diagnostics": {
+        "fixture_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+        "strategies": [
+          {
+            "strategy_name": "mc_oracle",
+            "fixture_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+            "mean_score": 15.3827,
+            "worst_seed": 4,
+            "best_seed": 3,
+            "per_class": [
+              {
+                "class": "Empty",
+                "mean_gt_prob": 0.568377,
+                "mean_pred_prob": 0.702429,
+                "fraction_of_loss": -0.0544
+              },
+              {
+                "class": "Settlement",
+                "mean_gt_prob": 0.198852,
+                "mean_pred_prob": 0.01048,
+                "fraction_of_loss": 0.6355
+              },
+              {
+                "class": "Port",
+                "mean_gt_prob": 0.014846,
+                "mean_pred_prob": 0.010097,
+                "fraction_of_loss": 0.0412
+              },
+              {
+                "class": "Ruin",
+                "mean_gt_prob": 0.01933,
+                "mean_pred_prob": 0.0102,
+                "fraction_of_loss": 0.0177
+              },
+              {
+                "class": "Forest",
+                "mean_gt_prob": 0.198596,
+                "mean_pred_prob": 0.256794,
+                "fraction_of_loss": -0.0155
+              },
+              {
+                "class": "Mountain",
+                "mean_gt_prob": 0.0,
+                "mean_pred_prob": 0.01,
+                "fraction_of_loss": 0.0
+              }
+            ],
+            "seeds": [
+              {
+                "seed_index": 0,
+                "score": 15.3173,
+                "weighted_kl": 0.625395,
+                "n_dynamic_cells": 1388,
+                "mean_entropy": 0.787973,
+                "worst_class": "Settlement",
+                "top_5_worst_cells": [
+                  {
+                    "row": 29,
+                    "col": 15,
+                    "weighted_kl": 2.027494,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 18,
+                    "col": 13,
+                    "weighted_kl": 1.979583,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 29,
+                    "col": 4,
+                    "weighted_kl": 1.945278,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 36,
+                    "col": 25,
+                    "weighted_kl": 1.944744,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 15,
+                    "col": 31,
+                    "weighted_kl": 1.93007,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  }
+                ]
+              },
+              {
+                "seed_index": 1,
+                "score": 15.1281,
+                "weighted_kl": 0.629539,
+                "n_dynamic_cells": 1352,
+                "mean_entropy": 0.818371,
+                "worst_class": "Settlement",
+                "top_5_worst_cells": [
+                  {
+                    "row": 7,
+                    "col": 35,
+                    "weighted_kl": 2.213465,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 36,
+                    "col": 10,
+                    "weighted_kl": 2.111194,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 36,
+                    "col": 4,
+                    "weighted_kl": 2.022143,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 25,
+                    "col": 4,
+                    "weighted_kl": 2.020593,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 29,
+                    "col": 10,
+                    "weighted_kl": 2.019303,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  }
+                ]
+              },
+              {
+                "seed_index": 2,
+                "score": 15.4388,
+                "weighted_kl": 0.622762,
+                "n_dynamic_cells": 1328,
+                "mean_entropy": 0.794871,
+                "worst_class": "Settlement",
+                "top_5_worst_cells": [
+                  {
+                    "row": 30,
+                    "col": 12,
+                    "weighted_kl": 2.40301,
+                    "gt_class": "Port",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 37,
+                    "col": 33,
+                    "weighted_kl": 2.298908,
+                    "gt_class": "Port",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 20,
+                    "col": 35,
+                    "weighted_kl": 2.293505,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 19,
+                    "col": 23,
+                    "weighted_kl": 2.274918,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 23,
+                    "col": 20,
+                    "weighted_kl": 2.222148,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  }
+                ]
+              },
+              {
+                "seed_index": 3,
+                "score": 16.9388,
+                "weighted_kl": 0.591854,
+                "n_dynamic_cells": 1339,
+                "mean_entropy": 0.835494,
+                "worst_class": "Settlement",
+                "top_5_worst_cells": [
+                  {
+                    "row": 35,
+                    "col": 13,
+                    "weighted_kl": 2.069753,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 33,
+                    "col": 9,
+                    "weighted_kl": 1.99292,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 29,
+                    "col": 3,
+                    "weighted_kl": 1.986338,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 10,
+                    "col": 7,
+                    "weighted_kl": 1.955044,
+                    "gt_class": "Port",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 34,
+                    "col": 33,
+                    "weighted_kl": 1.922254,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  }
+                ]
+              },
+              {
+                "seed_index": 4,
+                "score": 14.0903,
+                "weighted_kl": 0.653228,
+                "n_dynamic_cells": 1372,
+                "mean_entropy": 0.845907,
+                "worst_class": "Settlement",
+                "top_5_worst_cells": [
+                  {
+                    "row": 35,
+                    "col": 23,
+                    "weighted_kl": 2.211529,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 12,
+                    "col": 37,
+                    "weighted_kl": 2.171046,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 16,
+                    "col": 8,
+                    "weighted_kl": 2.100336,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 29,
+                    "col": 35,
+                    "weighted_kl": 2.054415,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 20,
+                    "col": 18,
+                    "weighted_kl": 2.009924,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+      "round_number": 3,
+      "params_source": "default_prior",
+      "runtime_seconds": 58.85,
+      "diagnostics": {
+        "fixture_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+        "strategies": [
+          {
+            "strategy_name": "mc_oracle",
+            "fixture_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+            "mean_score": 46.6718,
+            "worst_seed": 0,
+            "best_seed": 1,
+            "per_class": [
+              {
+                "class": "Empty",
+                "mean_gt_prob": 0.698357,
+                "mean_pred_prob": 0.63967,
+                "fraction_of_loss": 0.2671
+              },
+              {
+                "class": "Settlement",
+                "mean_gt_prob": 0.008857,
+                "mean_pred_prob": 0.010787,
+                "fraction_of_loss": 0.0066
+              },
+              {
+                "class": "Port",
+                "mean_gt_prob": 0.000198,
+                "mean_pred_prob": 0.010074,
+                "fraction_of_loss": -0.0001
+              },
+              {
+                "class": "Ruin",
+                "mean_gt_prob": 0.001988,
+                "mean_pred_prob": 0.010177,
+                "fraction_of_loss": -0.0009
+              },
+              {
+                "class": "Forest",
+                "mean_gt_prob": 0.290601,
+                "mean_pred_prob": 0.319291,
+                "fraction_of_loss": -0.0184
+              },
+              {
+                "class": "Mountain",
+                "mean_gt_prob": 0.0,
+                "mean_pred_prob": 0.01,
+                "fraction_of_loss": 0.0
+              }
+            ],
+            "seeds": [
+              {
+                "seed_index": 0,
+                "score": 43.5401,
+                "weighted_kl": 0.277162,
+                "n_dynamic_cells": 372,
+                "mean_entropy": 0.266794,
+                "worst_class": "Empty",
+                "top_5_worst_cells": [
+                  {
+                    "row": 15,
+                    "col": 5,
+                    "weighted_kl": 0.761065,
+                    "gt_class": "Forest",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 28,
+                    "col": 35,
+                    "weighted_kl": 0.619175,
+                    "gt_class": "Forest",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 35,
+                    "col": 21,
+                    "weighted_kl": 0.59856,
+                    "gt_class": "Forest",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 23,
+                    "col": 35,
+                    "weighted_kl": 0.595484,
+                    "gt_class": "Forest",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 20,
+                    "col": 17,
+                    "weighted_kl": 0.579253,
+                    "gt_class": "Forest",
+                    "pred_class": "Forest"
+                  }
+                ]
+              },
+              {
+                "seed_index": 1,
+                "score": 49.1819,
+                "weighted_kl": 0.236548,
+                "n_dynamic_cells": 541,
+                "mean_entropy": 0.262163,
+                "worst_class": "Empty",
+                "top_5_worst_cells": [
+                  {
+                    "row": 2,
+                    "col": 33,
+                    "weighted_kl": 0.743993,
+                    "gt_class": "Forest",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 36,
+                    "col": 31,
+                    "weighted_kl": 0.646964,
+                    "gt_class": "Forest",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 17,
+                    "col": 17,
+                    "weighted_kl": 0.601994,
+                    "gt_class": "Forest",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 23,
+                    "col": 35,
+                    "weighted_kl": 0.586221,
+                    "gt_class": "Forest",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 21,
+                    "col": 20,
+                    "weighted_kl": 0.565635,
+                    "gt_class": "Forest",
+                    "pred_class": "Forest"
+                  }
+                ]
+              },
+              {
+                "seed_index": 2,
+                "score": 47.3392,
+                "weighted_kl": 0.249277,
+                "n_dynamic_cells": 407,
+                "mean_entropy": 0.262163,
+                "worst_class": "Empty",
+                "top_5_worst_cells": [
+                  {
+                    "row": 21,
+                    "col": 28,
+                    "weighted_kl": 0.905905,
+                    "gt_class": "Forest",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 22,
+                    "col": 29,
+                    "weighted_kl": 0.766896,
+                    "gt_class": "Forest",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 15,
+                    "col": 19,
+                    "weighted_kl": 0.549817,
+                    "gt_class": "Forest",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 12,
+                    "col": 15,
+                    "weighted_kl": 0.518513,
+                    "gt_class": "Forest",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 27,
+                    "col": 15,
+                    "weighted_kl": 0.499377,
+                    "gt_class": "Forest",
+                    "pred_class": "Forest"
+                  }
+                ]
+              },
+              {
+                "seed_index": 3,
+                "score": 47.6161,
+                "weighted_kl": 0.247333,
+                "n_dynamic_cells": 378,
+                "mean_entropy": 0.261443,
+                "worst_class": "Empty",
+                "top_5_worst_cells": [
+                  {
+                    "row": 6,
+                    "col": 10,
+                    "weighted_kl": 0.673121,
+                    "gt_class": "Forest",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 36,
+                    "col": 36,
+                    "weighted_kl": 0.666934,
+                    "gt_class": "Forest",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 25,
+                    "col": 13,
+                    "weighted_kl": 0.527554,
+                    "gt_class": "Forest",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 26,
+                    "col": 26,
+                    "weighted_kl": 0.484069,
+                    "gt_class": "Forest",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 37,
+                    "col": 37,
+                    "weighted_kl": 0.482007,
+                    "gt_class": "Forest",
+                    "pred_class": "Forest"
+                  }
+                ]
+              },
+              {
+                "seed_index": 4,
+                "score": 45.6817,
+                "weighted_kl": 0.261157,
+                "n_dynamic_cells": 400,
+                "mean_entropy": 0.245815,
+                "worst_class": "Empty",
+                "top_5_worst_cells": [
+                  {
+                    "row": 3,
+                    "col": 10,
+                    "weighted_kl": 0.823011,
+                    "gt_class": "Forest",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 22,
+                    "col": 30,
+                    "weighted_kl": 0.730474,
+                    "gt_class": "Forest",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 16,
+                    "col": 23,
+                    "weighted_kl": 0.648882,
+                    "gt_class": "Forest",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 20,
+                    "col": 32,
+                    "weighted_kl": 0.646964,
+                    "gt_class": "Forest",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 31,
+                    "col": 18,
+                    "weighted_kl": 0.601994,
+                    "gt_class": "Forest",
+                    "pred_class": "Forest"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+      "round_number": 4,
+      "params_source": "default_prior",
+      "runtime_seconds": 63.29,
+      "diagnostics": {
+        "fixture_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+        "strategies": [
+          {
+            "strategy_name": "mc_oracle",
+            "fixture_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+            "mean_score": 41.9338,
+            "worst_seed": 1,
+            "best_seed": 0,
+            "per_class": [
+              {
+                "class": "Empty",
+                "mean_gt_prob": 0.644426,
+                "mean_pred_prob": 0.687136,
+                "fraction_of_loss": 0.0038
+              },
+              {
+                "class": "Settlement",
+                "mean_gt_prob": 0.095905,
+                "mean_pred_prob": 0.010603,
+                "fraction_of_loss": 0.278
+              },
+              {
+                "class": "Port",
+                "mean_gt_prob": 0.006747,
+                "mean_pred_prob": 0.010095,
+                "fraction_of_loss": 0.0146
+              },
+              {
+                "class": "Ruin",
+                "mean_gt_prob": 0.009644,
+                "mean_pred_prob": 0.010109,
+                "fraction_of_loss": 0.0048
+              },
+              {
+                "class": "Forest",
+                "mean_gt_prob": 0.243278,
+                "mean_pred_prob": 0.272057,
+                "fraction_of_loss": -0.0111
+              },
+              {
+                "class": "Mountain",
+                "mean_gt_prob": 0.0,
+                "mean_pred_prob": 0.01,
+                "fraction_of_loss": 0.0
+              }
+            ],
+            "seeds": [
+              {
+                "seed_index": 0,
+                "score": 44.3904,
+                "weighted_kl": 0.270715,
+                "n_dynamic_cells": 1344,
+                "mean_entropy": 0.538223,
+                "worst_class": "Settlement",
+                "top_5_worst_cells": [
+                  {
+                    "row": 16,
+                    "col": 31,
+                    "weighted_kl": 1.248328,
+                    "gt_class": "Empty",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 4,
+                    "col": 3,
+                    "weighted_kl": 1.13082,
+                    "gt_class": "Empty",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 3,
+                    "col": 35,
+                    "weighted_kl": 1.101698,
+                    "gt_class": "Empty",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 28,
+                    "col": 36,
+                    "weighted_kl": 1.018562,
+                    "gt_class": "Empty",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 4,
+                    "col": 33,
+                    "weighted_kl": 1.011326,
+                    "gt_class": "Empty",
+                    "pred_class": "Forest"
+                  }
+                ]
+              },
+              {
+                "seed_index": 1,
+                "score": 38.0659,
+                "weighted_kl": 0.321951,
+                "n_dynamic_cells": 1362,
+                "mean_entropy": 0.603318,
+                "worst_class": "Settlement",
+                "top_5_worst_cells": [
+                  {
+                    "row": 5,
+                    "col": 22,
+                    "weighted_kl": 1.336328,
+                    "gt_class": "Empty",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 16,
+                    "col": 19,
+                    "weighted_kl": 1.279411,
+                    "gt_class": "Empty",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 26,
+                    "col": 37,
+                    "weighted_kl": 1.265448,
+                    "gt_class": "Empty",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 18,
+                    "col": 18,
+                    "weighted_kl": 1.251588,
+                    "gt_class": "Empty",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 28,
+                    "col": 4,
+                    "weighted_kl": 1.24751,
+                    "gt_class": "Empty",
+                    "pred_class": "Forest"
+                  }
+                ]
+              },
+              {
+                "seed_index": 2,
+                "score": 42.8998,
+                "weighted_kl": 0.282101,
+                "n_dynamic_cells": 1303,
+                "mean_entropy": 0.53089,
+                "worst_class": "Settlement",
+                "top_5_worst_cells": [
+                  {
+                    "row": 8,
+                    "col": 35,
+                    "weighted_kl": 1.244476,
+                    "gt_class": "Empty",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 33,
+                    "col": 31,
+                    "weighted_kl": 1.145485,
+                    "gt_class": "Empty",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 16,
+                    "col": 9,
+                    "weighted_kl": 1.140667,
+                    "gt_class": "Empty",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 35,
+                    "col": 30,
+                    "weighted_kl": 0.971171,
+                    "gt_class": "Empty",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 5,
+                    "col": 24,
+                    "weighted_kl": 0.937365,
+                    "gt_class": "Empty",
+                    "pred_class": "Forest"
+                  }
+                ]
+              },
+              {
+                "seed_index": 3,
+                "score": 43.6335,
+                "weighted_kl": 0.276448,
+                "n_dynamic_cells": 1313,
+                "mean_entropy": 0.517868,
+                "worst_class": "Settlement",
+                "top_5_worst_cells": [
+                  {
+                    "row": 36,
+                    "col": 31,
+                    "weighted_kl": 1.491748,
+                    "gt_class": "Empty",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 3,
+                    "col": 32,
+                    "weighted_kl": 1.255613,
+                    "gt_class": "Empty",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 30,
+                    "col": 33,
+                    "weighted_kl": 1.179972,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 37,
+                    "col": 26,
+                    "weighted_kl": 1.133003,
+                    "gt_class": "Empty",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 25,
+                    "col": 32,
+                    "weighted_kl": 1.059585,
+                    "gt_class": "Empty",
+                    "pred_class": "Forest"
+                  }
+                ]
+              },
+              {
+                "seed_index": 4,
+                "score": 40.6794,
+                "weighted_kl": 0.299816,
+                "n_dynamic_cells": 1384,
+                "mean_entropy": 0.582718,
+                "worst_class": "Settlement",
+                "top_5_worst_cells": [
+                  {
+                    "row": 32,
+                    "col": 2,
+                    "weighted_kl": 1.251607,
+                    "gt_class": "Empty",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 26,
+                    "col": 20,
+                    "weighted_kl": 1.128803,
+                    "gt_class": "Empty",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 12,
+                    "col": 14,
+                    "weighted_kl": 1.075167,
+                    "gt_class": "Empty",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 36,
+                    "col": 14,
+                    "weighted_kl": 1.042447,
+                    "gt_class": "Empty",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 5,
+                    "col": 9,
+                    "weighted_kl": 1.007834,
+                    "gt_class": "Forest",
+                    "pred_class": "Forest"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+      "round_number": 5,
+      "params_source": "default_prior",
+      "runtime_seconds": 63.92,
+      "diagnostics": {
+        "fixture_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+        "strategies": [
+          {
+            "strategy_name": "mc_oracle",
+            "fixture_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+            "mean_score": 15.801,
+            "worst_seed": 1,
+            "best_seed": 4,
+            "per_class": [
+              {
+                "class": "Empty",
+                "mean_gt_prob": 0.607778,
+                "mean_pred_prob": 0.683698,
+                "fraction_of_loss": -0.0194
+              },
+              {
+                "class": "Settlement",
+                "mean_gt_prob": 0.141211,
+                "mean_pred_prob": 0.010653,
+                "fraction_of_loss": 0.5926
+              },
+              {
+                "class": "Port",
+                "mean_gt_prob": 0.009793,
+                "mean_pred_prob": 0.010063,
+                "fraction_of_loss": 0.0409
+              },
+              {
+                "class": "Ruin",
+                "mean_gt_prob": 0.014667,
+                "mean_pred_prob": 0.010143,
+                "fraction_of_loss": 0.0177
+              },
+              {
+                "class": "Forest",
+                "mean_gt_prob": 0.22655,
+                "mean_pred_prob": 0.275443,
+                "fraction_of_loss": -0.0136
+              },
+              {
+                "class": "Mountain",
+                "mean_gt_prob": 0.0,
+                "mean_pred_prob": 0.01,
+                "fraction_of_loss": 0.0
+              }
+            ],
+            "seeds": [
+              {
+                "seed_index": 0,
+                "score": 14.0608,
+                "weighted_kl": 0.653928,
+                "n_dynamic_cells": 1300,
+                "mean_entropy": 0.607915,
+                "worst_class": "Settlement",
+                "top_5_worst_cells": [
+                  {
+                    "row": 8,
+                    "col": 33,
+                    "weighted_kl": 2.609843,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 37,
+                    "col": 16,
+                    "weighted_kl": 2.386457,
+                    "gt_class": "Forest",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 17,
+                    "col": 3,
+                    "weighted_kl": 2.339409,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 36,
+                    "col": 18,
+                    "weighted_kl": 2.23316,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 7,
+                    "col": 33,
+                    "weighted_kl": 2.196664,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  }
+                ]
+              },
+              {
+                "seed_index": 1,
+                "score": 13.0591,
+                "weighted_kl": 0.678562,
+                "n_dynamic_cells": 1186,
+                "mean_entropy": 0.581764,
+                "worst_class": "Settlement",
+                "top_5_worst_cells": [
+                  {
+                    "row": 36,
+                    "col": 1,
+                    "weighted_kl": 3.030167,
+                    "gt_class": "Port",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 2,
+                    "col": 21,
+                    "weighted_kl": 2.732564,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 36,
+                    "col": 3,
+                    "weighted_kl": 2.56675,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 2,
+                    "col": 22,
+                    "weighted_kl": 2.517259,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 4,
+                    "col": 21,
+                    "weighted_kl": 2.432492,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  }
+                ]
+              },
+              {
+                "seed_index": 2,
+                "score": 15.7358,
+                "weighted_kl": 0.616411,
+                "n_dynamic_cells": 1294,
+                "mean_entropy": 0.637276,
+                "worst_class": "Settlement",
+                "top_5_worst_cells": [
+                  {
+                    "row": 19,
+                    "col": 1,
+                    "weighted_kl": 2.470083,
+                    "gt_class": "Forest",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 19,
+                    "col": 3,
+                    "weighted_kl": 2.387854,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 20,
+                    "col": 2,
+                    "weighted_kl": 2.351338,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 20,
+                    "col": 3,
+                    "weighted_kl": 2.298741,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 18,
+                    "col": 18,
+                    "weighted_kl": 2.194544,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  }
+                ]
+              },
+              {
+                "seed_index": 3,
+                "score": 16.7781,
+                "weighted_kl": 0.595031,
+                "n_dynamic_cells": 1230,
+                "mean_entropy": 0.636745,
+                "worst_class": "Settlement",
+                "top_5_worst_cells": [
+                  {
+                    "row": 22,
+                    "col": 4,
+                    "weighted_kl": 2.005798,
+                    "gt_class": "Forest",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 18,
+                    "col": 27,
+                    "weighted_kl": 1.938849,
+                    "gt_class": "Settlement",
+                    "pred_class": "Empty"
+                  },
+                  {
+                    "row": 4,
+                    "col": 34,
+                    "weighted_kl": 1.932429,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 17,
+                    "col": 27,
+                    "weighted_kl": 1.918601,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 19,
+                    "col": 27,
+                    "weighted_kl": 1.909785,
+                    "gt_class": "Empty",
+                    "pred_class": "Forest"
+                  }
+                ]
+              },
+              {
+                "seed_index": 4,
+                "score": 19.3714,
+                "weighted_kl": 0.547123,
+                "n_dynamic_cells": 1289,
+                "mean_entropy": 0.594409,
+                "worst_class": "Settlement",
+                "top_5_worst_cells": [
+                  {
+                    "row": 23,
+                    "col": 37,
+                    "weighted_kl": 1.975658,
+                    "gt_class": "Forest",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 26,
+                    "col": 22,
+                    "weighted_kl": 1.953119,
+                    "gt_class": "Settlement",
+                    "pred_class": "Empty"
+                  },
+                  {
+                    "row": 25,
+                    "col": 23,
+                    "weighted_kl": 1.880179,
+                    "gt_class": "Settlement",
+                    "pred_class": "Empty"
+                  },
+                  {
+                    "row": 12,
+                    "col": 31,
+                    "weighted_kl": 1.863235,
+                    "gt_class": "Settlement",
+                    "pred_class": "Forest"
+                  },
+                  {
+                    "row": 29,
+                    "col": 33,
+                    "weighted_kl": 1.861463,
+                    "gt_class": "Forest",
+                    "pred_class": "Forest"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

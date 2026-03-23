@@ -20,14 +20,17 @@ from astar_twin.contracts.types import NUM_CLASSES
 from astar_twin.engine import Simulator
 from astar_twin.mc.aggregate import aggregate_runs
 from astar_twin.mc.runner import MCRunner
+from astar_twin.solver.inference.particles import Particle
 from astar_twin.solver.inference.posterior import PosteriorState
 from astar_twin.solver.predict.finalize import finalize_tensor
+from astar_twin.state.round_state import RoundState
 
 # Defaults
 DEFAULT_TOP_K = 6
 DEFAULT_SIMS_PER_SEED = 64
 FALLBACK_SIMS_PER_SEED = 32
 MIN_RUNS_PER_PARTICLE = 4
+PROBE_THRESHOLD = 16
 
 
 @dataclass
@@ -39,6 +42,73 @@ class PredictionMetrics:
     total_sims: int
     fallback_used: bool
     runs_per_particle: list[int] = field(default_factory=list)
+    probe_runs_per_particle: list[int] = field(default_factory=list)
+    final_runs_per_particle: list[int] = field(default_factory=list)
+    adaptive_allocation_used: bool = False
+
+
+def _states_to_tensor(
+    runs: list[RoundState],
+    map_height: int,
+    map_width: int,
+) -> NDArray[np.float64]:
+    """Convert raw simulation runs into a mean terrain tensor."""
+    return aggregate_runs(runs, map_height, map_width)
+
+
+def _compute_particle_variance(
+    particle: Particle,
+    initial_state: InitialState,
+    map_height: int,
+    map_width: int,
+    n_probe_runs: int,
+    base_seed: int,
+) -> float:
+    """Run probe simulations and return mean per-cell variance."""
+    if n_probe_runs <= 0:
+        return 0.0
+
+    simulator = Simulator(params=particle.to_simulation_params())
+    runner = MCRunner(simulator)
+    probe_runs = runner.run_batch(initial_state, n_probe_runs, base_seed=base_seed)
+
+    if not probe_runs:
+        return 0.0
+
+    probe_tensors = np.stack(
+        [_states_to_tensor([run], map_height, map_width) for run in probe_runs],
+        axis=0,
+    )
+    per_cell_variance = np.var(probe_tensors, axis=0)
+    return float(np.mean(per_cell_variance))
+
+
+def _run_particle_batch(
+    particle: Particle,
+    initial_state: InitialState,
+    n_runs: int,
+    base_seed: int,
+) -> list[RoundState]:
+    """Run a deterministic batch for one particle."""
+    if n_runs <= 0:
+        return []
+
+    simulator = Simulator(params=particle.to_simulation_params())
+    runner = MCRunner(simulator)
+    return runner.run_batch(initial_state, n_runs, base_seed=base_seed)
+
+
+def _adaptive_probe_runs_per_particle(sims_per_seed: int, n_particles: int) -> list[int]:
+    """Return deterministic per-particle probe allocations within budget."""
+    if n_particles <= 0 or sims_per_seed < PROBE_THRESHOLD:
+        return [0] * n_particles
+
+    base_probe_runs = max(2, sims_per_seed // 8)
+    probe_total = min(sims_per_seed, base_probe_runs * n_particles)
+    probe_alloc = [probe_total // n_particles] * n_particles
+    for i in range(probe_total % n_particles):
+        probe_alloc[i] += 1
+    return probe_alloc
 
 
 def allocate_runs_to_particles(
@@ -150,25 +220,84 @@ def predict_seed(
     selected_weights = [all_weights[i] for i in top_indices]
     # Re-normalize among selected
     w_sum = sum(selected_weights)
-    if w_sum > 0:
-        selected_weights = [w / w_sum for w in selected_weights]
-    else:
-        selected_weights = [1.0 / k] * k
+    selected_weights = [w / w_sum for w in selected_weights] if w_sum > 0 else [1.0 / k] * k
 
     # Allocate runs
-    run_alloc = allocate_runs_to_particles(selected_weights, sims_per_seed)
+    adaptive_allocation_used = sims_per_seed >= PROBE_THRESHOLD
+    probe_alloc = _adaptive_probe_runs_per_particle(sims_per_seed, k)
+    final_alloc = [0] * k
+    run_alloc: list[int]
+    probe_runs_by_particle: list[list[RoundState]] = []
+
+    if adaptive_allocation_used:
+        variance_weights: list[float] = []
+        remaining_runs = sims_per_seed - sum(probe_alloc)
+
+        for i in range(k):
+            particle = top_particles[i]
+            probe_runs = probe_alloc[i]
+            particle_seed = base_seed + i * sims_per_seed
+            probe_batch = _run_particle_batch(
+                particle,
+                initial_state,
+                probe_runs,
+                particle_seed,
+            )
+            probe_runs_by_particle.append(probe_batch)
+
+            if probe_batch:
+                probe_tensors = np.stack(
+                    [_states_to_tensor([run], map_height, map_width) for run in probe_batch],
+                    axis=0,
+                )
+                variance = float(np.mean(np.var(probe_tensors, axis=0)))
+            else:
+                variance = _compute_particle_variance(
+                    particle,
+                    initial_state,
+                    map_height,
+                    map_width,
+                    probe_runs,
+                    particle_seed,
+                )
+            variance_weights.append(selected_weights[i] * variance)
+
+        if remaining_runs > 0:
+            total_variance_weight = sum(variance_weights)
+            if total_variance_weight > 0:
+                normalized_uncertainty = [vw / total_variance_weight for vw in variance_weights]
+            else:
+                normalized_uncertainty = selected_weights
+            final_alloc = allocate_runs_to_particles(
+                normalized_uncertainty,
+                remaining_runs,
+                min_per_particle=0,
+            )
+
+        run_alloc = [probe_alloc[i] + final_alloc[i] for i in range(k)]
+    else:
+        run_alloc = allocate_runs_to_particles(selected_weights, sims_per_seed)
+        probe_runs_by_particle = [[] for _ in range(k)]
 
     # Run MC for each particle
     combined = np.zeros((map_height, map_width, NUM_CLASSES), dtype=np.float64)
 
-    for i, (particle, n_runs, weight) in enumerate(zip(top_particles, run_alloc, selected_weights)):
-        sim_params = particle.to_simulation_params()
-        simulator = Simulator(params=sim_params)
-        runner = MCRunner(simulator)
-
+    for i in range(k):
+        particle = top_particles[i]
+        n_runs = run_alloc[i]
+        weight = selected_weights[i]
+        if n_runs <= 0:
+            continue
         # Offset seed by particle index to avoid correlated runs
         particle_seed = base_seed + i * sims_per_seed
-        runs = runner.run_batch(initial_state, n_runs, base_seed=particle_seed)
+        cached_probe_runs = probe_runs_by_particle[i]
+        final_runs = _run_particle_batch(
+            particle,
+            initial_state,
+            final_alloc[i] if adaptive_allocation_used else n_runs,
+            particle_seed + len(cached_probe_runs),
+        )
+        runs = cached_probe_runs + final_runs
         particle_tensor = aggregate_runs(runs, map_height, map_width)
 
         # Weight by posterior mass
@@ -183,6 +312,9 @@ def predict_seed(
         total_sims=sum(run_alloc),
         fallback_used=(sims_per_seed == FALLBACK_SIMS_PER_SEED),
         runs_per_particle=run_alloc,
+        probe_runs_per_particle=probe_alloc,
+        final_runs_per_particle=final_alloc,
+        adaptive_allocation_used=adaptive_allocation_used,
     )
 
     return result, metrics

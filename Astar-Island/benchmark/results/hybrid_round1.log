@@ -1,0 +1,17 @@
+/Users/mathias/ai-fun/NmFrameMog/worktree-9/Astar-Island/benchmark/src/astar_twin/strategies/hybrid_solver/strategy.py:87: UserWarning: BenchmarkAdapter: fixture '71451d74-be9f-471f-aacd-a41f3b68a9cd' has params_source=DEFAULT_PRIOR. Simulator results reflect default prior parameters, not real competition values. Use this adapter for ground-truth generation only, not calibration.
+  adapter = BenchmarkAdapter(
+Running Round 1 (40x40)
+Fixture: 71451d74-be9f-471f-aacd-a41f3b68a9cd
+
+Benchmark completed in 2085.6s
+
+Strategy                      Mean                                   Scores
+---------------------------------------------------------------------------
+hybrid_solver                55.98   [53.8, 58.4, 56.3, 59.1, 52.3]
+filter_baseline              33.03   [30.4, 35.8, 31.0, 37.4, 30.6]
+initial_prior                25.94   [26.4, 25.4, 27.9, 25.0, 25.1]
+smc_particle_filter          17.27   [17.3, 18.0, 18.5, 16.6, 15.9]
+mc_oracle                    16.83   [16.9, 16.7, 18.8, 15.8, 15.9]
+uniform                       4.74   [4.3, 5.1, 4.5, 5.2, 4.6]
+
+Results saved to results/hybrid_round1_benchmark.json

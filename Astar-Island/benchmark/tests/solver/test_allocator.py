@@ -27,9 +27,11 @@ from astar_twin.solver.policy.allocator import (
     compute_entropy_map,
     compute_posterior_disagreement,
     initialize_allocation,
+    plan_calibration_bootstrap_queries,
     plan_bootstrap_queries,
     plan_reserve_queries,
     record_query,
+    score_bootstrap_calibration_candidate,
     score_candidate,
     select_adaptive_batch,
     transition_phase,
@@ -133,6 +135,60 @@ def test_bootstrap_two_queries_differ_per_seed():
             # Either different position or different category
             a, b = vps
             assert (a.x, a.y, a.w, a.h) != (b.x, b.y, b.w, b.h) or a.category != b.category
+
+
+def test_plan_calibration_bootstrap_queries_guarantees_one_per_seed():
+    """Calibration bootstrap guarantees at least one query for each seed."""
+    states = _make_5_initial_states()
+    alloc = initialize_allocation(states, map_height=10, map_width=10)
+    posterior = create_posterior(n_particles=4, seed=42)
+
+    planned = plan_calibration_bootstrap_queries(alloc, posterior)
+
+    per_seed: dict[int, int] = {}
+    for seed_idx, _ in planned:
+        per_seed[seed_idx] = per_seed.get(seed_idx, 0) + 1
+
+    assert len(planned) >= 5
+    for seed_idx in range(5):
+        assert per_seed.get(seed_idx, 0) >= 1
+
+
+def test_plan_calibration_bootstrap_queries_respects_budget():
+    """Calibration bootstrap never exceeds the bootstrap budget."""
+    states = _make_5_initial_states()
+    alloc = initialize_allocation(states, map_height=10, map_width=10)
+    posterior = create_posterior(n_particles=4, seed=42)
+
+    planned = plan_calibration_bootstrap_queries(alloc, posterior)
+
+    assert len(planned) <= BOOTSTRAP_QUERIES
+
+
+def test_score_bootstrap_calibration_candidate_deterministic():
+    """Calibration candidate scoring is deterministic for fixed inputs."""
+    state = _make_initial_state()
+    posterior = create_posterior(n_particles=4, seed=42)
+    candidate = ViewportCandidate(x=0, y=0, w=5, h=5, category="frontier", score=0.75)
+
+    score_1 = score_bootstrap_calibration_candidate(candidate, 0, posterior, state)
+    score_2 = score_bootstrap_calibration_candidate(candidate, 0, posterior, state)
+
+    assert score_1 == score_2
+
+
+def test_plan_calibration_bootstrap_queries_deterministic():
+    """Calibration bootstrap planning is deterministic for fixed inputs."""
+    states = _make_5_initial_states()
+    alloc_1 = initialize_allocation(states, map_height=10, map_width=10)
+    alloc_2 = initialize_allocation(states, map_height=10, map_width=10)
+    posterior_1 = create_posterior(n_particles=4, seed=42)
+    posterior_2 = create_posterior(n_particles=4, seed=42)
+
+    planned_1 = plan_calibration_bootstrap_queries(alloc_1, posterior_1)
+    planned_2 = plan_calibration_bootstrap_queries(alloc_2, posterior_2)
+
+    assert planned_1 == planned_2
 
 
 # ---- Scoring ----

@@ -10,6 +10,8 @@ For each observed viewport, computes particle likelihood using inner MC:
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import numpy as np
 from numpy.typing import NDArray
 
@@ -18,6 +20,65 @@ from astar_twin.contracts.types import NUM_CLASSES, TERRAIN_TO_CLASS
 from astar_twin.engine import Simulator
 from astar_twin.solver.inference.particles import Particle
 from astar_twin.solver.observe.features import ObservationFeatures, extract_features
+
+
+@dataclass(frozen=True)
+class _CacheKey:
+    params_hash: int
+    viewport_x: int
+    viewport_y: int
+    viewport_w: int
+    viewport_h: int
+    grid_hash: int
+    n_inner_runs: int
+    base_seed: int
+
+
+class LikelihoodCache:
+    def __init__(self) -> None:
+        self._cache: dict[_CacheKey, float] = {}
+        self.hits: int = 0
+        self.misses: int = 0
+
+    def get(self, key: _CacheKey) -> float | None:
+        return self._cache.get(key)
+
+    def put(self, key: _CacheKey, value: float) -> None:
+        self._cache[key] = value
+
+    def clear(self) -> None:
+        self._cache.clear()
+
+
+def _particle_params_hash(particle: Particle) -> int:
+    param_tuple = tuple(sorted(particle.params.items()))
+    return hash(param_tuple)
+
+
+def _initial_grid_hash(initial_state: InitialState) -> int:
+    return hash(tuple(tuple(row) for row in initial_state.grid))
+
+
+def _build_cache_key(
+    particle: Particle,
+    initial_state: InitialState,
+    viewport_x: int,
+    viewport_y: int,
+    viewport_w: int,
+    viewport_h: int,
+    n_inner_runs: int,
+    base_seed: int,
+) -> _CacheKey:
+    return _CacheKey(
+        params_hash=_particle_params_hash(particle),
+        viewport_x=viewport_x,
+        viewport_y=viewport_y,
+        viewport_w=viewport_w,
+        viewport_h=viewport_h,
+        grid_hash=_initial_grid_hash(initial_state),
+        n_inner_runs=n_inner_runs,
+        base_seed=base_seed,
+    )
 
 
 def _simulate_viewport_classes(
@@ -134,15 +195,15 @@ def compute_stats_loglik(
 
     # Compute mean and variance of simulated stats
     stat_names = [
-        ("population_mean", "population_var"),
-        ("food_mean", "food_var"),
-        ("wealth_mean", "wealth_var"),
-        ("defense_mean", "defense_var"),
-        ("prosperity_proxy_mean", "prosperity_proxy_var"),
+        "population_mean",
+        "food_mean",
+        "wealth_mean",
+        "defense_mean",
+        "prosperity_proxy_mean",
     ]
 
     loglik = 0.0
-    for mean_attr, var_attr in stat_names:
+    for mean_attr in stat_names:
         obs_val = getattr(observed_features, mean_attr)
         sim_vals = [getattr(f, mean_attr) for f in simulated_features_list]
         sim_mean = float(np.mean(sim_vals))
@@ -210,3 +271,40 @@ def compute_particle_loglik(
     stats_ll = compute_stats_loglik(obs_features, sim_features)
 
     return 0.75 * grid_ll + 0.25 * stats_ll
+
+
+def cached_compute_particle_loglik(
+    particle: Particle,
+    observed_response: SimulateResponse,
+    initial_state: InitialState,
+    cache: LikelihoodCache,
+    n_inner_runs: int = 6,
+    base_seed: int = 0,
+) -> float:
+    """Compute particle log-likelihood with an explicit in-memory cache."""
+    vp = observed_response.viewport
+    key = _build_cache_key(
+        particle,
+        initial_state,
+        vp.x,
+        vp.y,
+        vp.w,
+        vp.h,
+        n_inner_runs,
+        base_seed,
+    )
+    cached_value = cache.get(key)
+    if cached_value is not None:
+        cache.hits += 1
+        return cached_value
+
+    loglik = compute_particle_loglik(
+        particle,
+        observed_response,
+        initial_state,
+        n_inner_runs=n_inner_runs,
+        base_seed=base_seed,
+    )
+    cache.put(key, loglik)
+    cache.misses += 1
+    return loglik

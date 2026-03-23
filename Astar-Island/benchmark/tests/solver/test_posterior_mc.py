@@ -21,6 +21,7 @@ from astar_twin.solver.baselines import uniform_baseline
 from astar_twin.solver.inference.posterior import PosteriorState, create_posterior
 from astar_twin.solver.predict.posterior_mc import (
     FALLBACK_SIMS_PER_SEED,
+    PROBE_THRESHOLD,
     allocate_runs_to_particles,
     predict_all_seeds,
     predict_seed,
@@ -175,6 +176,113 @@ def test_predict_seed_metrics(posterior, initial_states, map_dims):
     assert metrics.total_sims == 6
     assert not metrics.fallback_used
     assert len(metrics.runs_per_particle) == 3
+
+
+def test_adaptive_allocation_triggered_for_large_sims(posterior, initial_states, map_dims):
+    """Adaptive allocation turns on at the probe threshold."""
+    height, width = map_dims
+    _, metrics = predict_seed(
+        posterior,
+        initial_states[0],
+        seed_index=0,
+        map_height=height,
+        map_width=width,
+        top_k=3,
+        sims_per_seed=PROBE_THRESHOLD,
+        base_seed=7,
+    )
+
+    assert metrics.adaptive_allocation_used is True
+
+
+def test_no_adaptive_for_small_sims(posterior, initial_states, map_dims):
+    """Small sim budgets keep the original proportional allocation path."""
+    height, width = map_dims
+    _, metrics = predict_seed(
+        posterior,
+        initial_states[0],
+        seed_index=0,
+        map_height=height,
+        map_width=width,
+        top_k=3,
+        sims_per_seed=PROBE_THRESHOLD - 1,
+        base_seed=7,
+    )
+
+    assert metrics.adaptive_allocation_used is False
+
+
+def test_adaptive_total_runs_correct(posterior, initial_states, map_dims):
+    """Probe and final allocations still consume the exact requested budget."""
+    height, width = map_dims
+    sims_per_seed = 24
+    _, metrics = predict_seed(
+        posterior,
+        initial_states[0],
+        seed_index=0,
+        map_height=height,
+        map_width=width,
+        top_k=3,
+        sims_per_seed=sims_per_seed,
+        base_seed=9,
+    )
+
+    assert (
+        sum(metrics.probe_runs_per_particle) + sum(metrics.final_runs_per_particle) == sims_per_seed
+    )
+    assert metrics.total_sims == sims_per_seed
+    assert metrics.runs_per_particle == [
+        probe + final
+        for probe, final in zip(metrics.probe_runs_per_particle, metrics.final_runs_per_particle)
+    ]
+
+
+def test_adaptive_metrics_populated(posterior, initial_states, map_dims):
+    """Adaptive metrics include per-particle probe and final allocations."""
+    height, width = map_dims
+    _, metrics = predict_seed(
+        posterior,
+        initial_states[0],
+        seed_index=0,
+        map_height=height,
+        map_width=width,
+        top_k=3,
+        sims_per_seed=PROBE_THRESHOLD,
+        base_seed=11,
+    )
+
+    assert len(metrics.probe_runs_per_particle) == 3
+    assert len(metrics.final_runs_per_particle) == 3
+    assert len(metrics.runs_per_particle) == 3
+
+
+def test_adaptive_deterministic(posterior, initial_states, map_dims):
+    """Adaptive probe+allocate remains deterministic for fixed seeds."""
+    height, width = map_dims
+    sims_per_seed = PROBE_THRESHOLD
+    tensor1, metrics1 = predict_seed(
+        posterior,
+        initial_states[0],
+        seed_index=0,
+        map_height=height,
+        map_width=width,
+        top_k=3,
+        sims_per_seed=sims_per_seed,
+        base_seed=42,
+    )
+    tensor2, metrics2 = predict_seed(
+        posterior,
+        initial_states[0],
+        seed_index=0,
+        map_height=height,
+        map_width=width,
+        top_k=3,
+        sims_per_seed=sims_per_seed,
+        base_seed=42,
+    )
+
+    np.testing.assert_array_equal(tensor1, tensor2)
+    assert metrics1 == metrics2
 
 
 def test_predict_seed_deterministic(posterior, initial_states, map_dims):

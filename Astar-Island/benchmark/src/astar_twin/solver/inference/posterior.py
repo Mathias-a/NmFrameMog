@@ -15,7 +15,10 @@ import numpy as np
 from numpy.random import default_rng
 
 from astar_twin.contracts.api_models import InitialState, SimulateResponse
-from astar_twin.solver.inference.likelihood import compute_particle_loglik
+from astar_twin.solver.inference.likelihood import (
+    LikelihoodCache,
+    cached_compute_particle_loglik,
+)
 from astar_twin.solver.inference.particles import Particle, initialize_particles
 
 
@@ -87,11 +90,13 @@ def update_posterior(
     base_seed: int = 0,
 ) -> PosteriorState:
     """Update particle weights given a new observation."""
+    likelihood_cache = LikelihoodCache()
     for particle in state.particles:
-        ll = compute_particle_loglik(
+        ll = cached_compute_particle_loglik(
             particle,
             observed_response,
             initial_state,
+            cache=likelihood_cache,
             n_inner_runs=n_inner_runs,
             base_seed=base_seed,
         )

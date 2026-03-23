@@ -3,8 +3,11 @@
 Evaluates the final solver against:
   - Uniform baseline
   - Fixed-coverage baseline
-  - Particle solver without hedge
-  - Particle solver with hedge enabled when gated
+  - Particle solver (with hybrid anchor blending from confidence model)
+  - Particle solver with legacy hedge enabled when gated
+
+Emits confidence summaries, hedge modes, and blend weights from the
+hybrid confidence model for each seed.
 
 Selects the winner as the highest-mean configuration.
 """
@@ -17,7 +20,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
-from numpy.typing import NDArray
 
 from astar_twin.data.loaders import load_fixture
 from astar_twin.scoring import compute_score
@@ -46,8 +48,11 @@ class ReplayResult:
     winner_mean: float
     hedge_activated: bool
     calibration_disagreements: list[float]
+    hybrid_confidence_scores: list[float]
+    hybrid_hedge_modes: list[str]
+    hybrid_blend_weights: list[float]
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, object]:
         return {
             "variants": [
                 {
@@ -63,6 +68,9 @@ class ReplayResult:
             },
             "hedge_activated": self.hedge_activated,
             "calibration_disagreements": self.calibration_disagreements,
+            "hybrid_confidence_scores": self.hybrid_confidence_scores,
+            "hybrid_hedge_modes": self.hybrid_hedge_modes,
+            "hybrid_blend_weights": self.hybrid_blend_weights,
         }
 
 
@@ -120,7 +128,9 @@ def run_replay_validation(
         n_mc_runs=fc_mc_runs,
         base_seed=42,
     )
-    fc_scores = [float(compute_score(gt, t)) for gt, t in zip(ground_truths, fc_tensors)]
+    fc_scores = [
+        float(compute_score(gt, t)) for gt, t in zip(ground_truths, fc_tensors, strict=True)
+    ]
     variants.append(
         VariantResult(
             name="fixed_coverage",
@@ -140,7 +150,9 @@ def run_replay_validation(
         sims_per_seed=sims_per_seed,
         base_seed=42,
     )
-    particle_scores = [float(compute_score(gt, t)) for gt, t in zip(ground_truths, result.tensors)]
+    particle_scores = [
+        float(compute_score(gt, t)) for gt, t in zip(ground_truths, result.tensors, strict=True)
+    ]
     particle_mean = float(np.mean(particle_scores))
     variants.append(
         VariantResult(
@@ -171,7 +183,9 @@ def run_replay_validation(
             height,
             width,
         )
-        hedged_scores = [float(compute_score(gt, t)) for gt, t in zip(ground_truths, hedged)]
+        hedged_scores = [
+            float(compute_score(gt, t)) for gt, t in zip(ground_truths, hedged, strict=True)
+        ]
         variants.append(
             VariantResult(
                 name="particle_hedged",
@@ -179,6 +193,16 @@ def run_replay_validation(
                 mean_score=float(np.mean(hedged_scores)),
             )
         )
+
+    # Extract hybrid confidence metadata from solver result
+    if result.hybrid is not None:
+        hybrid_confidence_scores = [c.confidence_score for c in result.hybrid.confidences]
+        hybrid_hedge_modes = list(result.hybrid.hedge_modes)
+        hybrid_blend_weights = list(result.hybrid.blend_weights)
+    else:
+        hybrid_confidence_scores = [0.0] * n_seeds
+        hybrid_hedge_modes = ["anchor"] * n_seeds
+        hybrid_blend_weights = [1.0] * n_seeds
 
     # Select winner
     winner = max(variants, key=lambda v: v.mean_score)
@@ -189,6 +213,9 @@ def run_replay_validation(
         winner_mean=winner.mean_score,
         hedge_activated=hedge_activated,
         calibration_disagreements=calibration_disagreements,
+        hybrid_confidence_scores=hybrid_confidence_scores,
+        hybrid_hedge_modes=hybrid_hedge_modes,
+        hybrid_blend_weights=hybrid_blend_weights,
     )
 
 

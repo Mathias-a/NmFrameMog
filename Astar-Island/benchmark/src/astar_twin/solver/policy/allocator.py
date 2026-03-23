@@ -78,6 +78,7 @@ class AllocationState:
 
     # Per-seed candidate pools (generated from hotspots)
     seed_candidates: dict[int, list[ViewportCandidate]] = field(default_factory=dict)
+    seed_initial_states: dict[int, InitialState] = field(default_factory=dict)
 
     @property
     def queries_used(self) -> int:
@@ -110,6 +111,7 @@ def initialize_allocation(
     """Create initial allocation state with candidate pools per seed."""
     state = AllocationState()
     for seed_idx in range(min(len(initial_states), MAX_SEEDS)):
+        state.seed_initial_states[seed_idx] = initial_states[seed_idx]
         candidates = generate_hotspots(initial_states[seed_idx], map_height, map_width)
         state.seed_candidates[seed_idx] = candidates
     return state
@@ -148,6 +150,81 @@ def plan_bootstrap_queries(
             planned.append((seed_idx, query_b))
 
     return planned[:BOOTSTRAP_QUERIES]
+
+
+def score_bootstrap_calibration_candidate(
+    candidate: ViewportCandidate,
+    seed_index: int,
+    posterior: PosteriorState,
+    initial_state: InitialState,
+) -> float:
+    """Score a bootstrap calibration candidate by posterior disagreement and hotspot quality."""
+    disagreement = compute_posterior_disagreement(candidate, posterior, initial_state)
+    _ = seed_index
+    return float(0.6 * disagreement + 0.4 * candidate.score)
+
+
+def plan_calibration_bootstrap_queries(
+    state: AllocationState,
+    posterior: PosteriorState,
+) -> list[tuple[int, ViewportCandidate]]:
+    """Plan bootstrap queries with one guaranteed seed query plus global calibration picks."""
+    guaranteed: list[tuple[int, ViewportCandidate]] = []
+    selected_keys: set[tuple[int, int, int, int, int]] = set()
+    n_seeds = len(state.seed_candidates)
+
+    for seed_idx in range(n_seeds):
+        candidates = state.seed_candidates.get(seed_idx, [])
+        if not candidates:
+            continue
+
+        guaranteed_candidate = _pick_by_category_priority(
+            candidates,
+            ["coastal", "corridor", "frontier", "reclaim", "fallback"],
+            exclude=[],
+        )
+        if guaranteed_candidate is None:
+            continue
+
+        guaranteed.append((seed_idx, guaranteed_candidate))
+        selected_keys.add(
+            (
+                seed_idx,
+                guaranteed_candidate.x,
+                guaranteed_candidate.y,
+                guaranteed_candidate.w,
+                guaranteed_candidate.h,
+            )
+        )
+
+    scored_remaining: list[tuple[float, int, int, ViewportCandidate]] = []
+    for seed_idx in range(n_seeds):
+        candidates = state.seed_candidates.get(seed_idx, [])
+        initial_state = state.seed_initial_states.get(seed_idx)
+        if not candidates or initial_state is None:
+            continue
+
+        for candidate_idx, candidate in enumerate(candidates):
+            key = (seed_idx, candidate.x, candidate.y, candidate.w, candidate.h)
+            if key in selected_keys:
+                continue
+            score = score_bootstrap_calibration_candidate(
+                candidate,
+                seed_idx,
+                posterior,
+                initial_state,
+            )
+            scored_remaining.append((score, seed_idx, candidate_idx, candidate))
+
+    scored_remaining.sort(
+        key=lambda item: (-item[0], item[1], item[2], item[3].x, item[3].y, item[3].w, item[3].h)
+    )
+
+    remaining_slots = max(BOOTSTRAP_QUERIES - len(guaranteed), 0)
+    extra = [
+        (seed_idx, candidate) for _, seed_idx, _, candidate in scored_remaining[:remaining_slots]
+    ]
+    return (guaranteed + extra)[:BOOTSTRAP_QUERIES]
 
 
 def _pick_by_category_priority(

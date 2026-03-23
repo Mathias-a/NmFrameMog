@@ -77,6 +77,9 @@ def test_replay_serialization():
     assert "winner" in d
     assert "hedge_activated" in d
     assert "calibration_disagreements" in d
+    assert "hybrid_confidence_scores" in d
+    assert "hybrid_hedge_modes" in d
+    assert "hybrid_blend_weights" in d
     assert d["winner"]["name"] == result.winner_name
 
 
@@ -92,3 +95,20 @@ def test_replay_per_seed_scores_present():
     for v in result.variants:
         assert len(v.per_seed_scores) == 5
         assert all(0 <= s <= 100 for s in v.per_seed_scores)
+
+
+def test_replay_hybrid_metadata() -> None:
+    """Hybrid confidence metadata is present for all seeds."""
+    result = run_replay_validation(
+        FIXTURE_PATH,
+        n_particles=4,
+        n_inner_runs=2,
+        sims_per_seed=4,
+        fc_mc_runs=10,
+    )
+    assert len(result.hybrid_confidence_scores) == 5
+    assert all(0.0 <= s <= 1.0 for s in result.hybrid_confidence_scores)
+    assert len(result.hybrid_hedge_modes) == 5
+    assert all(m in ("particle", "blend", "anchor") for m in result.hybrid_hedge_modes)
+    assert len(result.hybrid_blend_weights) == 5
+    assert all(0.0 <= w <= 1.0 for w in result.hybrid_blend_weights)

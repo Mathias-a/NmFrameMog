@@ -3,12 +3,14 @@
 Accepts an adapter and returns 5 prediction tensors (one per seed).
 This module is the single entrypoint that orchestrates:
   1. load round detail
-  2. generate bootstrap candidates
-  3. issue bootstrap queries
-  4. update posterior
-  5. iterate adaptive + reserve
-  6. generate final tensors
-  7. return metrics + transcripts
+  2. build structural anchors for hybrid fallback
+  3. generate bootstrap candidates
+  4. issue bootstrap queries
+  5. update posterior
+  6. iterate adaptive + reserve
+  7. compute per-seed confidence
+  8. generate final tensors with hybrid anchor blending
+  9. return metrics + transcripts
 """
 
 from __future__ import annotations
@@ -19,7 +21,12 @@ from dataclasses import dataclass, field
 import numpy as np
 from numpy.typing import NDArray
 
+from astar_twin.contracts.api_models import SimulateResponse
 from astar_twin.contracts.types import MAX_QUERIES, MAX_SEEDS
+from astar_twin.solver.inference.confidence import (
+    PosteriorConfidence,
+    compute_confidence,
+)
 from astar_twin.solver.inference.posterior import (
     create_posterior,
     prune_and_resample_bootstrap,
@@ -34,16 +41,18 @@ from astar_twin.solver.policy.allocator import (
     RESERVE_QUERIES,
     check_contradiction_triggers,
     initialize_allocation,
-    plan_bootstrap_queries,
+    plan_calibration_bootstrap_queries,
     plan_reserve_queries,
     record_query,
     select_adaptive_batch,
     transition_phase,
 )
+from astar_twin.solver.predict.hedge import apply_anchor_hedge, compute_blend_weight
 from astar_twin.solver.predict.posterior_mc import (
     DEFAULT_SIMS_PER_SEED,
     predict_all_seeds,
 )
+from astar_twin.solver.predict.structural_anchor import build_structural_anchors
 
 
 @dataclass
@@ -61,6 +70,15 @@ class QueryRecord:
 
 
 @dataclass
+class HybridMetadata:
+    """Per-seed confidence and hedge decision metadata."""
+
+    confidences: list[PosteriorConfidence]
+    hedge_modes: list[str]
+    blend_weights: list[float]
+
+
+@dataclass
 class SolveResult:
     """Complete result from one solver run."""
 
@@ -70,6 +88,7 @@ class SolveResult:
     runtime_seconds: float = 0.0
     final_ess: float = 0.0
     contradiction_triggered: bool = False
+    hybrid: HybridMetadata | None = None
 
 
 def _issue_query(
@@ -80,7 +99,7 @@ def _issue_query(
     viewport_y: int,
     viewport_w: int,
     viewport_h: int,
-):
+) -> SimulateResponse:
     """Issue a single simulate query through the adapter."""
     return adapter.simulate(
         round_id,
@@ -90,6 +109,64 @@ def _issue_query(
         viewport_w,
         viewport_h,
     )
+
+
+def _compute_entropy_mass(tensor: NDArray[np.float64]) -> float:
+    """Compute mean per-cell entropy of a prediction tensor.
+
+    Args:
+        tensor: (H, W, C) probability tensor.
+
+    Returns:
+        Mean Shannon entropy across all cells.
+    """
+    # Clamp to avoid log(0)
+    safe: NDArray[np.float64] = np.clip(tensor, 1e-10, 1.0)
+    per_cell: NDArray[np.float64] = np.sum(safe * np.log(safe), axis=-1)
+    cell_entropy: NDArray[np.float64] = -per_cell
+    return float(cell_entropy.sum()) / max(cell_entropy.size, 1)
+
+
+def _compute_seed_confidences(
+    posterior_ess: float,
+    posterior_top_mass: float,
+    n_particles: int,
+    particle_tensors: list[NDArray[np.float64]],
+    calibration_disagreements: list[float],
+) -> list[PosteriorConfidence]:
+    """Compute per-seed confidence summaries.
+
+    Uses the shared posterior ESS/top-mass (round-level signals) combined
+    with per-seed entropy and disagreement.
+
+    Args:
+        posterior_ess: ESS of the final posterior.
+        posterior_top_mass: Top particle mass in the final posterior.
+        n_particles: Number of particles in the posterior.
+        particle_tensors: Per-seed posterior-predictive tensors.
+        calibration_disagreements: Per-seed calibration disagreement values.
+
+    Returns:
+        One PosteriorConfidence per seed.
+    """
+    confidences: list[PosteriorConfidence] = []
+    for seed_idx, tensor in enumerate(particle_tensors):
+        disagreement = (
+            calibration_disagreements[seed_idx]
+            if seed_idx < len(calibration_disagreements)
+            else 0.0
+        )
+        entropy_mass = _compute_entropy_mass(tensor)
+        conf = compute_confidence(
+            seed_index=seed_idx,
+            ess=posterior_ess,
+            top_particle_mass=posterior_top_mass,
+            disagreement=disagreement,
+            entropy_mass=entropy_mass,
+            n_particles=n_particles,
+        )
+        confidences.append(conf)
+    return confidences
 
 
 def solve(
@@ -104,14 +181,17 @@ def solve(
 
     Steps:
       1. Load round detail for all seeds
-      2. Generate bootstrap candidates (hotspots)
-      3. Issue 10 bootstrap queries (2 per seed)
-      4. Update posterior after each observation
-      5. Prune and resample after bootstrap
-      6. Run 6 adaptive batches of 5 globally-selected queries
-      7. Check contradiction triggers → release reserve if needed
-      8. Generate posterior-predictive tensors for all 5 seeds
-      9. Return structured SolveResult with transcript
+      2. Build structural anchor tensors for hybrid fallback
+      3. Generate bootstrap candidates (hotspots)
+      4. Issue 10 bootstrap queries (2 per seed)
+      5. Update posterior after each observation
+      6. Prune and resample after bootstrap
+      7. Run 6 adaptive batches of 5 globally-selected queries
+      8. Check contradiction triggers -> release reserve if needed
+      9. Compute per-seed confidence from posterior state
+     10. Generate posterior-predictive tensors for all 5 seeds
+     11. Apply hybrid anchor hedge based on confidence
+     12. Return structured SolveResult with transcript and hybrid metadata
 
     Args:
         adapter: SolverAdapter (benchmark or prod).
@@ -122,7 +202,7 @@ def solve(
         base_seed: Base seed for deterministic execution.
 
     Returns:
-        SolveResult with tensors, transcript, and metrics.
+        SolveResult with tensors, transcript, hybrid metadata, and metrics.
     """
     t_start = time.monotonic()
     transcript: list[QueryRecord] = []
@@ -134,12 +214,15 @@ def solve(
     initial_states = detail.initial_states
     n_seeds = min(len(initial_states), MAX_SEEDS)
 
-    # 2. Initialize posterior and allocation
+    # 2. Build structural anchors for hybrid fallback
+    anchor_tensors = build_structural_anchors(initial_states[:n_seeds], height, width)
+
+    # 3. Initialize posterior and allocation
     posterior = create_posterior(n_particles=n_particles, seed=base_seed)
     alloc = initialize_allocation(initial_states[:n_seeds], height, width)
 
-    # 3. Bootstrap phase: 2 queries per seed
-    bootstrap_plan = plan_bootstrap_queries(alloc)
+    # 4. Bootstrap phase: 2 queries per seed
+    bootstrap_plan = plan_calibration_bootstrap_queries(alloc, posterior)
     query_counter = 0
 
     for seed_idx, vp in bootstrap_plan:
@@ -182,7 +265,19 @@ def solve(
         )
         query_counter += 1
 
-    # 4. Post-bootstrap: prune and resample
+    calibration_disagreements: list[float] = []
+    particle_count = max(len(posterior.particles), 1)
+    normalized_ess = min(posterior.ess / particle_count, 1.0)
+    for seed_idx in range(n_seeds):
+        seed_queries = [
+            q for q in transcript if q.phase == "bootstrap" and q.seed_index == seed_idx
+        ]
+        if seed_queries:
+            calibration_disagreements.append(1.0 - normalized_ess)
+        else:
+            calibration_disagreements.append(0.0)
+
+    # 5. Post-bootstrap: prune and resample
     transition_phase(alloc)
     posterior = prune_and_resample_bootstrap(
         posterior,
@@ -204,7 +299,7 @@ def solve(
         i: tensor for i, tensor in enumerate(bootstrap_tensors)
     }
 
-    # 5. Adaptive phase: 6 batches of 5
+    # 6. Adaptive phase: 6 batches of 5
 
     for batch_num in range(ADAPTIVE_BATCHES):
         if alloc.queries_remaining <= 0:
@@ -386,12 +481,12 @@ def solve(
 
     transition_phase(alloc)
 
-    # 7. Generate posterior-predictive tensors
+    # 8. Generate posterior-predictive tensors
     elapsed = time.monotonic() - t_start
     # Rough ceiling: 2.5h = 9000s. If > 80% of that, fallback.
     runtime_fraction = elapsed / 9000.0
 
-    tensors, prediction_metrics = predict_all_seeds(
+    particle_tensors, prediction_metrics = predict_all_seeds(
         posterior,
         initial_states[:n_seeds],
         map_height=height,
@@ -402,11 +497,37 @@ def solve(
         runtime_fraction=runtime_fraction,
     )
 
+    # 9. Compute per-seed confidence and apply hybrid anchor hedge
+    confidences = _compute_seed_confidences(
+        posterior_ess=posterior.ess,
+        posterior_top_mass=posterior.top_particle_mass,
+        n_particles=len(posterior.particles),
+        particle_tensors=particle_tensors,
+        calibration_disagreements=calibration_disagreements,
+    )
+
+    # Apply hybrid blending: confidence-gated anchor hedge
+    hybrid_tensors = apply_anchor_hedge(
+        particle_tensors=particle_tensors,
+        anchor_tensors=anchor_tensors,
+        confidences=confidences,
+        initial_states=initial_states[:n_seeds],
+        height=height,
+        width=width,
+    )
+
+    hybrid_meta = HybridMetadata(
+        confidences=confidences,
+        hedge_modes=[c.recommended_mode for c in confidences],
+        blend_weights=[compute_blend_weight(c) for c in confidences],
+    )
+
     return SolveResult(
-        tensors=tensors,
+        tensors=hybrid_tensors,
         transcript=transcript,
         total_queries_used=alloc.queries_used,
         runtime_seconds=time.monotonic() - t_start,
         final_ess=posterior.ess,
         contradiction_triggered=contradiction,
+        hybrid=hybrid_meta,
     )
